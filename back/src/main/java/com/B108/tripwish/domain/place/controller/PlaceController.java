@@ -33,7 +33,17 @@ public class PlaceController {
     @GetMapping("/{roomId}")
     public ResponseEntity<PlaceListResponseDto> getAllPlaces(@PathVariable Long roomId,
                                                             @RequestParam String category) {
-        PlaceDto sample = new PlaceDto(1L, "스타벅스 강남점", "https://example.com/images/place1.jpg", true, false);
+        PlaceDto sample = PlaceDto.builder()
+                .placeId(1L)
+                .placeName("스타벅스 강남점")
+                .placeImg("https://example.com/images/place1.jpg")
+                .category("카페")
+                .address("서울특별시 강남구 강남대로 584 (논현동)")
+                .latitude(37.517235)
+                .longitude(127.047325)
+                .isLiked(true)
+                .isWanted(false)
+                .build();
         List<PlaceDto> list = List.of(sample);
         PlaceListResponseDto response = new PlaceListResponseDto(list);
 
@@ -53,7 +63,18 @@ public class PlaceController {
     @GetMapping("/{roomId}/search")
     public ResponseEntity<PlaceListResponseDto> getSearchPlaces(@PathVariable Long roomId,
                                                                 @RequestParam String keyword) {
-        PlaceDto sample = new PlaceDto(1L, "스타벅스 강남점", "https://example.com/images/place1.jpg", "카페", true, false);
+        PlaceDto sample = PlaceDto.builder()
+                .placeId(1L)
+                .placeName("스타벅스 강남점")
+                .placeImg("https://example.com/images/place1.jpg")
+                .category("카페")
+                .address("서울특별시 강남구 강남대로 584 (논현동)")
+                .latitude(37.517235)
+                .longitude(127.047325)
+                .isLiked(true)
+                .isWanted(false)
+                .build();
+
         List<PlaceDto> list = List.of(sample);
         PlaceListResponseDto response = new PlaceListResponseDto(list);
 
@@ -76,7 +97,17 @@ public class PlaceController {
             @PathVariable Long roomId,
             @RequestParam String keyword
     ) {
-        PlaceDto sample = new PlaceDto(1L, "스타벅스 강남점", "https://example.com/images/place1.jpg", "카페", true, false);
+        PlaceDto sample = PlaceDto.builder()
+                .placeId(1L)
+                .placeName("스타벅스 강남점")
+                .placeImg("https://example.com/images/place1.jpg")
+                .category("카페")
+                .address("서울특별시 강남구 강남대로 584 (논현동)")
+                .latitude(37.517235)
+                .longitude(127.047325)
+                .isLiked(true)
+                .isWanted(false)
+                .build();
         List<PlaceDto> list = List.of(sample);
         PlaceListResponseDto response = new PlaceListResponseDto(list);
 
@@ -95,13 +126,13 @@ public class PlaceController {
     )
     @GetMapping("/detail")
     public ResponseEntity<PlaceDetailResponseDto> getDetailPlace(@RequestParam Long placeId) {
-        PlaceDetailResponseDto sample = new PlaceDetailResponseDto(
-                "https://example.com/image.jpg",
-                "성심당",
-                "대전 중구 중앙로 56",
-                true,
-                false,
-                "{\n" +
+        PlaceDetailResponseDto sample = PlaceDetailResponseDto.builder()
+                .placeImg("https://example.com/image.jpg")
+                .placeName("성심당")
+                .address("대전 중구 중앙로 56")
+                .isLiked(true)
+                .isWanted(false)
+                .detailGPT("{\n" +
                         "  \"description\": \"이곳은 대전의 명물 빵집입니다.\",\n" +
                         "  \"openingHours\": \"매일 08:00 ~ 22:00\",\n" +
                         "  \"atmosphere\": \"복고풍 감성과 활기찬 분위기, 가족 단위 방문이 많음\",\n" +
@@ -113,12 +144,14 @@ public class PlaceController {
                         "    \"단팥빵\"\n" +
                         "  ],\n" +
                         "  \"parking\": \"주차장은 별도로 없으며 인근 공영주차장 이용 가능\"\n" +
-                        "}",
-                List.of(
+                        "}")
+                .latitude(36.331348663430305)
+                .longitude(127.42718875120441)
+                .tagList(List.of(
                         new TagSummaryDto(1L, "맛있어요"),
                         new TagSummaryDto(2L, "친절해요")
-                )
-        );
+                ))
+                .build();
 
         return ResponseEntity.ok(sample); // 200
     }
