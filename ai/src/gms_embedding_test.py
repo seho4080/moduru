@@ -17,5 +17,3 @@ data = {
 response = requests.post(url, headers=headers, data=json.dumps(data))
 print(response.status_code)
 print(response.json())
-
-print(gms_key)
