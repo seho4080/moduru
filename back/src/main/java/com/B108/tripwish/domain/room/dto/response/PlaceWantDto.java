@@ -1,15 +1,14 @@
-package com.B108.tripwish.domain.place.dto.response;
+package com.B108.tripwish.domain.room.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlaceDto {
+public class PlaceWantDto {
+    private Long wantId;
     private Long placeId;
     private String placeName;
     private String placeImg;
@@ -19,5 +18,7 @@ public class PlaceDto {
     private Double longitude;
     private Boolean isLiked;
     private Boolean isWanted;
+    private Boolean isVoted;
+
 
 }
