@@ -19,13 +19,18 @@ services:
     networks:
       - app-network   # ✅ 추가
   # 프론트 설정
-  # frontend:
-  #   build:
-  #     context: ./front
-  #   ports:
-  #     - "3000:80"
-  #   networks:
-  #     - app-network
+  frontend:
+    build:
+      context: ./front/moduru
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./front/moduru:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true  # 리눅스 파일 감지 대응
+    networks:
+      - app-network
   # DB 설정
   db:
     image: postgres:16.9
