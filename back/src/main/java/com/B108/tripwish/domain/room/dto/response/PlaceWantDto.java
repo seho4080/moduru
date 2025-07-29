@@ -8,17 +8,15 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlaceWantDto {
-    private Long wantId;
-    private Long placeId;
-    private String placeName;
-    private String placeImg;
-    private String category;
-    private String address;
-    private Double latitude;
-    private Double longitude;
-    private Boolean isLiked;
-    private Boolean isWanted;
-    private Boolean isVoted;
-
-
+  private Long wantId;
+  private Long placeId;
+  private String placeName;
+  private String placeImg;
+  private String category;
+  private String address;
+  private Double latitude;
+  private Double longitude;
+  private Boolean isLiked;
+  private Boolean isWanted;
+  private Boolean isVoted;
 }

@@ -1,8 +1,8 @@
 package com.B108.tripwish.domain.room.dto.response;
 
-import lombok.*;
-
 import java.util.List;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -10,5 +10,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlaceWantListResponseDto {
-    private List<PlaceWantDto> placesWant;
+  private List<PlaceWantDto> placesWant;
 }
