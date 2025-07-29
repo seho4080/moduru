@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TagSummaryDto {
-    private Long tagId;
-    private String content;
+  private Long tagId;
+  private String content;
 }
