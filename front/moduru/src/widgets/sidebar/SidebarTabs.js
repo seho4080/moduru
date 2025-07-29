@@ -1,44 +1,39 @@
-// src/SidebarTabs.js
+// src/widgets/sidebar/SidebarTabs.js
 import React from 'react';
+import './SidebarTabs.css';
 
-const tabs = [
-  { key: 'title', label: '여행방 제목' },
-  { key: 'location', label: '여행 장소' },
-  { key: 'date', label: '여행 일정' },
-  { key: 'place', label: '장소 검색' },
-  { key: 'schedule', label: '일정 편집' },
-];
+const SidebarTabs = ({ activeTab, onTabChange }) => {
+  const steps = [
+    { key: 'date', step: 'STEP 1', label: '여행 일정' },
+    { key: 'place', step: 'STEP 2', label: '장소 검색' },
+    { key: 'schedule', step: 'STEP 3', label: '일정 편집' },
+  ];
 
-export default function SidebarTabs({ activeTab, onTabChange }) {
+  const handleExit = () => {
+    onTabChange('exit');
+  };
+
   return (
-    <div style={{
-      width: '220px',
-      backgroundColor: '#2d4d9f',
-      color: 'white',
-      padding: '12px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '12px',
-    }}>
-      {tabs.map(tab => (
-        <button
-          key={tab.key}
-          onClick={() => onTabChange(tab.key)}
-          style={{
-            backgroundColor: activeTab === tab.key ? 'white' : 'transparent',
-            color: activeTab === tab.key ? '#2d4d9f' : 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '10px 16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: activeTab === tab.key ? '0 2px 6px rgba(0,0,0,0.2)' : 'none',
-            transition: 'all 0.2s',
-          }}
-        >
-          {tab.label}
-        </button>
-      ))}
+    <div className="custom-sidebar">
+      <div className="logo-space"></div>
+
+      <div className="step-container">
+        {steps.map(({ key, step, label }) => (
+          <div
+            key={key}
+            className={`step-box ${activeTab === key ? 'active' : 'inactive'}`}
+            onClick={() => onTabChange(key)}
+          >
+            <div className="step-label">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      <button className="exit-button" onClick={handleExit}>
+        나가기
+      </button>
     </div>
   );
-}
+};
+
+export default SidebarTabs;
