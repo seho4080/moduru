@@ -2,6 +2,8 @@ package com.B108.tripwish.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -12,11 +14,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class User{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    private Long id;
 
     @Column(length = 100, unique = true)
     private String email;
@@ -28,10 +30,10 @@ public class User {
     private String provider;
 
     @Column(length = 50, nullable = false)
-    private String name;
+    private String nickname;
 
     @Column(columnDefinition = "TEXT")
-    private String profileImage;
+    private String profileImg;
 
     @Enumerated(EnumType.STRING)
     private Gender gender;
@@ -44,7 +46,17 @@ public class User {
     @Column
     private String phone;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;
+
+
     public enum Gender {
         M, F, O
     }
+
+    public enum Role {
+        ROLE_USER, ROLE_ADMIN
+    }
+
 }

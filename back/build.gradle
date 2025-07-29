@@ -1,6 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.4'
+	id 'com.diffplug.spotless' version '6.25.0'
+	id 'org.springframework.boot' version '3.1.6'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -12,6 +13,15 @@ java {
 		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
+
+spotless {
+	java {
+		googleJavaFormat("1.17.0")
+		importOrder("java", "javax", "org", "com", "")
+		removeUnusedImports()
+	}
+}
+
 
 configurations {
 	compileOnly {
@@ -44,8 +54,19 @@ dependencies {
 	// H2 Database (개발용 인메모리 DB, 선택)
 	runtimeOnly 'com.h2database:h2'
 
+	// postgreSql
+	implementation 'org.postgresql:postgresql:42.7.3'
+
 	// Swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+	// Spring Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// JWT (io.jsonwebtoken)
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON 처리를 위한 Jackson 연동
 }
 
 tasks.named('test') {
