@@ -8,9 +8,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TravelMemberDto {
-    private Long userId;
-    private String profileImg;
-    private String nickname;
-    private boolean isOwner;
-    private boolean isFriend;
+  private Long userId;
+  private String profileImg;
+  private String nickname;
+  private boolean isOwner;
+  private boolean isFriend;
 }

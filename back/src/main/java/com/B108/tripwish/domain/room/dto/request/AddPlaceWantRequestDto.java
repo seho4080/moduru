@@ -10,5 +10,5 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddPlaceWantRequestDto {
-    private Long placeId;
+  private Long placeId;
 }
