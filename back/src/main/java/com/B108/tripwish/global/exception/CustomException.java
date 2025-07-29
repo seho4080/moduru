@@ -1,15 +1,14 @@
 package com.B108.tripwish.global.exception;
 
 public class CustomException extends RuntimeException {
-    private final ErrorCode errorCode;
+  private final ErrorCode errorCode;
 
-    public CustomException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.errorCode = errorCode;
-    }
+  public CustomException(ErrorCode errorCode) {
+    super(errorCode.getMessage());
+    this.errorCode = errorCode;
+  }
 
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
+  public ErrorCode getErrorCode() {
+    return errorCode;
+  }
 }
-
