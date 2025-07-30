@@ -10,14 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlaceDto {
-    private Long placeId;
-    private String placeName;
-    private String placeImg;
-    private String category;
-    private String address;
-    private Double latitude;
-    private Double longitude;
-    private Boolean isLiked;
-    private Boolean isWanted;
-
+  private Long placeId;
+  private String placeName;
+  private String placeImg;
+  private String category;
+  private String address;
+  private Double latitude;
+  private Double longitude;
+  private Boolean isLiked;
+  private Boolean isWanted;
 }
