@@ -3,6 +3,8 @@ package com.B108.tripwish.domain.user.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,6 +40,7 @@ public class User {
 
   private LocalDate birth;
 
+  @CreationTimestamp
   @Column(nullable = false)
   private LocalDateTime createdAt;
 
