@@ -1,0 +1,4 @@
+/* Tailwind 지시문 추가 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

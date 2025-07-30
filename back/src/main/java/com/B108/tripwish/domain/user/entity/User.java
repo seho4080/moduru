@@ -1,11 +1,11 @@
 package com.B108.tripwish.domain.user.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "users")
@@ -14,49 +14,51 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User{
+public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(length = 100, unique = true)
-    private String email;
+  @Column(length = 100, unique = true)
+  private String email;
 
-    @Column
-    private String password;
+  @Column
+  private String password;
 
-    @Column(nullable = false)
-    private String provider;
+  @Column(nullable = false)
+  private String provider;
 
-    @Column(length = 50, nullable = false)
-    private String nickname;
+  @Column(length = 50, nullable = false)
+  private String nickname;
 
-    @Column(columnDefinition = "TEXT")
-    private String profileImg;
+  @Column(columnDefinition = "TEXT")
+  private String profileImg;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+  @Enumerated(EnumType.STRING)
+  private Gender gender;
 
-    private LocalDate birth;
+  private LocalDate birth;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+  @CreationTimestamp
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-    @Column
-    private String phone;
+  @Column
+  private String phone;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private Role role;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "role", nullable = false)
+  private Role role;
 
+  public enum Gender {
+    M,
+    F,
+    O
+  }
 
-    public enum Gender {
-        M, F, O
-    }
-
-    public enum Role {
-        ROLE_USER, ROLE_ADMIN
-    }
-
+  public enum Role {
+    ROLE_USER,
+    ROLE_ADMIN
+  }
 }

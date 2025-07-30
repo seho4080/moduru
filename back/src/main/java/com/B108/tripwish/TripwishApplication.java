@@ -10,18 +10,12 @@ import org.springframework.web.filter.ForwardedHeaderFilter;
 @SpringBootApplication
 public class TripwishApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TripwishApplication.class, args);
-		PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
-		String raw = "1234";
-		String encoded = encoder.encode(raw);
+  public static void main(String[] args) {
+    SpringApplication.run(TripwishApplication.class, args);
+  }
 
-		System.out.println("Encoded: " + encoded);
-		System.out.println("Matches? " + encoder.matches(raw, encoded));
-	}
-	@Bean
-	public ForwardedHeaderFilter forwardedHeaderFilter() {
-		return new ForwardedHeaderFilter();
-	}
-
+  @Bean
+  public ForwardedHeaderFilter forwardedHeaderFilter() {
+    return new ForwardedHeaderFilter();
+  }
 }

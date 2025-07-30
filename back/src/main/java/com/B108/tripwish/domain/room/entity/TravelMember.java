@@ -1,6 +1,7 @@
 package com.B108.tripwish.domain.room.entity;
 
 import com.B108.tripwish.domain.user.entity.User;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,20 +13,19 @@ import lombok.*;
 @Builder
 public class TravelMember {
 
-    @EmbeddedId
-    private TravelMemberId id;
+  @EmbeddedId private TravelMemberId id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("roomId") // TravelMemberId.roomId 와 매핑
-    @JoinColumn(name = "room_id")
-    private TravelRoom travelRoom;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("roomId") // TravelMemberId.roomId 와 매핑
+  @JoinColumn(name = "room_id")
+  private TravelRoom travelRoom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("userId") // TravelMemberId.userId 와 매핑
-    @JoinColumn(name = "user_id")
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("userId") // TravelMemberId.userId 와 매핑
+  @JoinColumn(name = "user_id")
+  private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TravelMemberRole role;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private TravelMemberRole role;
 }
