@@ -1,23 +1,6 @@
 version: "3.8"
 
 services:
-  # 백 설정
-  backend:
-    build:
-      context: ./back # 경로
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    container_name: backend
-    restart: always
-    environment:
-      - JWT_SECRET=${JWT_SECRET}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
-      - postgresql_user=${postgresql_user}
-      - postgresql_password=${postgresql_password}
-    networks:
-      - app-network   # ✅ 추가
   # 프론트 설정
   frontend:
     build:
@@ -46,8 +29,33 @@ services:
       - ./pg-data:/var/lib/postgresql/data
       # init.sql만드셈
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
     networks:
       - app-network
+  # 백 설정
+  backend:
+    build:
+      context: ./back # 경로
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    container_name: backend
+    restart: always
+    env_file: .env
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+      - postgresql_user=${postgresql_user}
+      - postgresql_password=${postgresql_password}
+    depends_on:
+      - db
+    networks:
+      - app-network   # ✅ 추가
 networks:
   app-network:
