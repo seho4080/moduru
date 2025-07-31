@@ -3,6 +3,7 @@ package com.B108.tripwish.domain.room.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.B108.tripwish.domain.room.service.RoomService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/rooms")
 public class RoomController {
 
+  private final RoomService roomService;
+
   @Operation(
       summary = "여행 방 생성",
       description = "여행 시작하기를 누르면 여행 방이 db에 생성됩니다." + "비회원도 여행 방을 생성할 수 있습니다.",
@@ -30,7 +33,7 @@ public class RoomController {
       })
   @PostMapping
   public ResponseEntity<TravelRoomCreateResponseDto> createRoom() {
-    TravelRoomCreateResponseDto response = new TravelRoomCreateResponseDto(1L);
+    TravelRoomCreateResponseDto response = roomService.addRoom();
     return ResponseEntity.ok(response);
   }
 
@@ -48,15 +51,7 @@ public class RoomController {
   @GetMapping("/{roomId}")
   public ResponseEntity<TravelRoomResponseDto> getTravelRoom(@PathVariable Long roomId) {
     // 예시 응답
-    TravelRoomResponseDto response =
-        TravelRoomResponseDto.builder()
-            .travelRoomId(roomId)
-            .title("이름없는사용자_2025-07-27")
-            .region(null)
-            .startDate(null)
-            .endDate(null)
-            .createdAt(LocalDateTime.now())
-            .build();
+    TravelRoomResponseDto response = roomService.enterRoom(roomId);
 
     return ResponseEntity.ok(response);
   }

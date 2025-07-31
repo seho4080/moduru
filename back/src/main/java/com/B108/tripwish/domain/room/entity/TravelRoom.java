@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "travel_rooms")
@@ -32,6 +33,7 @@ public class TravelRoom {
   @Column(name = "end_date", nullable = true)
   private LocalDate endDate;
 
+  @CreationTimestamp
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
 
