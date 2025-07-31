@@ -1,9 +1,10 @@
+// src/widgets/sidebar/SidebarTabs.js
 import React from 'react';
 import './SidebarTabs.css';
 import logo from '../../assets/moduru-logo.png';
-import { FaUser, FaCalendarAlt } from 'react-icons/fa';
+import { FaUser, FaCalendarAlt, FaMicrophone } from 'react-icons/fa';
 
-const SidebarTabs = ({ activeTab, onTabChange }) => {
+const SidebarTabs = ({ activeTab, onTabChange, onProfileClick }) => {
   const steps = [
     { key: 'place', step: 'STEP 2', label: '검색' },
     { key: 'pick', step: 'STEP 3', label: 'My 장소' },
@@ -30,15 +31,16 @@ const SidebarTabs = ({ activeTab, onTabChange }) => {
         ))}
       </div>
 
-      {/* ✅ 아래쪽 액션 버튼들 */}
       <div className="bottom-actions">
-        <div className="round-icon" onClick={() => alert('프로필 클릭')}>
+        <div className="round-icon" onClick={onProfileClick}>
           <FaUser />
         </div>
         <div className="round-icon" onClick={() => onTabChange('openTripModal')}>
           <FaCalendarAlt />
         </div>
-        <button className="exit-button" onClick={handleExit}>나가기</button>
+        <div className="round-icon" onClick={() => alert('음성 기능 실행')}>
+          <FaMicrophone />
+        </div>
       </div>
     </div>
   );
