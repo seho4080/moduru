@@ -1,7 +1,7 @@
 .custom-sidebar {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  position: relative;
   height: 100vh;
   width: 140px;
   background-color: #3399CC;
@@ -55,7 +55,6 @@
   font-weight: bold;
 }
 
-/* ✅ 기본 글자 크기 (조금 더 큼) */
 .step-title {
   font-size: 15px;
   transition: font-size 0.2s ease;
@@ -67,7 +66,6 @@
   transition: font-size 0.2s ease;
 }
 
-/* ✅ 선택 시 더 큼 */
 .step-box.active .step-title {
   font-size: 16px;
 }
@@ -76,50 +74,33 @@
   font-size: 20px;
 }
 
-/* ✅ 아이콘 동그라미 틀: 테두리만 있고 배경은 없음 */
+/* ✅ 아이콘 스타일 줄임 */
 .round-icon {
-  width: 48px;
-  height: 48px;
-  background-color: transparent;  /* 배경 제거 */
-  color: white;                   /* 아이콘 색상 흰색 */
-  border: 2px solid white;        /* 테두리 흰색 */
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
   cursor: pointer;
-  box-shadow: none;
   transition: background-color 0.2s;
 }
 
 .round-icon:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* 호버 시 강조 효과 */
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* ✅ 아이콘 버튼 컨테이너 */
 .bottom-actions {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.exit-button {
-  background-color: white;
-  color: #3399CC;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 24px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.exit-button:hover {
-  background-color: #f0f0f0;
+  gap: 8px;
 }

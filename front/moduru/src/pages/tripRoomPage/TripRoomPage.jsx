@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import SidebarContainer from '../../widgets/sidebar/SidebarContainer';
 import Controls from '../../features/map/ui/MapControls';
 import KakaoMap from '../../features/map/ui/KakaoMap';
+import TripCreateForm from '../../features/tripCreate/TripCreateForm';
 
 export default function TripRoomPage() {
   const [mode, setMode] = useState('marker');
@@ -9,6 +10,12 @@ export default function TripRoomPage() {
   const [region, setRegion] = useState(null);
   const [removeMode, setRemoveMode] = useState(false);
   const [toRemove, setToRemove] = useState(new Set());
+  const [activeTab, setActiveTab] = useState(null);
+  const [showTripModal, setShowTripModal] = useState(false);
+  const [tripName, setTripName] = useState('');
+  const [tripRegion, setTripRegion] = useState('');
+  const [tripDates, setTripDates] = useState([null, null]);
+
   const mapRef = useRef();
 
   const handleDeleteConfirm = () => {
@@ -24,32 +31,89 @@ export default function TripRoomPage() {
     }
   };
 
-  // ✅ useCallback으로 안정화
   const onSelectMarker = useCallback((selSet) => {
     setToRemove(new Set(selSet));
   }, []);
 
+  const handleTabChange = (tab) => {
+    if (tab === 'openTripModal') {
+      setShowTripModal(true);
+    } else if (tab === 'exit') {
+      console.log('나가기');
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  const handleTripSave = () => {
+    console.log('[여행방 정보]', {
+      tripName,
+      tripRegion,
+      tripDates
+    });
+    setShowTripModal(false);
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      <SidebarContainer />
+      <SidebarContainer activeTab={activeTab} onTabChange={handleTabChange} />
+
       <div style={{ flex: 1, position: 'relative' }}>
         <Controls
           mode={mode} setMode={setMode}
           zoomable={zoomable} setZoomable={setZoomable}
-          zoomIn={() => mapRef.current.zoomIn()}
-          zoomOut={() => mapRef.current.zoomOut()}
+          zoomIn={() => mapRef.current?.zoomIn?.()}
+          zoomOut={() => mapRef.current?.zoomOut?.()}
           region={region} setRegion={setRegion}
           removeMode={removeMode} setRemoveMode={setRemoveMode}
           onDeleteConfirm={handleDeleteConfirm}
         />
+
         <KakaoMap
           ref={mapRef}
           mode={mode}
           zoomable={zoomable}
-          region={region}
+          region={tripRegion}
           removeMode={removeMode}
           onSelectMarker={onSelectMarker}
         />
+
+        {showTripModal && (
+          <TripCreateForm
+            tripName={tripName}
+            setTripName={setTripName}
+            region={tripRegion}
+            setRegion={setTripRegion}
+            dates={tripDates}
+            setDates={setTripDates}
+            onClose={() => setShowTripModal(false)}
+            onSubmit={handleTripSave}
+          />
+        )}
+
+        {/* ✅ 오른쪽 하단 고정 나가기 버튼 */}
+        <button
+          onClick={() => setActiveTab('exit')}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            zIndex: 1000,
+            backgroundColor: '#ffffff',
+            color: '#007aff',
+            fontWeight: 'bold',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 16px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            cursor: 'pointer',
+            transition: 'background 0.2s ease',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = '#f0f7ff'}
+          onMouseOut={(e) => e.currentTarget.style.background = '#ffffff'}
+        >
+          나가기
+        </button>
       </div>
     </div>
   );
