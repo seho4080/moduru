@@ -1,4 +1,3 @@
-// src/pages/TripRoomPage.js
 import React, { useState, useRef, useCallback } from 'react';
 import SidebarContainer from '../../widgets/sidebar/SidebarContainer';
 import Controls from '../../features/map/ui/MapControls';

@@ -6,14 +6,20 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-gms_key = os.getenv("GMS_KEY")
+gms_api_key = os.getenv("GMS_API_KEY")
 
 url = "https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions"
-headers = {"Content-Type": "application/json", "Authorization": f"Bearer {gms_key}"}
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {gms_api_key}",
+}
 data = {
     "model": "gpt-4.1-nano",
     "messages": [
-        {"role": "system", "content": "Summarize the following text in Korean with 3 sentences."},
+        {
+            "role": "system",
+            "content": "Summarize the following text in Korean with 3 sentences.",
+        },
         {
             "role": "user",
             "content": """
@@ -38,7 +44,7 @@ data = {
             궁극적으로 스마트시티는 기술 중심이 아니라 사람 중심의 도시를 지향해야 하며, 이를 위해서는 기술과 인간, 공공성과 개인권리가 균형을 이루는 설계가 필수적이다. 
             기술이 아닌 시민의 삶의 질을 중심에 두는 접근이 지속가능한 스마트시티의 핵심이다. 
             따라서 앞으로의 스마트시티 정책은 단순한 기술 도입을 넘어서, 도시의 포용성, 공정성, 시민 참여를 아우르는 다차원적 전략이 필요하다.
-        """,
+            """,
         },
     ],
     "max_tokens": 4096,

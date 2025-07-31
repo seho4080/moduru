@@ -4,15 +4,28 @@
   justify-content: space-between;
   height: 100vh;
   width: 140px;
-  background-color: white;
+  background-color: #3399CC;
   padding: 20px 0;
   box-sizing: border-box;
   align-items: center;
+  color: white;
 }
 
 .logo-space {
-  height: 60px;
+  height: 100px;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.logo-img {
+  max-width: 100px;
+  max-height: 80px;
+  object-fit: contain;
+  display: block;
+  background: none;
 }
 
 .step-container {
@@ -32,13 +45,13 @@
 
 .step-box.inactive .step-title,
 .step-box.inactive .step-label {
-  color: #ccc;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: normal;
 }
 
 .step-box.active .step-title,
 .step-box.active .step-label {
-  color: #00c4cc;
+  color: white;
   font-weight: bold;
 }
 
@@ -63,9 +76,39 @@
   font-size: 20px;
 }
 
+/* ✅ 아이콘 동그라미 틀: 테두리만 있고 배경은 없음 */
+.round-icon {
+  width: 48px;
+  height: 48px;
+  background-color: transparent;  /* 배경 제거 */
+  color: white;                   /* 아이콘 색상 흰색 */
+  border: 2px solid white;        /* 테두리 흰색 */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background-color 0.2s;
+}
+
+.round-icon:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* 호버 시 강조 효과 */
+}
+
+/* ✅ 아이콘 버튼 컨테이너 */
+.bottom-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .exit-button {
-  background-color: black;
-  color: white;
+  background-color: white;
+  color: #3399CC;
   border: none;
   border-radius: 10px;
   padding: 12px 24px;
@@ -74,9 +117,9 @@
   font-weight: bold;
   font-size: 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .exit-button:hover {
-  background-color: #333;
+  background-color: #f0f0f0;
 }
