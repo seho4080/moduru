@@ -1,6 +1,4 @@
-// src/features/map/ui/KakaoMap.js
-/* global kakao */
-import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle, useState } from 'react';
 
 const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarker }, ref) => {
   const mapRef        = useRef(null);
@@ -14,11 +12,28 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
   const dots          = useRef([]);
   const modeRef       = useRef(mode);
   const removeModeRef = useRef(removeMode);
+  const [sdkReady, setSdkReady] = useState(false);
+
+  // SDK 동적 로딩 (https 명시)
+  useEffect(() => {
+    if (window.kakao && window.kakao.maps) {
+      setSdkReady(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=a0260ae00da2be3e964123c620d9f4ae&libraries=services`;
+    script.async = true;
+    script.onload = () => {
+      if (window.kakao?.maps) setSdkReady(true);
+      else console.error('Kakao SDK 로딩 실패');
+    };
+    script.onerror = () => console.error('Kakao 지도 스크립트 로딩 오류');
+    document.head.appendChild(script);
+  }, []);
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { removeModeRef.current = removeMode; }, [removeMode]);
 
-  // ✅ 의존성에 onSelectMarker 포함
   useEffect(() => {
     if (!removeMode) {
       selected.current.forEach(mk => mk.setOpacity(1));
@@ -37,11 +52,10 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
     }
   }, [mode]);
 
-  // ✅ 지도 및 마커 초기화 → 의존성 포함
   useEffect(() => {
-    const { kakao } = window;
-    if (!kakao?.maps) return;
+    if (!sdkReady) return;
 
+    const kakao = window.kakao;
     const m = new kakao.maps.Map(mapRef.current, {
       center: new kakao.maps.LatLng(33.450701, 126.9780),
       level: 3,
@@ -153,7 +167,7 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
     });
 
     return () => { clearLine(); clearDots(); clearOverlay(); };
-  }, [onSelectMarker]); // ✅ 여기에 포함!
+  }, [sdkReady, onSelectMarker]);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => { const m = mapInstance.current; if (m) m.setLevel(m.getLevel() - 1); },

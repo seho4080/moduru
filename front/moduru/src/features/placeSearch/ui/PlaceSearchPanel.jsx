@@ -5,6 +5,9 @@ import { FiSearch } from 'react-icons/fi';
 export default function PlaceSearchPanel() {
   const [selectedCategory, setSelectedCategory] = useState('음식점');
 
+  const filterOptions = ['전체'];
+  const categoryOptions = ['음식점', '카페', '명소', '숙소', '축제'];
+
   return (
     <div className="place-search-panel">
       <div className="search-bar">
@@ -18,15 +21,24 @@ export default function PlaceSearchPanel() {
         </div>
       </div>
 
+      {/* ✅ 위쪽 필터 버튼 (전체) */}
       <div className="filter-buttons">
-        <button className="filter-button">전체</button>
-        <button className="filter-button">My 장소</button>
+        {filterOptions.map((label) => (
+          <button
+            key={label}
+            className={`category-tab ${selectedCategory === label ? 'active' : ''}`}
+            onClick={() => setSelectedCategory(label)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="divider-line"></div>
 
+      {/* ✅ 아래 카테고리 */}
       <div className="category-tabs">
-        {['음식점', '카페', '명소', '숙소', '축제'].map((label) => (
+        {categoryOptions.map((label) => (
           <button
             key={label}
             className={`category-tab ${selectedCategory === label ? 'active' : ''}`}

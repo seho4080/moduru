@@ -1,4 +1,3 @@
-// src/features/map/ui/MapControls.js
 import React from 'react';
 import './MapControls.css';
 
@@ -12,13 +11,20 @@ export default function Controls({
 }) {
   const toggleMode = (targetMode) => {
     if (removeMode) return;
-    setMode(prev => (prev === targetMode ? '' : targetMode)); // 누르면 토글됨
+    setMode(prev => (prev === targetMode ? '' : targetMode));
     setRemoveMode(false);
   };
 
   return (
     <div className="controls-container">
-      {/* 핀 추가 모드 */}
+
+      {/* ✅ 줌 버튼 (오른쪽 정렬) */}
+      <div className="zoom-btn-wrapper">
+        <button className="zoom-btn" onClick={zoomIn}>+</button>
+        <button className="zoom-btn" onClick={zoomOut}>–</button>
+      </div>
+
+      {/* ✅ 핀 추가 모드 */}
       <button
         className={mode === 'marker' && !removeMode ? 'selected_btn' : 'btn'}
         onClick={() => toggleMode('marker')}
@@ -27,7 +33,7 @@ export default function Controls({
         핀 추가 모드
       </button>
 
-      {/* 거리 측정 모드 */}
+      {/* ✅ 거리 측정 모드 */}
       <button
         className={mode === 'measure' && !removeMode ? 'selected_btn' : 'btn'}
         onClick={() => toggleMode('measure')}
@@ -36,24 +42,13 @@ export default function Controls({
         거리 측정 모드
       </button>
 
-      {/* 줌 ON/OFF */}
-      <button
-        className={zoomable ? 'selected_btn' : 'btn'}
-        onClick={() => setZoomable(z => !z)}
-      >
-        줌 {zoomable ? 'ON' : 'OFF'}
-      </button>
-
-      <button className="btn" onClick={zoomIn}>+</button>
-      <button className="btn" onClick={zoomOut}>–</button>
-
-      {/* 핀 제거 모드 */}
+      {/* ✅ 핀 제거 모드 */}
       {!removeMode ? (
         <button
           className="btn"
           onClick={() => {
             setRemoveMode(true);
-            setMode(''); // ❌ 'marker' 말고 빈 문자열로 초기화
+            setMode('');
           }}
         >
           핀 제거 모드
@@ -65,7 +60,7 @@ export default function Controls({
             className="btn"
             onClick={() => {
               setRemoveMode(false);
-              setMode(''); // ❌ 해제 시에도 초기화
+              setMode('');
             }}
           >
             취소
@@ -73,7 +68,7 @@ export default function Controls({
         </>
       )}
 
-      {/* 지역 설정 */}
+      {/* ✅ 지역 설정 (서울, 대전, 부산) */}
       <button
         className={region === 'seoul' ? 'selected_btn' : 'btn'}
         onClick={() => {

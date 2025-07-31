@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   padding: 16px;
-  user-select: none; /* ✅ 패널 전체에서 텍스트 선택 방지 */
+  user-select: none;
 }
 
 .search-bar {
@@ -49,9 +49,11 @@
   user-select: none;
 }
 
+/* ✅ 전체 탭도 동일한 크기로 보이게 grid 사용 */
 .filter-buttons {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5개 기준으로 */
+  gap: 8px;
   margin-bottom: 4px;
 }
 
@@ -107,7 +109,7 @@
 }
 
 .category-tab.active {
-  background-color: #2d4d9f;
+  background-color: #3399CC;
   color: white;
   font-weight: bold;
 }
