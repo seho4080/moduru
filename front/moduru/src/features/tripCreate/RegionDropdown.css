@@ -1,0 +1,31 @@
+.region-dropdown-container {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.region-label {
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #222;
+}
+
+.region-select {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  font-size: 1.05rem;
+  transition: border 0.2s, background 0.2s;
+  box-sizing: border-box; /* ✅ 중요! */
+}
+
+.region-select:focus {
+  border-color: #007aff;
+  outline: none;
+  background: #fff;
+}
