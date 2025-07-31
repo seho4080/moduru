@@ -4,8 +4,12 @@ import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomCreateResponseDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomResponseDto;
+import com.B108.tripwish.domain.room.entity.TravelMember;
+import com.B108.tripwish.domain.room.entity.TravelMemberId;
+import com.B108.tripwish.domain.room.entity.TravelMemberRole;
 import com.B108.tripwish.domain.room.entity.TravelRoom;
 import com.B108.tripwish.domain.room.mapper.TravelRoomMapper;
+import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
@@ -23,6 +27,7 @@ import java.time.LocalDateTime;
 public class RoomServiceImpl implements RoomService{
 
     private final TravelRoomRepository travelRoomRepository;
+    private final TravelMemberRepository travelMemberRepository;
     private final TravelRoomMapper travelRoomMapper;
 
     @Transactional
@@ -39,13 +44,22 @@ public class RoomServiceImpl implements RoomService{
         TravelRoom room = TravelRoom.builder()
                 .title(title)
                 .build();
+        travelRoomRepository.save(room);
+
+        TravelMember member = TravelMember.builder()
+                .travelRoom(room)
+                .user(user.getUser())
+                .role(TravelMemberRole.OWNER)
+                .id(new TravelMemberId(room.getRoomId(), user.getUser().getId()))
+                .build();
+        travelMemberRepository.save(member);
 
         TravelRoomCreateResponseDto response = new TravelRoomCreateResponseDto(room.getRoomId());
         return response;
     }
 
     @Override
-    public TravelRoomResponseDto enterRoom(Long roomId) {
+    public TravelRoomResponseDto enterRoom(CustomUserDetails user, Long roomId) {
         TravelRoom room =  travelRoomRepository.findByRoomId(roomId).orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
         TravelRoomResponseDto response = TravelRoomResponseDto.from(room);
         return response;

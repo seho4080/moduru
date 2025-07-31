@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 public interface RoomService {
     TravelRoomCreateResponseDto addRoom(CustomUserDetails user);
 
-    TravelRoomResponseDto enterRoom(Long roomId);
+    TravelRoomResponseDto enterRoom(CustomUserDetails user, Long roomId);
 
     TravelRoomResponseDto updateRoom(Long roomId, UpdateTravelRoomRequestDto request);
 
