@@ -3,8 +3,12 @@ package com.B108.tripwish.domain.room.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.auth.service.CustomUserDetailsService;
 import com.B108.tripwish.domain.room.service.RoomService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import com.B108.tripwish.domain.room.dto.request.AddPlaceWantRequestDto;
@@ -32,8 +36,8 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
   @PostMapping
-  public ResponseEntity<TravelRoomCreateResponseDto> createRoom() {
-    TravelRoomCreateResponseDto response = roomService.addRoom();
+  public ResponseEntity<TravelRoomCreateResponseDto> createRoom(@AuthenticationPrincipal CustomUserDetails user) {
+    TravelRoomCreateResponseDto response = roomService.addRoom(user);
     return ResponseEntity.ok(response);
   }
 
@@ -50,9 +54,7 @@ public class RoomController {
       })
   @GetMapping("/{roomId}")
   public ResponseEntity<TravelRoomResponseDto> getTravelRoom(@PathVariable Long roomId) {
-    // 예시 응답
     TravelRoomResponseDto response = roomService.enterRoom(roomId);
-
     return ResponseEntity.ok(response);
   }
 
@@ -70,17 +72,7 @@ public class RoomController {
   @PatchMapping("/{roomId}/update")
   public ResponseEntity<TravelRoomResponseDto> updateTravelRoom(
       @PathVariable Long roomId, @RequestBody UpdateTravelRoomRequestDto request) {
-    // 예시 응답
-    TravelRoomResponseDto response =
-        TravelRoomResponseDto.builder()
-            .travelRoomId(roomId)
-            .title("사용자_2025-07-24")
-            .region("대전")
-            .startDate(null)
-            .endDate(null)
-            .createdAt(LocalDateTime.now())
-            .build();
-
+    TravelRoomResponseDto response = roomService.updateRoom(roomId, request);
     return ResponseEntity.ok(response);
   }
 
