@@ -21,7 +21,13 @@
   background: #f9fafb;
   font-size: 1.05rem;
   transition: border 0.2s, background 0.2s;
-  box-sizing: border-box; /* ✅ 중요! */
+  box-sizing: border-box;
+  color: #111827; /* 일반 선택된 글자 색 */
+}
+
+/* ✅ "선택하세요" 색을 input placeholder와 동일하게 설정 */
+.region-select option[value=""] {
+  color: #9ca3af; /* input placeholder의 실제 색상 */
 }
 
 .region-select:focus {
