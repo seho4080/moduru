@@ -11,8 +11,11 @@
   "dependencies": {
     "cores": "^0.8.5",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "livekit-server-sdk": "^2.13.1"
+    "ioredis": "^5.6.1",
+    "livekit-server-sdk": "^2.13.1",
+    "pg": "^8.16.3"
   },
   "description": ""
 }
