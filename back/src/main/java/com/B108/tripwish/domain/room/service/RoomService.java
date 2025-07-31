@@ -4,7 +4,7 @@ import com.B108.tripwish.domain.room.dto.response.TravelRoomCreateResponseDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomResponseDto;
 
 public interface RoomService {
-    TravelRoomCreateResponseDto addRoom();
+  TravelRoomCreateResponseDto addRoom();
 
-    TravelRoomResponseDto enterRoom(Long roomId);
+  TravelRoomResponseDto enterRoom(Long roomId);
 }
