@@ -51,15 +51,7 @@ public class RoomController {
   @GetMapping("/{roomId}")
   public ResponseEntity<TravelRoomResponseDto> getTravelRoom(@PathVariable Long roomId) {
     // 예시 응답
-    TravelRoomResponseDto response =
-        TravelRoomResponseDto.builder()
-            .travelRoomId(roomId)
-            .title("이름없는사용자_2025-07-27")
-            .region(null)
-            .startDate(null)
-            .endDate(null)
-            .createdAt(LocalDateTime.now())
-            .build();
+    TravelRoomResponseDto response = roomService.enterRoom(roomId);
 
     return ResponseEntity.ok(response);
   }
