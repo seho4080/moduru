@@ -15,5 +15,7 @@ public interface RoomService {
 
     TravelRoomResponseDto updateRoom(Long roomId, UpdateTravelRoomRequestDto request);
 
+    void deleteRoom(CustomUserDetails user, Long roomId);
+
 
 }

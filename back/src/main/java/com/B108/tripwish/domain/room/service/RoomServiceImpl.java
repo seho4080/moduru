@@ -72,4 +72,17 @@ public class RoomServiceImpl implements RoomService{
         travelRoomMapper.updateFromDto(request, room);
         return travelRoomMapper.toDto(room);
     }
+
+    @Transactional
+    @Override
+    public void deleteRoom(CustomUserDetails user, Long roomId) {
+        Long userId = user.getUser().getId();
+        TravelMember member = travelMemberRepository.findByUser_IdAndTravelRoom_RoomId(userId, roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROOM_MEMBER_NOT_FOUND));
+        if (member.getRole() != TravelMemberRole.OWNER) {
+            throw new CustomException(ErrorCode.ROOM_DELETE_FORBIDDEN); // 권한 없음
+        }
+
+        travelRoomRepository.deleteByRoomId(roomId);
+    }
 }

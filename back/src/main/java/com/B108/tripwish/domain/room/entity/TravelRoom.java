@@ -2,6 +2,7 @@ package com.B108.tripwish.domain.room.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,6 +37,10 @@ public class TravelRoom {
   @CreationTimestamp
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
+
+  @OneToMany(mappedBy = "travelRoom", cascade = CascadeType.REMOVE, orphanRemoval = true)
+  private List<TravelMember> travelMembers;
+
 
   @PrePersist
   protected void onCreate() {
