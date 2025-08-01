@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.B108.tripwish.domain.room.entity.TravelRoom;
+
 import lombok.*;
 
 @Getter
@@ -19,13 +20,12 @@ public class TravelRoomResponseDto {
 
   public static TravelRoomResponseDto from(TravelRoom room) {
     return TravelRoomResponseDto.builder()
-            .travelRoomId(room.getRoomId())
-            .title(room.getTitle())
-            .region(room.getRegion())
-            .startDate(room.getStartDate())
-            .endDate(room.getEndDate())
-            .createdAt(room.getCreatedAt())
-            .build();
+        .travelRoomId(room.getRoomId())
+        .title(room.getTitle())
+        .region(room.getRegion())
+        .startDate(room.getStartDate())
+        .endDate(room.getEndDate())
+        .createdAt(room.getCreatedAt())
+        .build();
   }
-
 }
