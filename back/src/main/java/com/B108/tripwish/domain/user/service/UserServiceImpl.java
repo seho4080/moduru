@@ -1,13 +1,14 @@
 package com.B108.tripwish.domain.user.service;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
+import com.B108.tripwish.domain.user.repository.UserTokenRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.B108.tripwish.domain.user.dto.SignUpRequestDto;
-import com.B108.tripwish.domain.user.dto.UpdateUserRequestDto;
+import com.B108.tripwish.domain.user.dto.request.SignUpRequestDto;
+import com.B108.tripwish.domain.user.dto.request.UpdateUserRequestDto;
 import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.domain.user.repository.UserRepository;
 import com.B108.tripwish.global.exception.CustomException;
@@ -23,6 +24,7 @@ public class UserServiceImpl implements UserService {
 
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
+  private final UserTokenRepository userTokenRepository;
 
   @Transactional
   @Override
@@ -49,13 +51,9 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public void updateUser(Long userId, UpdateUserRequestDto request) {
-    User currentUser = getCurrentUser();
-
-    // 권한 확인: 로그인 사용자와 PathVariable ID 비교
-    if (!currentUser.getId().equals(userId)) {
-      throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
-    }
+  public void updateUser(CustomUserDetails currentUserDetails, UpdateUserRequestDto request) {
+    User currentUser = userRepository.findById(currentUserDetails.getUser().getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     if (request.getNickname() != null && !request.getNickname().isBlank()) {
       currentUser.setNickname(request.getNickname());
@@ -75,23 +73,25 @@ public class UserServiceImpl implements UserService {
 
   @Transactional
   @Override
-  public void deleteUser(Long userId) {
-    User currentUser = getCurrentUser();
+  public void deleteUser(CustomUserDetails currentUserDetails) {
+    User currentUser = userRepository.findById(currentUserDetails.getUser().getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    // 권한 확인
-    if (!currentUser.getId().equals(userId)) {
-      throw new CustomException(ErrorCode.UNAUTHORIZED_ACCESS);
-    }
+    // UserToken 삭제
+    userTokenRepository.deleteByUserId(currentUser.getId());
 
     userRepository.delete(currentUser);
   }
 
-  // 현재 로그인한 사용자
-  private User getCurrentUser() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String currentEmail = authentication.getName(); // JWT에서 추출된 username(email)
-    return userRepository
-        .findByEmail(currentEmail)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+  @Transactional(readOnly = true)
+  @Override
+  public InfoUserResponseDto getUserInfo(CustomUserDetails currentUserDetails) {
+    User user = userRepository.findById(currentUserDetails.getUser().getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    return new InfoUserResponseDto(user);
   }
+
+
 }

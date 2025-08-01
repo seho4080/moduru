@@ -1,12 +1,16 @@
 package com.B108.tripwish.domain.user.service;
 
-import com.B108.tripwish.domain.user.dto.SignUpRequestDto;
-import com.B108.tripwish.domain.user.dto.UpdateUserRequestDto;
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
+import com.B108.tripwish.domain.user.dto.request.SignUpRequestDto;
+import com.B108.tripwish.domain.user.dto.request.UpdateUserRequestDto;
 
 public interface UserService {
   void addUser(SignUpRequestDto request);
 
-  void updateUser(Long userId, UpdateUserRequestDto request);
+  InfoUserResponseDto getUserInfo(CustomUserDetails currentUser);
 
-  void deleteUser(Long userId);
+  void updateUser(CustomUserDetails currentUser, UpdateUserRequestDto request);
+
+  void deleteUser(CustomUserDetails currentUser);
 }
