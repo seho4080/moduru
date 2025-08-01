@@ -1,4 +1,4 @@
-package com.B108.tripwish.domain.user.dto;
+package com.B108.tripwish.domain.user.dto.request;
 
 import java.time.LocalDate;
 
