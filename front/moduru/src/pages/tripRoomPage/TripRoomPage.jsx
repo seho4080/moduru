@@ -1,22 +1,36 @@
-import React, { useState, useRef, useCallback } from 'react';
+// src/pages/tripRoomPage/TripRoomPage.jsx
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
 import SidebarContainer from '../../widgets/sidebar/SidebarContainer';
 import Controls from '../../features/map/ui/MapControls';
 import KakaoMap from '../../features/map/ui/KakaoMap';
 import TripCreateForm from '../../features/tripCreate/TripCreateForm';
+import RegionSelectModal from '../../features/tripCreate/RegionSelectModal';
 
 export default function TripRoomPage() {
+  const location = useLocation();
+  const { travelRoomId, title } = location.state || {};
+
   const [mode, setMode] = useState('marker');
   const [zoomable, setZoomable] = useState(true);
-  const [region, setRegion] = useState(null);
+  const [region, setRegion] = useState('');
   const [removeMode, setRemoveMode] = useState(false);
   const [toRemove, setToRemove] = useState(new Set());
+
   const [activeTab, setActiveTab] = useState(null);
   const [showTripModal, setShowTripModal] = useState(false);
+  const [showRegionModal, setShowRegionModal] = useState(true);
+
   const [tripName, setTripName] = useState('');
   const [tripRegion, setTripRegion] = useState('');
   const [tripDates, setTripDates] = useState([null, null]);
 
   const mapRef = useRef();
+
+  useEffect(() => {
+    if (title) setTripName(title);
+  }, [title]);
 
   const handleDeleteConfirm = () => {
     if (toRemove.size === 0) {
@@ -47,16 +61,21 @@ export default function TripRoomPage() {
 
   const handleTripSave = () => {
     console.log('[여행방 정보]', {
+      travelRoomId,
       tripName,
       tripRegion,
-      tripDates
+      tripDates,
     });
     setShowTripModal(false);
   };
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      <SidebarContainer activeTab={activeTab} onTabChange={handleTabChange} />
+      <SidebarContainer
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        travelRoomId={travelRoomId} // ✅ 전달
+      />
 
       <div style={{ flex: 1, position: 'relative' }}>
         <Controls
@@ -78,6 +97,16 @@ export default function TripRoomPage() {
           onSelectMarker={onSelectMarker}
         />
 
+        {showRegionModal && (
+          <RegionSelectModal
+            roomId={travelRoomId}
+            onRegionSet={(region) => {
+              setTripRegion(region);
+              setShowRegionModal(false);
+            }}
+          />
+        )}
+
         {showTripModal && (
           <TripCreateForm
             tripName={tripName}
@@ -91,7 +120,6 @@ export default function TripRoomPage() {
           />
         )}
 
-        {/* ✅ 오른쪽 하단 고정 나가기 버튼 */}
         <button
           onClick={() => setActiveTab('exit')}
           style={{
