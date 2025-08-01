@@ -13,6 +13,7 @@ import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,7 +25,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RoomServiceImpl implements RoomService{
+public class RoomServiceImpl implements RoomService {
 
     private final TravelRoomRepository travelRoomRepository;
     private final TravelMemberRepository travelMemberRepository;
