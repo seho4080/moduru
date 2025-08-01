@@ -27,7 +27,7 @@ public enum ErrorCode {
   INVALID_NICKNAME("올바르지 않은 닉네임 형식입니다.", HttpStatus.BAD_REQUEST),
 
   // 존재하지 않는 데이터
-  DISEASE_NOT_FOUND("해당 질병 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+  ROOM_NOT_FOUND("해당 여행방 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
   FOOD_NOT_FOUND("음식을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   DIET_NOT_FOUND("해당 식사를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   BOARD_NOT_FOUND("해당 게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
