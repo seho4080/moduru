@@ -114,11 +114,10 @@ public class RoomController {
                     @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
             })
     @DeleteMapping("/{roomId}")
-    public ResponseEntity<CommonResponse> deleteTravelRoom(@PathVariable Long roomId) {
-        // 서비스 단에서 roomId와 userId 기준으로 방장 여부 확인 후 삭제 처리
-
-        CommonResponse response = new CommonResponse("ROOM_DELETE_SUCCESS", "여행방이 성공적으로 삭제되었습니다.");
-        return ResponseEntity.ok(response);
+    public ResponseEntity<CommonResponse> deleteTravelRoom(@AuthenticationPrincipal CustomUserDetails user,
+                                                           @PathVariable Long roomId) {
+        roomService.deleteRoom(user, roomId);
+        return ResponseEntity.ok(new CommonResponse("ROOM_DELETE_SUCCESS", "여행방이 성공적으로 삭제되었습니다."));
     }
 
     @Operation(
@@ -136,7 +135,7 @@ public class RoomController {
     @PostMapping("/{roomId}/wants")
     public ResponseEntity<CommonResponse> addPlaceWant(
             @PathVariable Long roomId, @RequestBody AddPlaceWantRequestDto request) {
-
+        // 서비스 단 미작성
         CommonResponse response = new CommonResponse("PLACE_WANT_ADD_SUCCESS", "희망 장소가 성공적으로 추가되었습니다.");
         return ResponseEntity.ok(response);
     }
@@ -154,7 +153,7 @@ public class RoomController {
             })
     @GetMapping("/{roomId}/wants")
     public ResponseEntity<PlaceWantListResponseDto> getPlaceWants(@PathVariable Long roomId) {
-
+        // 서비스단 미작성
         PlaceWantDto sample1 =
                 PlaceWantDto.builder()
                         .wantId(1L)
@@ -205,6 +204,7 @@ public class RoomController {
     @DeleteMapping("/{roomId}/wants/{wantId}")
     public ResponseEntity<CommonResponse> getPlaceWants(
             @PathVariable Long roomId, @PathVariable Long wantId) {
+        // 서비스단 미작성
         CommonResponse response = new CommonResponse("WANT_DELETE_SUCCESS", "희망 장소에서 성공적으로 삭제되었습니다.");
         return ResponseEntity.ok(response);
     }
@@ -228,7 +228,7 @@ public class RoomController {
                 TravelMemberDto.builder()
                         .userId(1L)
                         .nickname("여행덕후123")
-                        .profileImg("https://example.com/profile1.jpg")
+                        .profileImg("\"profile_basic.png\"")
                         .isFriend(false)
                         .isOwner(true)
                         .build();
@@ -237,7 +237,7 @@ public class RoomController {
                 TravelMemberDto.builder()
                         .userId(2L)
                         .nickname("빵순이")
-                        .profileImg("https://example.com/profile2.jpg")
+                        .profileImg("\"profile_basic.png\"")
                         .isFriend(true)
                         .isOwner(false)
                         .build();
