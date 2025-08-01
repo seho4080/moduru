@@ -3,9 +3,10 @@ package com.B108.tripwish.domain.room.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "travel_rooms")

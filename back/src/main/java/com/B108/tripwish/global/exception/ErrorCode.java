@@ -37,6 +37,7 @@ public enum ErrorCode {
 
   // 접근 권한 관련
   NO_PERMISSION("접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+  UNAUTHORIZED_ACCESS("권한이 없습니다.", HttpStatus.FORBIDDEN),
 
   INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST),
   INVALID_BOARD_TYPE("유효하지 않은 게시판 타입입니다.", HttpStatus.BAD_REQUEST);
