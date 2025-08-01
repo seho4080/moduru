@@ -1,10 +1,10 @@
-// src/widgets/sidebar/SidebarContainer.js
 import React, { useState } from 'react';
 import SidebarTabs from './SidebarTabs';
 import SidebarPanel from './SidebarPanel';
 import LoginForm from '../../features/auth/ui/LoginForm';
 
-export default function SidebarContainer({ activeTab, onTabChange }) {
+// ✅ TripRoomPage에서 roomId를 props로 전달받도록 수정
+export default function SidebarContainer({ activeTab, onTabChange, roomId }) {
   const [lastTab, setLastTab] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -19,7 +19,7 @@ export default function SidebarContainer({ activeTab, onTabChange }) {
     if (lastTab) {
       onTabChange(lastTab);
     } else {
-      onTabChange('place'); // ✅ 기본 탭 fallback
+      onTabChange('place'); // 기본 탭 fallback
     }
   };
 
@@ -43,6 +43,7 @@ export default function SidebarContainer({ activeTab, onTabChange }) {
           activeTab={activeTab}
           onClosePanel={handleClosePanel}
           onOpenPanel={handleOpenPanel}
+          roomId={roomId} // ✅ 추가된 부분: SidebarPanel로 roomId 전달
         />
       </div>
 
