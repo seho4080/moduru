@@ -1,21 +1,40 @@
-// builtin
 import React from "react";
-
-// external
 import { useNavigate } from "react-router-dom";
 
-// styles
 import "./MainPage.css";
-
-// constants
-const START_BUTTON_LABEL = "여행 시작하기";
-const LIST_BUTTON_LABEL = "내 여행방 목록";
 
 const MainContent = () => {
   const navigate = useNavigate();
 
-  const handleStartTrip = () => {
-    navigate("/trip-room");
+  const handleStartTrip = async () => {
+    try {
+      // 1. 여행방 생성 API 호출
+      const createRes = await fetch("http://localhost:8080/rooms", {
+        method: "POST",
+        credentials: "include", // ✅ 로그인 유저만 고려
+      });
+
+      if (!createRes.ok) throw new Error("여행방 생성 실패");
+
+      const { travelRoomId } = await createRes.json();
+
+      // 2. 여행방 접속 API 호출 (제목 받아오기)
+      const infoRes = await fetch(`http://localhost:8080/rooms/${travelRoomId}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!infoRes.ok) throw new Error("여행방 정보 조회 실패");
+
+      const { title } = await infoRes.json();
+
+      // 3. trip-room 페이지로 이동하면서 state 전달
+      navigate("/trip-room", { state: { travelRoomId, title } });
+
+    } catch (err) {
+      console.error("여행 시작 중 오류:", err.message);
+      alert("여행을 시작할 수 없습니다. 다시 시도해주세요.");
+    }
   };
 
   return (
@@ -25,9 +44,8 @@ const MainContent = () => {
         <h2>함께 만드는 여행 플랜</h2>
       </div>
 
-      {/* NOTE: 여행 시작 버튼 클릭 시 trip-room 페이지로 이동 */}
       <button className="btn-start" onClick={handleStartTrip}>
-        {START_BUTTON_LABEL}
+        여행 시작하기
       </button>
 
       <img
@@ -36,7 +54,7 @@ const MainContent = () => {
         className="main-image"
       />
 
-      <button className="btn-list">{LIST_BUTTON_LABEL}</button>
+      <button className="btn-list">내 여행방 목록</button>
     </div>
   );
 };

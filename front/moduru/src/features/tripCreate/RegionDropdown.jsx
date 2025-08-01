@@ -24,7 +24,7 @@ export default function RegionDropdown({ value, onChange }) {
       required
     >
       <option value="" disabled hidden>
-        선택하세요
+        여행지
       </option>
       {REGIONS.map((r, i) => (
         <option key={i} value={r.name}>
