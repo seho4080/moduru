@@ -20,8 +20,8 @@ public class TravelRoom {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "room_id")
-  private Long roomId;
+  @Column(name = "room_id ")
+  private Long id;
 
   @Column(name = "title", nullable = false)
   private String title;
