@@ -3,10 +3,13 @@ package com.B108.tripwish.domain.place.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "restaurants")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class Restaurant {
@@ -42,4 +45,7 @@ public class Restaurant {
 
   @Column(length = 30)
   private String price;
+
+  @OneToMany(mappedBy = "restaurants", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<RestaurantMenu> menus = new ArrayList<>();
 }
