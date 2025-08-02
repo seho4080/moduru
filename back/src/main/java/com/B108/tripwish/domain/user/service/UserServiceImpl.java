@@ -1,16 +1,16 @@
 package com.B108.tripwish.domain.user.service;
 
-import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
-import com.B108.tripwish.domain.user.repository.UserTokenRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.user.dto.request.SignUpRequestDto;
 import com.B108.tripwish.domain.user.dto.request.UpdateUserRequestDto;
+import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
 import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.domain.user.repository.UserRepository;
+import com.B108.tripwish.domain.user.repository.UserTokenRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
@@ -52,7 +52,9 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public void updateUser(CustomUserDetails currentUserDetails, UpdateUserRequestDto request) {
-    User currentUser = userRepository.findById(currentUserDetails.getUser().getId())
+    User currentUser =
+        userRepository
+            .findById(currentUserDetails.getUser().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     if (request.getNickname() != null && !request.getNickname().isBlank()) {
@@ -74,7 +76,9 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public void deleteUser(CustomUserDetails currentUserDetails) {
-    User currentUser = userRepository.findById(currentUserDetails.getUser().getId())
+    User currentUser =
+        userRepository
+            .findById(currentUserDetails.getUser().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     // UserToken 삭제
@@ -83,15 +87,14 @@ public class UserServiceImpl implements UserService {
     userRepository.delete(currentUser);
   }
 
-
   @Transactional(readOnly = true)
   @Override
   public InfoUserResponseDto getUserInfo(CustomUserDetails currentUserDetails) {
-    User user = userRepository.findById(currentUserDetails.getUser().getId())
+    User user =
+        userRepository
+            .findById(currentUserDetails.getUser().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     return new InfoUserResponseDto(user);
   }
-
-
 }
