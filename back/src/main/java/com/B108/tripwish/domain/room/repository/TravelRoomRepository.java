@@ -8,9 +8,7 @@ import com.B108.tripwish.domain.room.entity.TravelRoom;
 
 public interface TravelRoomRepository extends JpaRepository<TravelRoom, Long> {
 
-    Optional<TravelRoom> findById(Long roomId);
+  Optional<TravelRoom> findById(Long roomId);
 
-    void deleteById(Long roomId);
-
-
+  void deleteById(Long roomId);
 }
