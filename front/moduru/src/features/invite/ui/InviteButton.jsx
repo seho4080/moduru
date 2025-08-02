@@ -1,6 +1,6 @@
 // src/features/map/ui/InviteButton.jsx
 import React from 'react';
-import './MapControls.css';
+import '../../map/ui/MapControls.css';
 import { LuLink } from 'react-icons/lu'; // ✅ 새 아이콘 (클립 아이콘)
 
 export default function InviteButton({ onClick }) {

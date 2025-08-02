@@ -1,12 +1,13 @@
-// src/pages/tripRoomPage/TripRoomPage.jsx
+// ✅ src/pages/TripRoomPage.jsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import SidebarContainer from '../../widgets/sidebar/SidebarContainer';
 import Controls from '../../features/map/ui/MapControls';
 import KakaoMap from '../../features/map/ui/KakaoMap';
-import TripCreateForm from '../../features/tripCreate/TripCreateForm';
-import RegionSelectModal from '../../features/tripCreate/RegionSelectModal';
+import TripCreateForm from '../../features/tripCreate/ui/TripCreateForm';
+import RegionOnlyModal from '../../features/tripCreate/ui/RegionOnlyModal';
+import InviteButton from '../../features/invite/ui/InviteButton'; 
 
 export default function TripRoomPage() {
   const location = useLocation();
@@ -25,6 +26,7 @@ export default function TripRoomPage() {
   const [tripName, setTripName] = useState('');
   const [tripRegion, setTripRegion] = useState('');
   const [tripDates, setTripDates] = useState([null, null]);
+  const [hoveredCoords, setHoveredCoords] = useState(null);
 
   const mapRef = useRef();
 
@@ -74,10 +76,15 @@ export default function TripRoomPage() {
       <SidebarContainer
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        travelRoomId={travelRoomId} // ✅ 전달
+        roomId={travelRoomId}
+        setHoveredCoords={setHoveredCoords}
       />
 
       <div style={{ flex: 1, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 1000 }}>
+          <InviteButton onClick={() => alert('초대 링크 복사')} />
+        </div>
+
         <Controls
           mode={mode} setMode={setMode}
           zoomable={zoomable} setZoomable={setZoomable}
@@ -95,10 +102,11 @@ export default function TripRoomPage() {
           region={tripRegion}
           removeMode={removeMode}
           onSelectMarker={onSelectMarker}
+          hoveredCoords={hoveredCoords}
         />
 
         {showRegionModal && (
-          <RegionSelectModal
+          <RegionOnlyModal
             roomId={travelRoomId}
             onRegionSet={(region) => {
               setTripRegion(region);

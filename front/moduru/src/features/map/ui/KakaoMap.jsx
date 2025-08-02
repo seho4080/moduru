@@ -1,179 +1,106 @@
-// src/features/map/ui/KakaoMap.js
+// ✅ src/features/map/ui/KakaoMap.jsx
+import React, { useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
+import useMapInit from '../hooks/useMapInit';
+import useMarkerMode from '../hooks/useMarkerMode';
+import useMeasureMode from '../hooks/useMeasureMode';
+import useHoverMarker from '../hooks/useHoverMarker';
+import useRemoveMode from '../hooks/useRemoveMode';
+import { getLatLngFromRegion } from '../lib/regionUtils';
+
 /* global kakao */
-import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { getLatLngFromRegion } from '../lib/regionUtils'; // ✅ 추가
 
-const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarker }, ref) => {
-  const mapRef        = useRef(null);
-  const mapInstance   = useRef(null);
-  const markers       = useRef([]);
-  const selected      = useRef(new Set());
-  const drawing       = useRef(false);
-  const clickLine     = useRef(null);
-  const moveLine      = useRef(null);
-  const overlay       = useRef(null);
-  const dots          = useRef([]);
-  const modeRef       = useRef(mode);
-  const removeModeRef = useRef(removeMode);
+const KakaoMap = forwardRef(
+  ({ mode, zoomable, region, removeMode, onSelectMarker, hoveredCoords }, ref) => {
+    const mapRef = useRef(null);
+    const mapInstance = useRef(null);
+    const markers = useRef([]);
+    const selected = useRef(new Set());
+    const hoverMarker = useRef(null);
+    const clickLine = useRef(null);
+    const moveLine = useRef(null);
+    const overlay = useRef(null);
+    const dots = useRef([]);
+    const drawing = useRef(false);
 
-  useEffect(() => { modeRef.current = mode; }, [mode]);
-  useEffect(() => { removeModeRef.current = removeMode; }, [removeMode]);
+    const modeRef = useRef(mode);
+    const prevMode = useRef(mode);
+    const removeModeRef = useRef(removeMode);
 
-  useEffect(() => {
-    if (!removeMode) {
-      selected.current.forEach(mk => mk.setOpacity(1));
-      selected.current.clear();
-      onSelectMarker(new Set());
-    }
-  }, [removeMode, onSelectMarker]);
+    useEffect(() => {
+      modeRef.current = mode;
+    }, [mode]);
 
-  useEffect(() => {
-    if (mode !== 'measure') {
-      clickLine.current?.setMap(null); clickLine.current = null;
-      dots.current.forEach(d => { d.circle.setMap(null); d.distance?.setMap(null); });
+    useEffect(() => {
+      removeModeRef.current = removeMode;
+    }, [removeMode]);
+
+    // ✅ 지도 초기화 및 각 모드 훅 연결
+    useMapInit(mapRef, mapInstance);
+    useMarkerMode({ mapInstance, modeRef, removeModeRef, markers, selected, onSelectMarker });
+    useMeasureMode({ mapInstance, modeRef, clickLine, moveLine, overlay, dots, drawing });
+    useHoverMarker({ mapInstance, hoveredCoords, hoverMarkerRef: hoverMarker });
+    useRemoveMode({ mapInstance, markers, removeModeRef, selected, onSelectMarker });
+
+    // ✅ 거리 측정 흔적 제거 함수
+    const clearMeasure = () => {
+      clickLine.current?.setMap(null);
+      moveLine.current?.setMap(null);
+      overlay.current?.setMap(null);
+
+      dots.current.forEach(({ circle, distance }) => {
+        circle.setMap(null);
+        distance?.setMap(null);
+      });
+
+      clickLine.current = null;
+      moveLine.current = null;
+      overlay.current = null;
       dots.current = [];
-      overlay.current?.setMap(null); overlay.current = null;
       drawing.current = false;
-    }
-  }, [mode]);
+    };
 
-  useEffect(() => {
-    const { kakao } = window;
-    if (!kakao?.maps) return;
+    // ✅ 모드 전환 감지: measure → 다른 모드 OR measure → measure 재진입 시
+    useEffect(() => {
+      const m = mapInstance.current;
+      if (!m) return;
 
-    const m = new kakao.maps.Map(mapRef.current, {
-      center: new kakao.maps.LatLng(33.450701, 126.9780),
-      level: 3,
-      draggable: true
-    });
-    mapInstance.current = m;
+      const prev = prevMode.current;
+      prevMode.current = mode;
 
-    const clearLine = () => { clickLine.current?.setMap(null); clickLine.current = null; };
-    const clearDots = () => { dots.current.forEach(d => { d.circle.setMap(null); d.distance?.setMap(null); }); dots.current = []; };
-    const clearOverlay = () => { overlay.current?.setMap(null); overlay.current = null; };
+      const isLeavingMeasure = prev === 'measure' && mode !== 'measure';
+      const isReenteringMeasure = prev === 'measure' && mode === 'measure';
 
-    const showDistance = (html, pos) => {
-      if (overlay.current) {
-        overlay.current.setPosition(pos);
-        overlay.current.setContent(html);
-      } else {
-        overlay.current = new kakao.maps.CustomOverlay({
-          map: m, content: html, position: pos,
-          xAnchor: 0, yAnchor: 0, zIndex: 3
-        });
+      if (isLeavingMeasure || isReenteringMeasure) {
+        clearMeasure();
       }
-    };
+    }, [mode]);
 
-    const displayDot = (pos, dist) => {
-      const circle = new kakao.maps.CustomOverlay({
-        map: m, content: '<span class="dot"></span>', position: pos, zIndex: 1
-      });
-      const distOv = dist > 0 ? new kakao.maps.CustomOverlay({
-        map: m, content: `<div class="dotOverlay">거리 <span class="number">${dist}</span>m</div>`,
-        position: pos, yAnchor: 1, zIndex: 2
-      }) : null;
-      dots.current.push({ circle, distance: distOv });
-    };
+    // ✅ 외부에서 확대/축소 호출 가능하도록 expose
+    useImperativeHandle(
+      ref,
+      () => ({
+        zoomIn: () => mapInstance.current?.setLevel(mapInstance.current.getLevel() - 1),
+        zoomOut: () => mapInstance.current?.setLevel(mapInstance.current.getLevel() + 1),
+      }),
+      []
+    );
 
-    const getTimeHTML = d => {
-      const walk = Math.floor(d / 67), wH = Math.floor(walk / 60), wM = walk % 60;
-      const bike = Math.floor(d / 227), bH = Math.floor(bike / 60), bM = bike % 60;
-      return `<ul class="dotOverlay distanceInfo">
-        <li><span class="label">총거리</span><span class="number">${d}</span>m</li>
-        <li><span class="label">도보</span>${wH ? `<span class="number">${wH}</span>시간 ` : ''}<span class="number">${wM}</span>분</li>
-        <li><span class="label">자전거</span>${bH ? `<span class="number">${bH}</span>시간 ` : ''}<span class="number">${bM}</span>분</li>
-      </ul>`;
-    };
+    // ✅ 줌 가능 여부 반영
+    useEffect(() => {
+      mapInstance.current?.setZoomable(zoomable);
+    }, [zoomable]);
 
-    const addMarker = pos => {
-      const mk = new kakao.maps.Marker({ position: pos });
-      mk.setMap(m);
-      markers.current.push(mk);
-      kakao.maps.event.addListener(mk, 'click', () => {
-        if (!removeModeRef.current) return;
-        if (selected.current.has(mk)) {
-          selected.current.delete(mk);
-          mk.setOpacity(1);
-        } else {
-          selected.current.add(mk);
-          mk.setOpacity(0.5);
-        }
-        onSelectMarker(new Set(selected.current));
-      });
-    };
+    // ✅ 지역 변경 시 중심 이동
+    useEffect(() => {
+      if (!region || !mapInstance.current) return;
+      const coords = getLatLngFromRegion(region);
+      if (!coords) return;
+      mapInstance.current.setCenter(new kakao.maps.LatLng(coords.lat, coords.lng));
+      mapInstance.current.setLevel(7);
+    }, [region]);
 
-    kakao.maps.event.addListener(m, 'click', e => {
-      if (removeModeRef.current) return;
-      const pos = e.latLng;
-      if (modeRef.current === 'marker') {
-        addMarker(pos);
-      } else if (modeRef.current === 'measure') {
-        if (!drawing.current) {
-          drawing.current = true;
-          clearLine(); clearOverlay(); clearDots();
-          clickLine.current = new kakao.maps.Polyline({
-            map: m, path: [pos], strokeWeight: 3, strokeColor: '#db4040',
-            strokeOpacity: 1, strokeStyle: 'solid'
-          });
-          moveLine.current = new kakao.maps.Polyline({
-            strokeWeight: 3, strokeColor: '#db4040',
-            strokeOpacity: 0.5, strokeStyle: 'solid'
-          });
-          displayDot(pos, 0);
-        } else {
-          const path = clickLine.current.getPath();
-          path.push(pos);
-          clickLine.current.setPath(path);
-          displayDot(pos, Math.round(clickLine.current.getLength()));
-        }
-      }
-    });
-
-    kakao.maps.event.addListener(m, 'mousemove', e => {
-      if (modeRef.current !== 'measure' || !drawing.current) return;
-      const pos = e.latLng;
-      const path = clickLine.current.getPath();
-      moveLine.current.setPath([path[path.length - 1], pos]);
-      moveLine.current.setMap(m);
-      showDistance(`<div class="dotOverlay distanceInfo">총거리 <span class="number">${Math.round(clickLine.current.getLength() + moveLine.current.getLength())}</span>m</div>`, pos);
-    });
-
-    kakao.maps.event.addListener(m, 'rightclick', () => {
-      if (modeRef.current !== 'measure' || !drawing.current) return;
-      moveLine.current.setMap(null);
-      const path = clickLine.current.getPath();
-      if (path.length > 1) {
-        const fd = Math.round(clickLine.current.getLength());
-        showDistance(getTimeHTML(fd), path[path.length - 1]);
-      } else {
-        clearLine(); clearDots(); clearOverlay();
-      }
-      drawing.current = false;
-    });
-
-    return () => { clearLine(); clearDots(); clearOverlay(); };
-  }, [onSelectMarker]);
-
-  useImperativeHandle(ref, () => ({
-    zoomIn: () => { const m = mapInstance.current; if (m) m.setLevel(m.getLevel() - 1); },
-    zoomOut: () => { const m = mapInstance.current; if (m) m.setLevel(m.getLevel() + 1); }
-  }), []);
-
-  useEffect(() => {
-    const m = mapInstance.current;
-    if (!m || !region) return;
-    const coords = getLatLngFromRegion(region);
-    if (!coords) return;
-    const { lat, lng } = coords;
-    m.setCenter(new kakao.maps.LatLng(lat, lng));
-    m.setLevel(7);
-  }, [region]);
-
-  useEffect(() => {
-    mapInstance.current?.setZoomable(zoomable);
-  }, [zoomable]);
-
-  return <div id="map" ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
-});
+    return <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
+  }
+);
 
 export default KakaoMap;
