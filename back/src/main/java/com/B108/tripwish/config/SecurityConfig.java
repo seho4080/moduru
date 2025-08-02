@@ -23,50 +23,49 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider;
+  private final JwtTokenProvider jwtTokenProvider;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .headers(headers -> headers.frameOptions().disable())
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers(
-                                                new AntPathRequestMatcher("/v3/api-docs/**"),
-                                                new AntPathRequestMatcher("/swagger-resources/**"),
-                                                new AntPathRequestMatcher("/swagger-ui/**"),
-                                                new AntPathRequestMatcher("/swagger-ui.html"),
-                                                new AntPathRequestMatcher("/webjars/**"),
-                                                new AntPathRequestMatcher("/auth/login"),
-                                                new AntPathRequestMatcher("/auth/reissue"))
-                                        .permitAll()
-                                        // .anyRequest().authenticated()
-                                        .anyRequest()
-                                        .permitAll())
-                .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider),
-                        UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    return http.csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .headers(headers -> headers.frameOptions().disable())
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers(
+                        new AntPathRequestMatcher("/v3/api-docs/**"),
+                        new AntPathRequestMatcher("/swagger-resources/**"),
+                        new AntPathRequestMatcher("/swagger-ui/**"),
+                        new AntPathRequestMatcher("/swagger-ui.html"),
+                        new AntPathRequestMatcher("/webjars/**"),
+                        new AntPathRequestMatcher("/auth/login"),
+                        new AntPathRequestMatcher("/auth/reissue"))
+                    .permitAll()
+                    // .anyRequest().authenticated()
+                    .anyRequest()
+                    .permitAll())
+        .addFilterBefore(
+            new JwtAuthenticationFilter(jwtTokenProvider),
+            UsernamePasswordAuthenticationFilter.class)
+        .build();
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+  }
 
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.addAllowedOrigin("http://localhost:3000");
+    config.setAllowCredentials(true);
+    config.addAllowedOriginPattern("*");
+    config.addAllowedHeader("*");
+    config.addAllowedMethod("*");
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:5173");
-        config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
 }
