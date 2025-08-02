@@ -1,18 +1,31 @@
 .custom-sidebar {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  position: relative;
   height: 100vh;
   width: 140px;
-  background-color: white;
+  background-color: #3399CC;
   padding: 20px 0;
   box-sizing: border-box;
   align-items: center;
+  color: white;
 }
 
 .logo-space {
-  height: 60px;
+  height: 100px;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.logo-img {
+  max-width: 100px;
+  max-height: 80px;
+  object-fit: contain;
+  display: block;
+  background: none;
 }
 
 .step-container {
@@ -32,17 +45,16 @@
 
 .step-box.inactive .step-title,
 .step-box.inactive .step-label {
-  color: #ccc;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: normal;
 }
 
 .step-box.active .step-title,
 .step-box.active .step-label {
-  color: #00c4cc;
+  color: white;
   font-weight: bold;
 }
 
-/* ✅ 기본 글자 크기 (조금 더 큼) */
 .step-title {
   font-size: 15px;
   transition: font-size 0.2s ease;
@@ -54,7 +66,6 @@
   transition: font-size 0.2s ease;
 }
 
-/* ✅ 선택 시 더 큼 */
 .step-box.active .step-title {
   font-size: 16px;
 }
@@ -63,20 +74,33 @@
   font-size: 20px;
 }
 
-.exit-button {
-  background-color: black;
+/* ✅ 아이콘 스타일 줄임 */
+.round-icon {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  background-color: transparent;
   color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 24px;
-  margin-bottom: 12px;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 16px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: background-color 0.2s;
 }
 
-.exit-button:hover {
-  background-color: #333;
+.round-icon:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.bottom-actions {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
