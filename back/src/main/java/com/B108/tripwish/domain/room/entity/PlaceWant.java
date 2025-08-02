@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "place_want")
+@Table(name = "want_places")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,7 +19,7 @@ public class PlaceWant {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "want_id")
-  private Long wantId;
+  private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "place_id", nullable = false)
