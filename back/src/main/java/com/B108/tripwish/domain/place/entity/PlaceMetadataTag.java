@@ -20,6 +20,6 @@ public class PlaceMetadataTag {
   @JoinColumn(name = "place_id", nullable = false)
   private Place place;
 
-  @Column(length = 100, nullable = false)
+  @Column(length = 500, nullable = false)
   private String content;
 }
