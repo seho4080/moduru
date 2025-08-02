@@ -10,10 +10,10 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface TravelRoomMapper {
 
-    @Mapping(source="roomId", target = "travelRoomId")
+    @Mapping(source="id", target = "travelRoomId")
     TravelRoomResponseDto toDto(TravelRoom room);
 
     TravelRoom toEntity(UpdateTravelRoomRequestDto dto);
-    @Mapping(target = "roomId", ignore = true) // ID는 수정 안 함
+    @Mapping(target = "id", ignore = true) // ID는 수정 안 함
     void updateFromDto(UpdateTravelRoomRequestDto dto, @MappingTarget TravelRoom room);
 }
