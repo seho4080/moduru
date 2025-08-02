@@ -1,20 +1,67 @@
 version: "3.8"
 
 services:
-  # 프론트 설정
-  frontend:
-    build:
-      context: ./front/moduru
+  ##########################################
+  # 1. LiveKit 서버
+  ##########################################
+  livekit:
+    image: livekit/livekit-server
     ports:
-      - "3000:3000"
-    volumes:
-      - ./front/moduru:/app
-      - /app/node_modules
+      - "7880:7880"                     # WebSocket signaling
+      - "7881:7881"                     # ICE TCP
+      - "7882:7882/udp"                 # ICE UDP
+      - "30000-30010:30000-30010/udp"   # Media UDP 포트 범위
     environment:
-      - CHOKIDAR_USEPOLLING=true  # 리눅스 파일 감지 대응
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+      - LIVEKIT_UDP_PORT=7882
+      - LIVEKIT_UDP_PORT_RANGE=30000-30010
+      - LIVEKIT_PUBLIC_IP=host.docker.internal  # 로컬 개발용
+      - LIVEKIT_STUN_URIS=stun:stun.l.google.com:19302
+      - LIVEKIT_WEBHOOK_URLS=http://host.docker.internal:3001/webhook/livekit
+    command: ["--dev", "--bind", "0.0.0.0"]
     networks:
       - app-network
-  # DB 설정
+  ##########################################
+  # 2. 프론트엔드 (node-test)
+  ##########################################
+  
+  front-node:
+    build:
+      context: ./front-node
+      dockerfile: Dockerfile
+    volumes:
+      - ./front-node:/app      # 코드 변경 즉시 반영
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true  # 필요시 파일 변경 감지 옵션
+    depends_on:
+      - backend                  # (optional) 백엔드 서비스 이름
+    networks:
+      - app-network
+
+
+
+  ##########################################
+  # 2. 프론트엔드 (React/Vite 등)
+  ##########################################
+  # frontend:
+  #   build:
+  #     context: ./front/moduru
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./front/moduru:/app
+  #     - /app/node_modules
+  #   environment:
+  #     - CHOKIDAR_USEPOLLING=true
+  #   networks:
+  #     - app-network
+
+  ##########################################
+  # 3. PostgreSQL 데이터베이스
+  ##########################################
   db:
     image: postgres:16.9
     container_name: pg-db
@@ -25,9 +72,7 @@ services:
       POSTGRES_PASSWORD: ssafy
       POSTGRES_DB: mydb
     volumes:
-      # 로컬에 데이터 저장될 경로
       - ./pg-data:/var/lib/postgresql/data
-      # init.sql만드셈
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -37,10 +82,13 @@ services:
     restart: always
     networks:
       - app-network
-  # 백 설정
+
+  ##########################################
+  # 4. 백엔드 (Spring Boot)
+  ##########################################
   backend:
     build:
-      context: ./back # 경로
+      context: ./back
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
@@ -53,9 +101,47 @@ services:
       - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
       - postgresql_user=${postgresql_user}
       - postgresql_password=${postgresql_password}
+      - REDIS_HOST=redis        # ← 여기
+      - REDIS_PORT=6379
     depends_on:
       - db
+      - redis
     networks:
-      - app-network   # ✅ 추가
+      - app-network
+  ##########################################
+  # 5. 백엔드 (Node.js)
+  ##########################################
+  node-backend:
+    build:
+      context: ./back-node
+    ports:
+      - "4000:4000"  # Node.js 앱이 사용하는 포트로 수정
+    # volumes:
+      # - ./back-node:/app
+      # - /app/node_modules
+    env_file: .env
+    environment:
+      # 기존 DB, LIVEKIT_* 그대로 두시고
+      - REDIS_HOST=redis        # ← 여기
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - redis
+    restart: always
+    networks:
+      - app-network
+  ##########################################
+  # 6. 백엔드 (redis)
+  ##########################################
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --save "" --appendonly no
+    networks:
+      - app-network
+
+
 networks:
   app-network:
