@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "place_votes")
+@Table(name = "vote_places")
 @Getter
 @Setter
 @NoArgsConstructor

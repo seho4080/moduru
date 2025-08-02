@@ -29,6 +29,7 @@ export default defineConfig({
   },
 
   server: {
-    historyApiFallback: true, // 새로고침 시 404 방지
+    host: '0.0.0.0',
+    port: 5173,
   },
 });
