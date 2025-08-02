@@ -12,15 +12,14 @@ import lombok.*;
 @Entity
 @Table(name = "travel_rooms")
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class TravelRoom {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "room_id ")
+  @Column(name = "id")
   private Long id;
 
   @Column(name = "title", nullable = false)
@@ -41,7 +40,6 @@ public class TravelRoom {
 
   @OneToMany(mappedBy = "travelRoom", cascade = CascadeType.REMOVE, orphanRemoval = true)
   private List<TravelMember> travelMembers;
-
 
   @PrePersist
   protected void onCreate() {
