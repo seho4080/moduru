@@ -1,42 +1,28 @@
 import React, { useState } from 'react';
+import { login } from '../model/authStore';
 import './LoginForm.css';
 
 export default function LoginForm({ onClose }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const response = await fetch('http://localhost:8080/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+    const result = await login({ email, password });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || '로그인 실패');
+    if (result.success) {
+      onClose(); // 모달 닫기
+    } else {
+      // ❌ UI 에러 표시 제거하고
+      // ✅ 콘솔에만 출력
+      console.error('[로그인 실패]', result.message);
     }
 
-    console.log(data.accessToken);
-    console.log(data.refreshToken);
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    onClose(); // 모달 닫기
-
-  } catch (err) {
-    console.error('[로그인 실패]', err.message);
-    // 화면에는 출력 안 함
-  }
-};
-
+    setLoading(false);
+  };
 
   return (
     <div className="login-overlay">
@@ -61,9 +47,9 @@ export default function LoginForm({ onClose }) {
             className="login-input"
             required
           />
-          {error && <div className="login-error">{error}</div>}
-          <button type="submit" className="login-button">
-            로그인
+          {/* ❌ UI 에러 메시지 제거됨 */}
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
 
