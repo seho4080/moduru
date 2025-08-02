@@ -42,7 +42,6 @@ public class TravelRoom {
   @OneToMany(mappedBy = "travelRoom", cascade = CascadeType.REMOVE, orphanRemoval = true)
   private List<TravelMember> travelMembers;
 
-
   @PrePersist
   protected void onCreate() {
     this.createdAt = LocalDateTime.now();
