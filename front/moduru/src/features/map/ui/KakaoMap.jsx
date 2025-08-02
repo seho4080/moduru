@@ -2,6 +2,7 @@
 /* global kakao */
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { getLatLngFromRegion } from '../lib/regionUtils'; // ✅ 추가
+import { useSelector } from 'react-redux';
 
 const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarker }, ref) => {
   const mapRef        = useRef(null);
@@ -15,6 +16,7 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
   const dots          = useRef([]);
   const modeRef       = useRef(mode);
   const removeModeRef = useRef(removeMode);
+  const pins = useSelector((state) => state.map.pins);  //pin 상태 가지고 오기
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { removeModeRef.current = removeMode; }, [removeMode]);
@@ -172,6 +174,26 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
   useEffect(() => {
     mapInstance.current?.setZoomable(zoomable);
   }, [zoomable]);
+
+
+  useEffect(() => {
+  const map = mapInstance.current;
+  if (!map) return;
+
+  // 1. 기존 마커 제거
+  markers.current.forEach((marker) => marker.setMap(null));
+  markers.current = [];
+
+  // 2. 새 마커 그리기
+  pins.forEach((pin) => {
+    const pos = new kakao.maps.LatLng(pin.lat, pin.lng);
+    const marker = new kakao.maps.Marker({ position: pos });
+    marker.setMap(map);
+    markers.current.push(marker);
+  });
+}, [pins]);
+
+
 
   return <div id="map" ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
 });
