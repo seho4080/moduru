@@ -35,6 +35,6 @@ public class TravelMember {
     this.travelRoom = travelRoom;
     this.user = user;
     this.role = role;
-    this.id = new TravelMemberId(travelRoom.getRoomId(), user.getId());
+    this.id = new TravelMemberId(travelRoom.getId(), user.getId());
   }
 }
