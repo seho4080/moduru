@@ -26,62 +26,62 @@ services:
   # 2. 프론트엔드 (node-test)
   ##########################################
   
-  front-node:
-    build:
-      context: ./front-node
-      dockerfile: Dockerfile
-    volumes:
-      - ./front-node:/app      # 코드 변경 즉시 반영
-    ports:
-      - "3000:3000"
-    environment:
-      - CHOKIDAR_USEPOLLING=true  # 필요시 파일 변경 감지 옵션
-    depends_on:
-      - backend                  # (optional) 백엔드 서비스 이름
-    networks:
-      - app-network
+  # front-node:
+  #   build:
+  #     context: ./front-node
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./front-node:/app      # 코드 변경 즉시 반영
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - CHOKIDAR_USEPOLLING=true  # 필요시 파일 변경 감지 옵션
+  #   depends_on:
+  #     - backend                  # (optional) 백엔드 서비스 이름
+  #   networks:
+  #     - app-network
 
 
 
   ##########################################
   # 2. 프론트엔드 (React/Vite 등)
   ##########################################
-  # frontend:
-  #   build:
-  #     context: ./front/moduru
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./front/moduru:/app
-  #     - /app/node_modules
-  #   environment:
-  #     - CHOKIDAR_USEPOLLING=true
-  #   networks:
-  #     - app-network
+  frontend:
+    build:
+      context: ./front/moduru
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./front/moduru:/app
+      # - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - app-network
 
   ##########################################
   # 3. PostgreSQL 데이터베이스
   ##########################################
-  db:
-    image: postgres:16.9
-    container_name: pg-db
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ssafy
-      POSTGRES_DB: mydb
-    volumes:
-      - ./pg-data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    restart: always
-    networks:
-      - app-network
+  # db:
+  #   image: postgres:16.9
+  #   container_name: pg-db
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: ssafy
+  #     POSTGRES_DB: mydb
+  #   volumes:
+  #     - ./pg-data:/var/lib/postgresql/data
+  #     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #   restart: always
+  #   networks:
+  #     - app-network
 
   ##########################################
   # 4. 백엔드 (Spring Boot)
@@ -104,7 +104,7 @@ services:
       - REDIS_HOST=redis        # ← 여기
       - REDIS_PORT=6379
     depends_on:
-      - db
+      # - db
       - redis
     networks:
       - app-network
@@ -125,7 +125,7 @@ services:
       - REDIS_HOST=redis        # ← 여기
       - REDIS_PORT=6379
     depends_on:
-      - db
+      # - db
       - redis
     restart: always
     networks:
