@@ -1,16 +1,22 @@
+// src/features/placeSearch/ui/PlaceSearchPanel.jsx
 import React, { useState } from 'react';
 import './PlaceSearchPanel.css';
 import { FiSearch } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
-export default function PlaceSearchPanel() {
+import { usePlaceList } from '../../../entities/place/model/usePlaceList';
+import PlaceCard from '../../../entities/place/ui/PlaceCard';
+
+export default function PlaceSearchPanel({ roomId }) {
   const [selectedCategory, setSelectedCategory] = useState('음식점');
+  const { places, loading } = usePlaceList(roomId, selectedCategory);
+
   const filterOptions = ['전체'];
   const categoryOptions = ['음식점', '카페', '명소', '숙소', '축제'];
 
   return (
     <div className="place-search-panel">
-      {/* ✅ 검색바 전체 묶기 */}
+      {/* ✅ 검색바 */}
       <div className="search-wrapper">
         <div className="input-wrapper">
           <input
@@ -26,6 +32,7 @@ export default function PlaceSearchPanel() {
         </button>
       </div>
 
+      {/* ✅ 필터 버튼 */}
       <div className="filter-buttons">
         {filterOptions.map((label) => (
           <button
@@ -40,6 +47,7 @@ export default function PlaceSearchPanel() {
 
       <div className="divider-line" />
 
+      {/* ✅ 카테고리 탭 */}
       <div className="category-tabs">
         {categoryOptions.map((label) => (
           <button
@@ -50,6 +58,21 @@ export default function PlaceSearchPanel() {
             {label}
           </button>
         ))}
+      </div>
+
+      {/* ✅ 장소 카드 리스트 */}
+      <div className="place-card-list">
+        {loading ? (
+          <p>장소 목록 불러오는 중...</p>
+        ) : places.length === 0 ? (
+          <p>해당 카테고리에 등록된 장소가 없어요.</p>
+        ) : (
+          <div className="card-grid">
+            {places.map((place) => (
+              <PlaceCard key={place.placeId} place={place} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

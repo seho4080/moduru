@@ -7,39 +7,36 @@ export default function LoginForm({ onClose }) {
   const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
 
-    try {
-      const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', 
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const response = await fetch('http://localhost:8080/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || '로그인 실패');
-      }
-
-      // ✅ 응답 정상 처리
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-
-      // 👉 나중에 전역 상태로 user 정보 저장 가능
-      // 예: setUser(data.user);
-
-      onClose(); // 모달 닫기
-
-    } catch (err) {
-      console.error(err);
-      setError(err.message); // 에러 메시지 출력
+    if (!response.ok) {
+      throw new Error(data.message || '로그인 실패');
     }
-  };
+
+    console.log(data.accessToken);
+    console.log(data.refreshToken);
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    onClose(); // 모달 닫기
+
+  } catch (err) {
+    console.error('[로그인 실패]', err.message);
+    // 화면에는 출력 안 함
+  }
+};
+
 
   return (
     <div className="login-overlay">
