@@ -19,6 +19,6 @@ public class RestaurantMenu {
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant; // 연관된 식당
 
-    @Column(name = "menu", length = 20, nullable = false)
+    @Column(name = "menu", length = 500, nullable = false)
     private String menu;
 }
