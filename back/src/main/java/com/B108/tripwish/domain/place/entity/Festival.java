@@ -1,0 +1,45 @@
+package com.B108.tripwish.domain.place.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
+@Table(name = "festivals")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
+public class Festival {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "place_id", nullable = false, unique = true)
+  private Place place;
+
+  @Column(columnDefinition = "TEXT")
+  private String description;
+
+  @Column(name = "description_short", columnDefinition = "TEXT")
+  private String descriptionShort;
+
+  @Column(length = 100)
+  private String homepage;
+
+  @Column(name = "info_center", length = 100)
+  private String infoCenter;
+
+  @Column(length = 60)
+  private String period;
+
+  @Column(length = 30)
+  private String price;
+
+  @Column(length = 30)
+  private String organizer;
+
+  @Column(length = 10)
+  private String sns;
+}
