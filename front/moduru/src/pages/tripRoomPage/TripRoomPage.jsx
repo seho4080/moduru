@@ -1,20 +1,22 @@
 // src/pages/tripRoomPage/TripRoomPage.jsx
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
-import SidebarContainer from '../../widgets/sidebar/SidebarContainer';
-import Controls from '../../features/map/ui/MapControls';
-import KakaoMap from '../../features/map/ui/KakaoMap';
-import TripCreateForm from '../../features/tripCreate/TripCreateForm';
-import RegionSelectModal from '../../features/tripCreate/RegionSelectModal';
+import SidebarContainer from "../../widgets/sidebar/SidebarContainer";
+import Controls from "../../features/map/ui/MapControls";
+import KakaoMap from "../../features/map/ui/KakaoMap";
+import TripCreateForm from "../../features/tripCreate/TripCreateForm";
+import RegionSelectModal from "../../features/tripCreate/RegionSelectModal";
+import TestAddPin from "../../features/map/dev/TestAddPin"; // 임시 확인
+import FakeAutoPin from "../../features/map/dev/FakeAutoPin"; // 임시 확인
 
 export default function TripRoomPage() {
   const location = useLocation();
   const { travelRoomId, title } = location.state || {};
 
-  const [mode, setMode] = useState('marker');
+  const [mode, setMode] = useState("marker");
   const [zoomable, setZoomable] = useState(true);
-  const [region, setRegion] = useState('');
+  const [region, setRegion] = useState("");
   const [removeMode, setRemoveMode] = useState(false);
   const [toRemove, setToRemove] = useState(new Set());
 
@@ -22,8 +24,8 @@ export default function TripRoomPage() {
   const [showTripModal, setShowTripModal] = useState(false);
   const [showRegionModal, setShowRegionModal] = useState(true);
 
-  const [tripName, setTripName] = useState('');
-  const [tripRegion, setTripRegion] = useState('');
+  const [tripName, setTripName] = useState("");
+  const [tripRegion, setTripRegion] = useState("");
   const [tripDates, setTripDates] = useState([null, null]);
 
   const mapRef = useRef();
@@ -34,14 +36,14 @@ export default function TripRoomPage() {
 
   const handleDeleteConfirm = () => {
     if (toRemove.size === 0) {
-      alert('삭제할 핀을 먼저 선택하세요.');
+      alert("삭제할 핀을 먼저 선택하세요.");
       return;
     }
-    if (window.confirm('삭제하시겠습니까?')) {
-      toRemove.forEach(mk => mk.setMap(null));
+    if (window.confirm("삭제하시겠습니까?")) {
+      toRemove.forEach((mk) => mk.setMap(null));
       setToRemove(new Set());
       setRemoveMode(false);
-      setMode('marker');
+      setMode("marker");
     }
   };
 
@@ -50,17 +52,17 @@ export default function TripRoomPage() {
   }, []);
 
   const handleTabChange = (tab) => {
-    if (tab === 'openTripModal') {
+    if (tab === "openTripModal") {
       setShowTripModal(true);
-    } else if (tab === 'exit') {
-      console.log('나가기');
+    } else if (tab === "exit") {
+      console.log("나가기");
     } else {
       setActiveTab(tab);
     }
   };
 
   const handleTripSave = () => {
-    console.log('[여행방 정보]', {
+    console.log("[여행방 정보]", {
       travelRoomId,
       tripName,
       tripRegion,
@@ -70,24 +72,29 @@ export default function TripRoomPage() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
+    <div style={{ display: "flex", height: "100vh" }}>
       <SidebarContainer
         activeTab={activeTab}
         onTabChange={handleTabChange}
         travelRoomId={travelRoomId} // ✅ 전달
       />
 
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ flex: 1, position: "relative" }}>
         <Controls
-          mode={mode} setMode={setMode}
-          zoomable={zoomable} setZoomable={setZoomable}
+          mode={mode}
+          setMode={setMode}
+          zoomable={zoomable}
+          setZoomable={setZoomable}
           zoomIn={() => mapRef.current?.zoomIn?.()}
           zoomOut={() => mapRef.current?.zoomOut?.()}
-          region={region} setRegion={setRegion}
-          removeMode={removeMode} setRemoveMode={setRemoveMode}
+          region={region}
+          setRegion={setRegion}
+          removeMode={removeMode}
+          setRemoveMode={setRemoveMode}
           onDeleteConfirm={handleDeleteConfirm}
         />
-
+        <TestAddPin roomId={travelRoomId} /> {/* 테스트용 버튼 */}
+        {/* <FakeAutoPin />   테스트용 버튼 */}
         <KakaoMap
           ref={mapRef}
           mode={mode}
@@ -96,7 +103,6 @@ export default function TripRoomPage() {
           removeMode={removeMode}
           onSelectMarker={onSelectMarker}
         />
-
         {showRegionModal && (
           <RegionSelectModal
             roomId={travelRoomId}
@@ -106,7 +112,6 @@ export default function TripRoomPage() {
             }}
           />
         )}
-
         {showTripModal && (
           <TripCreateForm
             tripName={tripName}
@@ -119,26 +124,25 @@ export default function TripRoomPage() {
             onSubmit={handleTripSave}
           />
         )}
-
         <button
-          onClick={() => setActiveTab('exit')}
+          onClick={() => setActiveTab("exit")}
           style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
+            position: "fixed",
+            bottom: "20px",
+            right: "20px",
             zIndex: 1000,
-            backgroundColor: '#ffffff',
-            color: '#007aff',
-            fontWeight: 'bold',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '10px 16px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            cursor: 'pointer',
-            transition: 'background 0.2s ease',
+            backgroundColor: "#ffffff",
+            color: "#007aff",
+            fontWeight: "bold",
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 16px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            cursor: "pointer",
+            transition: "background 0.2s ease",
           }}
-          onMouseOver={(e) => e.currentTarget.style.background = '#f0f7ff'}
-          onMouseOut={(e) => e.currentTarget.style.background = '#ffffff'}
+          onMouseOver={(e) => (e.currentTarget.style.background = "#f0f7ff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "#ffffff")}
         >
           나가기
         </button>
