@@ -25,21 +25,21 @@ public class Spot {
   @Column(name = "description_short", columnDefinition = "TEXT")
   private String descriptionShort;
 
-  @Column(name = "info_center", length = 100)
+  @Column(name = "info_center", length = 500)
   private String infoCenter;
 
-  @Column(length = 100)
+  @Column(length = 500)
   private String homepage;
 
-  @Column(name = "business_hours", length = 40)
+  @Column(name = "business_hours", length = 500)
   private String businessHours;
 
-  @Column(name = "rest_date", length = 100)
+  @Column(name = "rest_date", length = 500)
   private String restDate;
 
-  @Column(length = 100)
+  @Column(length = 500)
   private String parking;
 
-  @Column(length = 30)
+  @Column(length = 500)
   private String price;
 }
