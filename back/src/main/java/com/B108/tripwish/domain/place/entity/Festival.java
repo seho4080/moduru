@@ -25,21 +25,21 @@ public class Festival {
   @Column(name = "description_short", columnDefinition = "TEXT")
   private String descriptionShort;
 
-  @Column(length = 100)
+  @Column(length = 500)
   private String homepage;
 
-  @Column(name = "info_center", length = 100)
+  @Column(name = "info_center", length = 500)
   private String infoCenter;
 
-  @Column(length = 60)
+  @Column(length = 500)
   private String period;
 
-  @Column(length = 30)
+  @Column(length = 500)
   private String price;
 
-  @Column(length = 30)
+  @Column(length = 500)
   private String organizer;
 
-  @Column(length = 10)
+  @Column(length = 500)
   private String sns;
 }

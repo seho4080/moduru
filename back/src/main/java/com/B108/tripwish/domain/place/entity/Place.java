@@ -24,16 +24,16 @@ public class Place {
   @Column(name = "kakao_id")
   private Long kakaoId;
 
-  @Column(name = "place_name", length = 50)
+  @Column(name = "place_name", length = 500)
   private String placeName;
 
   @Column(name = "place_url")
   private String placeUrl;
 
-  @Column(name = "address_name", length = 150)
+  @Column(name = "address_name", length = 500)
   private String addressName; // 지번 주소
 
-  @Column(name = "road_address_name", nullable = false, length = 150)
+  @Column(name = "road_address_name", nullable = false, length = 500)
   private String roadAddressName; // 도로명 주소
 
   @Column(nullable = false)

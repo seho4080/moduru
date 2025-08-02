@@ -28,24 +28,24 @@ public class Restaurant {
   @Column(name = "description_short", columnDefinition = "TEXT")
   private String descriptionShort;
 
-  @Column(length = 100)
+  @Column(length = 500)
   private String tel;
 
-  @Column(length = 100)
+  @Column(length = 500)
   private String homepage;
 
-  @Column(name = "business_hours", length = 100)
+  @Column(name = "business_hours", length = 500)
   private String businessHours;
 
-  @Column(name = "rest_date", length = 100)
+  @Column(name = "rest_date", length = 500)
   private String restDate;
 
-  @Column(length = 100)
+  @Column(length = 500)
   private String parking;
 
-  @Column(length = 30)
+  @Column(length = 500)
   private String price;
 
-  @OneToMany(mappedBy = "restaurants", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<RestaurantMenu> menus = new ArrayList<>();
 }
