@@ -11,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @EqualsAndHashCode
 @Embeddable
-public class PlaceVoteId implements Serializable {
+public class VotePlaceId implements Serializable {
   // equals, hashCode는 @EqualsAndHashCode로 자동 생성됨
 
   private Long wantId;
