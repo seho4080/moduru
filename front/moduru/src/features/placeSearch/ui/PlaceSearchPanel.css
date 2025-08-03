@@ -2,61 +2,79 @@
   display: flex;
   flex-direction: column;
   padding: 16px;
-  user-select: none; /* ✅ 패널 전체에서 텍스트 선택 방지 */
-}
-
-.search-bar {
-  display: flex;
-  align-items: center;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-}
-
-.search-bar input {
-  flex: 1;
-  border: none;
-  font-size: 14px;
-  outline: none;
   user-select: none;
 }
 
-.search-controls {
+/* ✅ 검색 바 한 세트로 움직이도록 묶음 */
+.search-wrapper {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-left: 8px;
+  gap: 8px;
+  margin-bottom: 12px;
+  width: 100%;
 }
 
-.ai-circle {
+.input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 10px 38px 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  background: #f9fafb;
+  outline: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-icon-inside {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #2d4d9f;
+  pointer-events: none;
+  font-size: 18px;
+}
+
+.ai-robot-btn {
+  flex-shrink: 0;
+  background: #f5f7fa;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #2d4d9f;
-  color: #2d4d9f;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  font-size: 12px;
-  font-weight: bold;
-  background-color: white;
-  user-select: none;
+  color: #3399CC;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.search-icon {
-  color: #2d4d9f;
-  user-select: none;
+.ai-robot-btn:hover {
+  background: #e6f0ff;
 }
 
+/* ✅ 전체 필터 버튼 */
 .filter-buttons {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 카테고리와 동일한 구조 */
+  gap: 8px;
   margin-bottom: 4px;
 }
 
 .filter-button {
-  padding: 6px 12px;
+  width: 100%;
+  padding: 8px 0;
   border: 1px solid #ccd3ec;
   border-radius: 12px;
   font-size: 14px;
@@ -64,13 +82,13 @@
   color: #333;
   font-weight: 500;
   cursor: pointer;
-  user-select: none; /* ✅ 버튼 텍스트 선택 방지 */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.filter-button.active {
+  background-color: #3399CC;
+  color: white;
+  font-weight: bold;
 }
 
 .divider-line {
@@ -78,11 +96,12 @@
   margin: 4px 0;
 }
 
+/* ✅ 카테고리 탭 */
 .category-tabs {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  margin-top: 0;
+  margin-top: 4px;
 }
 
 .category-tab {
@@ -94,20 +113,27 @@
   font-size: 14px;
   font-weight: 500;
   text-align: center;
-  width: 100%;
   cursor: pointer;
 
-  user-select: none; /* ✅ 버튼 텍스트 선택 방지 */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .category-tab.active {
-  background-color: #2d4d9f;
+  background-color: #3399CC;
   color: white;
   font-weight: bold;
+}
+
+/* ✅ 카드 리스트 간격 추가 */
+.place-card-list {
+  margin-top: 20px;
+}
+
+/* ✅ 카드 리스트 그리드 스타일 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
 }

@@ -1,5 +1,7 @@
 package com.B108.tripwish.domain.place.dto.response;
 
+import com.B108.tripwish.domain.place.entity.Place;
+import com.B108.tripwish.domain.place.entity.PlaceImage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,4 +21,22 @@ public class PlaceDto {
   private Double longitude;
   private Boolean isLiked;
   private Boolean isWanted;
+
+  public static PlaceDto fromEntity(Place place, boolean isLiked, boolean isWanted){
+    String imageUrl = null;
+    if (place.getImages() != null && !place.getImages().isEmpty()) {
+      imageUrl = place.getImages().get(0).getImgUrl();
+    }
+    return new PlaceDto(
+            place.getId(),
+            place.getPlaceName(),
+            imageUrl,
+            place.getCategory().getCategoryName(),
+            place.getRoadAddressName(),
+            place.getLat(),
+            place.getLng(),
+            isLiked,
+            isWanted
+    );
+  }
 }

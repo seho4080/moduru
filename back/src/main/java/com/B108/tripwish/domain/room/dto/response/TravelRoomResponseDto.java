@@ -20,7 +20,7 @@ public class TravelRoomResponseDto {
 
   public static TravelRoomResponseDto from(TravelRoom room) {
     return TravelRoomResponseDto.builder()
-        .travelRoomId(room.getRoomId())
+        .travelRoomId(room.getId())
         .title(room.getTitle())
         .region(room.getRegion())
         .startDate(room.getStartDate())

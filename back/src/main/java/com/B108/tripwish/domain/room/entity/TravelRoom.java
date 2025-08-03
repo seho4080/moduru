@@ -13,15 +13,15 @@ import lombok.*;
 @Table(name = "travel_rooms")
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 public class TravelRoom {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "room_id")
-  private Long roomId;
+  @Column(name = "id")
+  private Long id;
 
   @Column(name = "title", nullable = false)
   private String title;
