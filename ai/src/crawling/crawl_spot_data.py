@@ -7,13 +7,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JSON_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "vk_spot_links.json")
-SAVE_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "vk_spot_data.json")
+DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "vk_spot_data.json")
 
 # ───────────────────────────────────────────────
 # 1. 크롬 드라이버 설정
 options = Options()
-# options.add_argument("--headless")  # 필요 시 해제
+# options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 driver = webdriver.Chrome(service=Service(), options=options)
@@ -113,7 +112,7 @@ def crawl_spot(entry):
 
     try:
         driver.get(url)
-        time.sleep(0.5)  # JS 렌더링 대기
+        time.sleep(0.5)
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
         images = extract_images(soup)
@@ -122,22 +121,24 @@ def crawl_spot(entry):
         tags = extract_tags(soup)
         detail_info = extract_detail_info_for_spot(soup)
 
-        return {
-            "name": name,
-            "link": url,
-            "description": description,
-            "description_short": description_short,
-            "description_vector": None,
-            "info_center": detail_info["info_center"],
-            "homepage": detail_info["homepage"],
-            "address": detail_info["address"],
-            "business_hours": detail_info["business_hours"],
-            "rest_date": detail_info["rest_date"],
-            "parking": detail_info["parking"],
-            "price": detail_info["price"],
-            "images": images,
-            "tags": tags,
-        }
+        # 기존 entry에 덮어쓰기
+        entry.update(
+            {
+                "description": description,
+                "description_short": description_short,
+                "description_vector": None,
+                "info_center": detail_info["info_center"],
+                "homepage": detail_info["homepage"],
+                "address": detail_info["address"],
+                "business_hours": detail_info["business_hours"],
+                "rest_date": detail_info["rest_date"],
+                "parking": detail_info["parking"],
+                "price": detail_info["price"],
+                "images": images,
+                "tags": tags,
+            }
+        )
+        return entry
 
     except Exception as e:
         print(f"크롤링 실패: {url} - {e}")
@@ -145,38 +146,28 @@ def crawl_spot(entry):
 
 
 # ───────────────────────────────────────────────
-# 3. 기존 결과 불러오기 (중복 검사용)
-if os.path.exists(SAVE_PATH):
-    with open(SAVE_PATH, "r", encoding="utf-8") as f:
-        existing_data = json.load(f)
-else:
-    existing_data = []
-
-existing_links = set(item["link"] for item in existing_data if "link" in item)
+# 3. 기존 데이터 불러오기
+with open(DATA_PATH, "r", encoding="utf-8") as f:
+    data = json.load(f)
 
 # ───────────────────────────────────────────────
-# 4. 링크 파일 읽기
-with open(JSON_PATH, "r", encoding="utf-8") as f:
-    links = json.load(f)
-
-# ───────────────────────────────────────────────
-# 5. 크롤링 시작
-for i, entry in enumerate(links):
-    if entry["link"] in existing_links:
-        print(f"[{i + 1}/{len(links)}] 이미 수집됨: {entry['name']}")
+# 4. address가 없는 항목만 다시 수집
+updated = 0
+for idx, entry in enumerate(data):
+    if entry.get("address") is not None:
         continue
 
-    print(f"[{i + 1}/{len(links)}] 수집 중: {entry['name']}")
+    print(f"[{idx + 1}/{len(data)}] 📍 Re-crawling: {entry.get('name')}")
     result = crawl_spot(entry)
 
     if result:
-        existing_data.append(result)
-        existing_links.add(entry["link"])
+        data[idx] = result
+        updated += 1
+        with open(DATA_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"✅ Updated: {entry.get('name')}")
     else:
-        print(f"수집 실패: {entry['name']}")
+        print(f"❌ Failed: {entry.get('name')}")
 
-with open(SAVE_PATH, "w", encoding="utf-8") as f:
-    json.dump(existing_data, f, ensure_ascii=False, indent=2)
-print(f"저장 완료: {entry['name']}")
-
+print(f"\n🔁 Done — {updated} spots updated with address info.")
 driver.quit()
