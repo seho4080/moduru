@@ -50,11 +50,11 @@ public class RoomServiceImpl implements RoomService {
             .travelRoom(room)
             .user(user.getUser())
             .role(TravelMemberRole.OWNER)
-            .id(new TravelMemberId(room.getRoomId(), user.getUser().getId()))
+            .id(new TravelMemberId(room.getId(), user.getUser().getId()))
             .build();
     travelMemberRepository.save(member);
 
-    TravelRoomCreateResponseDto response = new TravelRoomCreateResponseDto(room.getRoomId());
+    TravelRoomCreateResponseDto response = new TravelRoomCreateResponseDto(room.getId());
     return response;
   }
 
@@ -62,7 +62,7 @@ public class RoomServiceImpl implements RoomService {
   public TravelRoomResponseDto enterRoom(CustomUserDetails user, Long roomId) {
     TravelRoom room =
         travelRoomRepository
-            .findByRoomId(roomId)
+            .findById(roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     TravelRoomResponseDto response = TravelRoomResponseDto.from(room);
     return response;
@@ -71,9 +71,12 @@ public class RoomServiceImpl implements RoomService {
   @Transactional
   @Override
   public TravelRoomResponseDto updateRoom(Long roomId, UpdateTravelRoomRequestDto request) {
+    log.info("🔍 요청 DTO: title={}, region={}, startDate={}, endDate={}",
+            request.getTitle(), request.getRegion(), request.getStartDate(), request.getEndDate());
+
     TravelRoom room =
         travelRoomRepository
-            .findByRoomId(roomId)
+            .findById(roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     travelRoomMapper.updateFromDto(request, room);
     return travelRoomMapper.toDto(room);
@@ -85,12 +88,19 @@ public class RoomServiceImpl implements RoomService {
     Long userId = user.getUser().getId();
     TravelMember member =
         travelMemberRepository
-            .findByUser_IdAndTravelRoom_RoomId(userId, roomId)
+            .findByUser_IdAndTravelRoom_Id(userId, roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_MEMBER_NOT_FOUND));
     if (member.getRole() != TravelMemberRole.OWNER) {
       throw new CustomException(ErrorCode.ROOM_DELETE_FORBIDDEN); // 권한 없음
     }
 
-    travelRoomRepository.deleteByRoomId(roomId);
+    travelRoomRepository.deleteById(roomId);
+  }
+
+  @Override
+  public String getRegionByRoomId(Long roomId) {
+    TravelRoom room = travelRoomRepository.findById(roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+    return room.getRegion();
   }
 }

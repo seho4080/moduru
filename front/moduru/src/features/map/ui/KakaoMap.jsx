@@ -1,6 +1,8 @@
 // src/features/map/ui/KakaoMap.js
 /* global kakao */
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { getLatLngFromRegion } from '../lib/regionUtils'; // ✅ 추가
+import { useSelector } from 'react-redux';
 
 const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarker }, ref) => {
   const mapRef        = useRef(null);
@@ -14,11 +16,11 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
   const dots          = useRef([]);
   const modeRef       = useRef(mode);
   const removeModeRef = useRef(removeMode);
+  const pins = useSelector((state) => state.map.pins);  //pin 상태 가지고 오기
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { removeModeRef.current = removeMode; }, [removeMode]);
 
-  // ✅ 의존성에 onSelectMarker 포함
   useEffect(() => {
     if (!removeMode) {
       selected.current.forEach(mk => mk.setOpacity(1));
@@ -37,7 +39,6 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
     }
   }, [mode]);
 
-  // ✅ 지도 및 마커 초기화 → 의존성 포함
   useEffect(() => {
     const { kakao } = window;
     if (!kakao?.maps) return;
@@ -153,7 +154,7 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
     });
 
     return () => { clearLine(); clearDots(); clearOverlay(); };
-  }, [onSelectMarker]); // ✅ 여기에 포함!
+  }, [onSelectMarker]);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => { const m = mapInstance.current; if (m) m.setLevel(m.getLevel() - 1); },
@@ -163,19 +164,36 @@ const KakaoMap = forwardRef(({ mode, zoomable, region, removeMode, onSelectMarke
   useEffect(() => {
     const m = mapInstance.current;
     if (!m || !region) return;
-    const C = {
-      seoul: { lat: 37.5665, lng: 126.9780, lvl: 8 },
-      daejeon: { lat: 36.3504, lng: 127.3845, lvl: 8 },
-      busan: { lat: 35.1796, lng: 129.0756, lvl: 8 },
-    };
-    const { lat, lng, lvl } = C[region];
+    const coords = getLatLngFromRegion(region);
+    if (!coords) return;
+    const { lat, lng } = coords;
     m.setCenter(new kakao.maps.LatLng(lat, lng));
-    m.setLevel(lvl);
+    m.setLevel(7);
   }, [region]);
 
   useEffect(() => {
     mapInstance.current?.setZoomable(zoomable);
   }, [zoomable]);
+
+
+  useEffect(() => {
+  const map = mapInstance.current;
+  if (!map) return;
+
+  // 1. 기존 마커 제거
+  markers.current.forEach((marker) => marker.setMap(null));
+  markers.current = [];
+
+  // 2. 새 마커 그리기
+  pins.forEach((pin) => {
+    const pos = new kakao.maps.LatLng(pin.lat, pin.lng);
+    const marker = new kakao.maps.Marker({ position: pos });
+    marker.setMap(map);
+    markers.current.push(marker);
+  });
+}, [pins]);
+
+
 
   return <div id="map" ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
 });
