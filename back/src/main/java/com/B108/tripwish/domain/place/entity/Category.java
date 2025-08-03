@@ -1,6 +1,7 @@
 package com.B108.tripwish.domain.place.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "categories")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Category {
 
     @Id
