@@ -1,4 +1,4 @@
-// src/features/tripCreate/model/tripRoomApi.js
+// src/features/tripCreate/lib/tripRoomApi.js
 
 // 여행방 생성 API
 export async function createTripRoom() {
@@ -23,7 +23,9 @@ export async function getTripRoomInfo(roomId) {
   if (!res.ok) throw new Error("여행방 정보 조회 실패");
 
   const data = await res.json();
-  return data.title;
+
+  // ✅ 전체 travelRoom 객체 반환
+  return data;
 }
 
 // 여행방 지역 업데이트 API

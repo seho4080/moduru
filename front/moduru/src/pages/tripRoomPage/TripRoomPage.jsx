@@ -11,7 +11,16 @@ import InviteButton from '../../features/invite/ui/InviteButton';
 
 export default function TripRoomPage() {
   const location = useLocation();
-  const { travelRoomId, title } = location.state || {};
+
+  // ✅ 전체 travelRoom 정보 받기
+  const {
+    travelRoomId,
+    title,
+    region: initialRegion,
+    startDate,
+    endDate,
+    createdAt,
+  } = location.state || {};
 
   const [mode, setMode] = useState('marker');
   const [zoomable, setZoomable] = useState(true);
@@ -21,7 +30,7 @@ export default function TripRoomPage() {
 
   const [activeTab, setActiveTab] = useState(null);
   const [showTripModal, setShowTripModal] = useState(false);
-  const [showRegionModal, setShowRegionModal] = useState(true);
+  const [showRegionModal, setShowRegionModal] = useState(!initialRegion);
 
   const [tripName, setTripName] = useState('');
   const [tripRegion, setTripRegion] = useState('');
@@ -30,9 +39,12 @@ export default function TripRoomPage() {
 
   const mapRef = useRef();
 
+  // ✅ 초기 데이터 반영
   useEffect(() => {
     if (title) setTripName(title);
-  }, [title]);
+    if (initialRegion) setTripRegion(initialRegion);
+    if (startDate && endDate) setTripDates([new Date(startDate), new Date(endDate)]);
+  }, [title, initialRegion, startDate, endDate]);
 
   const handleDeleteConfirm = () => {
     if (toRemove.size === 0) {
