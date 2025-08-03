@@ -9,7 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.B108.tripwish.domain.place.dto.response.PlaceDetailResponseDto;
-import com.B108.tripwish.domain.place.dto.response.PlaceDto;
+import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 import com.B108.tripwish.domain.place.dto.response.TagSummaryDto;
 
@@ -36,7 +36,7 @@ public class PlaceController {
                     @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 누락 / 유효하지 않음 / 만료됨)"),
                     @ApiResponse(
                             responseCode = "404",
-                            description = "존재하지 않는 roomId이거나 해당 방의 장소가 없음",
+                            description = "존재하지 않는 roomId / 존재하지 않는 category",
                             content = @Content),
                     @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
             })
@@ -49,42 +49,7 @@ public class PlaceController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(
-            summary = "검색어(키워드) 기반 장소 목록 조회",
-            description = "사용자가 입력한 검색어를 기반으로 카카오맵에서 장소 목록을 조회하여 반환합니다. 방 ID를 기반으로 해당 지역 내에서만 검색이 가능합니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "장소 검색 결과 조회 성공"),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "검색어(keyword)가 누락되었거나 잘못된 요청입니다.",
-                            content = @Content),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "해당 roomId 또는 검색 조건에 해당하는 장소가 없습니다.",
-                            content = @Content),
-                    @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
-            })
-    @GetMapping("/{roomId}/search")
-    public ResponseEntity<PlaceListResponseDto> getSearchPlaces(
-            @PathVariable Long roomId, @RequestParam String keyword) {
-        PlaceDto sample =
-                PlaceDto.builder()
-                        .placeId(1L)
-                        .placeName("스타벅스 강남점")
-                        .placeImg("https://example.com/images/place1.jpg")
-                        .category("카페")
-                        .address("서울특별시 강남구 강남대로 584 (논현동)")
-                        .latitude(37.517235)
-                        .longitude(127.047325)
-                        .isLiked(true)
-                        .isWanted(false)
-                        .build();
 
-        List<PlaceDto> list = List.of(sample);
-        PlaceListResponseDto response = new PlaceListResponseDto(list);
-
-        return ResponseEntity.ok(response);
-    }
 
     @Operation(
             summary = "AI 기반 장소 목록 조회",
@@ -105,8 +70,8 @@ public class PlaceController {
     @GetMapping("/{roomId}/ai-search")
     public ResponseEntity<PlaceListResponseDto> getAISearchPlaces(
             @PathVariable Long roomId, @RequestParam String keyword) {
-        PlaceDto sample =
-                PlaceDto.builder()
+        PlaceResponseDto sample =
+                PlaceResponseDto.builder()
                         .placeId(1L)
                         .placeName("스타벅스 강남점")
                         .placeImg("https://example.com/images/place1.jpg")
@@ -117,7 +82,7 @@ public class PlaceController {
                         .isLiked(true)
                         .isWanted(false)
                         .build();
-        List<PlaceDto> list = List.of(sample);
+        List<PlaceResponseDto> list = List.of(sample);
         PlaceListResponseDto response = new PlaceListResponseDto(list);
 
         return ResponseEntity.ok(response);

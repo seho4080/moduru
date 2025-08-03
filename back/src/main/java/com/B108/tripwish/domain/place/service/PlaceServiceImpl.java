@@ -1,7 +1,7 @@
 package com.B108.tripwish.domain.place.service;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.domain.place.dto.response.PlaceDto;
+import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 import com.B108.tripwish.domain.place.entity.Category;
 import com.B108.tripwish.domain.place.entity.Place;
@@ -45,16 +45,17 @@ public class PlaceServiceImpl implements PlaceService{
             places = placeRepository.findAllByAddressNameContainingAndCategory(region, categoryEntity);
         }
 
-        List<PlaceDto> response = places.stream()
+        List<PlaceResponseDto> response = places.stream()
                 .map(place -> buildPlaceDto(place, user.getUser().getId(), roomId))
                 .toList();
         return new PlaceListResponseDto(response);
     }
 
+
     @Override
-    public PlaceDto buildPlaceDto(Place place, Long userId, Long roomId) {
+    public PlaceResponseDto buildPlaceDto(Place place, Long userId, Long roomId) {
         boolean isLiked = myPlaceService.isLiked(userId, place.getId());
         boolean isWanted = wantPlaceService.isWanted(roomId, place.getId());
-        return PlaceDto.fromEntity(place, isLiked, isWanted);
+        return PlaceResponseDto.fromEntity(place, isLiked, isWanted);
     }
 }
