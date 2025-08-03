@@ -11,7 +11,7 @@ const categoryMap = {
   축제: 'etc',
 };
 
-export const usePlaceList = (roomId, selectedCategory) => {
+export const usePlaceSearch = (roomId, selectedCategory) => {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
 

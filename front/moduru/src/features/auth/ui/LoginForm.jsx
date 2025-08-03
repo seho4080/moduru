@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { login } from '../model/authStore';
+import { login } from '../lib/authApi';
+import { useAuth } from '../../../shared/model/useAuth';
 import './LoginForm.css';
 
-export default function LoginForm({ onClose }) {
+export default function LoginForm({ onClose, onSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { setIsLoggedIn } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -14,14 +16,15 @@ export default function LoginForm({ onClose }) {
     const result = await login({ email, password });
 
     if (result.success) {
-      onClose(); // 모달 닫기
+      console.log('[✅ 로그인 성공]');
+      setIsLoggedIn(true);
+      setLoading(false);
+      onClose();
+      onSuccess?.();
     } else {
-      // ❌ UI 에러 표시 제거하고
-      // ✅ 콘솔에만 출력
-      console.error('[로그인 실패]', result.message);
+      console.error('[🚨 로그인 실패]', result.message);
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -47,22 +50,10 @@ export default function LoginForm({ onClose }) {
             className="login-input"
             required
           />
-          {/* ❌ UI 에러 메시지 제거됨 */}
           <button type="submit" className="login-button" disabled={loading}>
             {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
-
-        <div className="login-links">
-          <button>회원가입</button>
-          <button>아이디/비밀번호 찾기</button>
-        </div>
-
-        <div className="social-divider">
-          <hr className="divider-line" />
-          <span className="divider-text">SNS LOGIN</span>
-          <hr className="divider-line" />
-        </div>
       </div>
     </div>
   );

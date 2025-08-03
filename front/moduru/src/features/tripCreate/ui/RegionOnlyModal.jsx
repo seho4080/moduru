@@ -1,7 +1,7 @@
 // src/features/tripCreate/RegionSelectModal.jsx
 import { useState, useRef, useEffect } from 'react';
 import { REGIONS } from '../lib/regionName'; // ✅ 지역 상수 import
-import { updateTripRoomRegion } from '../model/tripRoomApi'; // ✅ API 함수 import
+import { updateTripRoomRegion } from '../lib/tripRoomApi'; // ✅ API 함수 import
 import './TripCreateForm.css';
 
 export default function RegionSelectModal({ roomId, onRegionSet }) {

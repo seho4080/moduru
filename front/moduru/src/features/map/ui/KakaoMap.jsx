@@ -1,10 +1,10 @@
 // ✅ src/features/map/ui/KakaoMap.jsx
 import React, { useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
-import useMapInit from '../hooks/useMapInit';
-import useMarkerMode from '../hooks/useMarkerMode';
-import useMeasureMode from '../hooks/useMeasureMode';
-import useHoverMarker from '../hooks/useHoverMarker';
-import useRemoveMode from '../hooks/useRemoveMode';
+import useMapInit from '../model/useMapInit';
+import useMarkerMode from '../model/useMarkerMode';
+import useMeasureMode from '../model/useMeasureMode';
+import useHoverMarker from '../model/useHoverMarker';
+import useRemoveMode from '../model/useRemoveMode';
 import { getLatLngFromRegion } from '../lib/regionUtils';
 
 /* global kakao */
