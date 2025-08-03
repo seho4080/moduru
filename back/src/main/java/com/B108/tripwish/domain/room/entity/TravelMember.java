@@ -29,7 +29,6 @@ public class TravelMember {
   @Column(nullable = false)
   private TravelMemberRole role;
 
-
   @Builder
   public TravelMember(TravelRoom travelRoom, User user, TravelMemberRole role) {
     this.travelRoom = travelRoom;
