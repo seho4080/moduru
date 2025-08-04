@@ -43,9 +43,6 @@ public class Restaurant {
   @Column(length = 500)
   private String parking;
 
-  @Column(length = 500)
-  private String price;
-
   @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<RestaurantMenu> menus = new ArrayList<>();
 }
