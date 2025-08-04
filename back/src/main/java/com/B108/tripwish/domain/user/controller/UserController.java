@@ -26,6 +26,7 @@ public class UserController {
 
   private final UserService userService;
 
+
   @Operation(
       summary = "회원가입",
       description = "사용자가 이메일, 비밀번호, 닉네임 등의 정보를 입력하여 회원가입을 수행합니다.",

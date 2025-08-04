@@ -103,4 +103,6 @@ public class RoomServiceImpl implements RoomService {
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     return room.getRegion();
   }
+
 }
+
