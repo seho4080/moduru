@@ -1,13 +1,13 @@
-// external
-import React, { useState, useRef, useCallback, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+// ✅ src/pages/TripRoomPage.jsx
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
-// relative imports
-import SidebarContainer from "../../widgets/sidebar/SidebarContainer";
-import Controls from "../../features/map/ui/MapControls";
-import KakaoMap from "../../features/map/ui/KakaoMap";
-import TripCreateForm from "../../features/tripCreate/TripCreateForm";
-import RegionSelectModal from "../../features/tripCreate/RegionSelectModal";
+import SidebarContainer from '../../widgets/sidebar/SidebarContainer';
+import Controls from '../../features/map/ui/MapControls';
+import KakaoMap from '../../features/map/ui/KakaoMap';
+import TripCreateForm from '../../features/tripCreate/ui/TripCreateForm';
+import RegionOnlyModal from '../../features/tripCreate/ui/RegionOnlyModal';
+import InviteButton from '../../features/invite/ui/InviteButton';
 import TestAddPin from "../../features/map/dev/TestAddPin";
 //import FakeAutoPin from '../../features/map/dev/FakeAutoPin';
 
@@ -19,7 +19,16 @@ import TestAddPin from "../../features/map/dev/TestAddPin";
 export default function TripRoomPage() {
   // 라우터에서 전달된 여행방 정보 추출
   const location = useLocation();
-  const { travelRoomId, title } = location.state || {};
+
+  // ✅ 전체 travelRoom 정보 받기
+  const {
+    travelRoomId,
+    title,
+    region: initialRegion,
+    startDate,
+    endDate,
+    createdAt,
+  } = location.state || {};
 
   // 지도 제어 상태
   const [mode, setMode] = useState("marker");
@@ -31,22 +40,23 @@ export default function TripRoomPage() {
   // 사이드바 탭 상태 및 모달
   const [activeTab, setActiveTab] = useState(null);
   const [showTripModal, setShowTripModal] = useState(false);
-  const [showRegionModal, setShowRegionModal] = useState(true);
+  const [showRegionModal, setShowRegionModal] = useState(!initialRegion);
 
   // 여행방 정보 (제목, 지역, 날짜)
   const [tripName, setTripName] = useState("");
   const [tripRegion, setTripRegion] = useState("");
   const [tripDates, setTripDates] = useState([null, null]);
+  const [hoveredCoords, setHoveredCoords] = useState(null);
 
   // KakaoMap 제어용 ref
   const mapRef = useRef();
 
-  // title이 있으면 초기값으로 설정
+  // ✅ 초기 데이터 반영
   useEffect(() => {
-    if (title) {
-      setTripName(title);
-    }
-  }, [title]);
+    if (title) setTripName(title);
+    if (initialRegion) setTripRegion(initialRegion);
+    if (startDate && endDate) setTripDates([new Date(startDate), new Date(endDate)]);
+  }, [title, initialRegion, startDate, endDate]);
 
   /**
    * 핀 삭제 확정
@@ -108,11 +118,15 @@ export default function TripRoomPage() {
       <SidebarContainer
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        travelRoomId={travelRoomId}
+        roomId={travelRoomId}
+        setHoveredCoords={setHoveredCoords}
       />
 
-      <div style={{ flex: 1, position: "relative" }}>
-        {/* 지도 상단 컨트롤 버튼들 */}
+      <div style={{ flex: 1, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 1000 }}>
+          <InviteButton onClick={() => alert('초대 링크 복사')} />
+        </div>
+
         <Controls
           mode={mode}
           setMode={setMode}
@@ -141,11 +155,12 @@ export default function TripRoomPage() {
           region={tripRegion}
           removeMode={removeMode}
           onSelectMarker={onSelectMarker}
+          hoveredCoords={hoveredCoords}
         />
 
         {/* 지역 선택 모달 (최초 진입 시 필수) */}
         {showRegionModal && (
-          <RegionSelectModal
+          <RegionOnlyModal
             roomId={travelRoomId}
             onRegionSet={(region) => {
               setTripRegion(region);
