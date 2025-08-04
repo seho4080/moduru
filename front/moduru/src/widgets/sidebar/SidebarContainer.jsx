@@ -4,22 +4,24 @@ import SidebarPanel from './SidebarPanel';
 import LoginForm from '../../features/auth/ui/LoginForm';
 
 export default function SidebarContainer({ activeTab, onTabChange, roomId, setHoveredCoords }) {
-  const [lastTab, setLastTab] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
   const isLoggedIn = !!localStorage.getItem('accessToken');
 
   const handleClosePanel = () => {
-    setLastTab(activeTab);
-    onTabChange(null);
+    setIsPanelOpen(false);
   };
 
   const handleOpenPanel = () => {
-    if (lastTab) {
-      onTabChange(lastTab);
-    } else {
-      onTabChange('place');
+    setIsPanelOpen(true);
+  };
+
+  const handleTabClick = (tabKey) => {
+    if (!isPanelOpen) {
+      setIsPanelOpen(true); // NOTE: 패널이 닫힌 경우 탭 클릭 시 열어줌
     }
+    onTabChange(tabKey);
   };
 
   const handleProfileClick = () => {
@@ -35,11 +37,12 @@ export default function SidebarContainer({ activeTab, onTabChange, roomId, setHo
       <div style={{ display: 'flex', height: '100vh' }}>
         <SidebarTabs
           activeTab={activeTab}
-          onTabChange={onTabChange}
+          onTabChange={handleTabClick}
           onProfileClick={handleProfileClick}
         />
         <SidebarPanel
           activeTab={activeTab}
+          isOpen={isPanelOpen}
           onClosePanel={handleClosePanel}
           onOpenPanel={handleOpenPanel}
           roomId={roomId}
