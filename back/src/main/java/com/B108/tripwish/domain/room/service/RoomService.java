@@ -17,5 +17,5 @@ public interface RoomService {
 
   String getRegionByRoomId(Long roomId);
 
-  TravelRoom findById(Long roomId);
+
 }

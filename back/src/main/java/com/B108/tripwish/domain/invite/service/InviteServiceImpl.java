@@ -13,11 +13,14 @@ import com.B108.tripwish.domain.room.entity.TravelMemberId;
 import com.B108.tripwish.domain.room.entity.TravelMemberRole;
 import com.B108.tripwish.domain.room.entity.TravelRoom;
 import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
+import com.B108.tripwish.domain.room.service.RoomReaderService;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.user.entity.Friend;
 import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.domain.user.repository.FriendRepository;
 import com.B108.tripwish.domain.user.repository.UserRepository;
+import com.B108.tripwish.domain.user.service.FriendReaderService;
+import com.B108.tripwish.domain.user.service.UserReaderService;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -41,15 +44,14 @@ public class InviteServiceImpl implements InviteService {
     private String inviteBaseUrl;
 
     private final InviteTokenRepository inviteTokenRepository;
-    private final TravelMemberRepository travelMemberRepository;
-    private final FriendRepository friendRepository;
-    private final UserRepository userRepository;
-    private final RoomService roomService;
+    private final RoomReaderService roomReaderService;
+    private final FriendReaderService friendReaderService;
+    private final UserReaderService userReaderService;
 
     @Transactional
     @Override
     public InviteLinkResponseDto createInviteLink(Long roomId) {
-        TravelRoom room = roomService.findById(roomId);
+        TravelRoom room = roomReaderService.findById(roomId);
 
         // 이미 초대 토큰이 있는지 확인
         Optional<InviteToken> optionalToken = inviteTokenRepository.findByRoomId(roomId);
@@ -96,7 +98,7 @@ public class InviteServiceImpl implements InviteService {
         Long userId = user.getUser().getId();
         Long roomId = inviteToken.getRoom().getId();
 
-        if (!travelMemberRepository.existsById(new TravelMemberId(userId, roomId))) {
+        if (!roomReaderService.existsUser(roomId, userId)) {
             // 새로 참여자 등록
             TravelMember travelMember = TravelMember.builder()
                     .id(new TravelMemberId(userId, roomId))
@@ -104,7 +106,7 @@ public class InviteServiceImpl implements InviteService {
                     .user(user.getUser())
                     .role(TravelMemberRole.INVITED) // 또는 기본 권한
                     .build();
-            travelMemberRepository.save(travelMember);
+            roomReaderService.travelMemeberSave(travelMember);
         }
 
         return new JoinRoomResponseDto(roomId);
@@ -115,16 +117,14 @@ public class InviteServiceImpl implements InviteService {
     public InvitableFriendListResponseDto getFriends(CustomUserDetails user, Long roomId) {
 
         // 로그인한 사용자의 친구 목록 조회
-        List<Friend> friends = friendRepository.findByUser(user.getUser());
+        List<Friend> friends = friendReaderService.findByUser(user.getUser());
 
         // 친구들의 방 참여 여부 확인
         List<FriendInviteInfoResponseDto> friendDtos = friends.stream()
                 .map(friend -> {
                     User friendUser = friend.getFriend();
                     Long friendId = friendUser.getId();
-                    boolean alreadyInvited = travelMemberRepository.existsById(
-                            new TravelMemberId(roomId, friendId)
-                    );
+                    boolean alreadyInvited = roomReaderService.existsUser( roomId, friendId);
 
                     return new FriendInviteInfoResponseDto(
                             friendUser.getId(),
@@ -141,22 +141,20 @@ public class InviteServiceImpl implements InviteService {
     @Transactional
     @Override
     public void inviteFriends(InviteFriendRequestDto request) {
-        TravelRoom room = roomService.findById(request.getRoomId());
+        TravelRoom room = roomReaderService.findById(request.getRoomId());
 
         for (Long friendId : request.getFriendIds()) {
-            TravelMemberId memberId = new TravelMemberId(request.getRoomId(), friendId);
 
             // 이미 초대되어 있는지 확인
-            boolean alreadyExists = travelMemberRepository.existsById(memberId);
+            boolean alreadyExists = roomReaderService.existsUser(request.getRoomId(), friendId);
             if (alreadyExists) continue;
 
             // 친구 사용자 조회
-            User friend = userRepository.findById(friendId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+            User friend = userReaderService.findById(friendId);
 
             // 새 TravelMember 저장
             TravelMember member = new TravelMember(room, friend, TravelMemberRole.INVITED);
-            travelMemberRepository.save(member);
+            roomReaderService.travelMemeberSave(member);
         }
     }
 }
