@@ -15,4 +15,5 @@ public interface RoomService {
   void deleteRoom(CustomUserDetails user, Long roomId);
 
   String getRegionByRoomId(Long roomId);
+
 }

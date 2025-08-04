@@ -17,4 +17,5 @@ public interface RoomReaderService {
         List<String> getMembers();
 
     }
+
 }
