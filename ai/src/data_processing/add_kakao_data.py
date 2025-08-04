@@ -1,21 +1,21 @@
-import kakao_maps_api
+import ../kakao_maps_api
 import os
 import re
 import json
 
 # restaurant    spot
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JSON_PATH = os.path.join(BASE_DIR, "..", "data", "raw", "vk_restaurant_data.json")
-SAVE_PATH = os.path.join(BASE_DIR, "..", "data", "raw", "restaurant_data.json")
+JSON_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "festival_data_embedding.json")
+SAVE_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "festival_data_embedding1.json")
 SAVE_EVERY = 1000
 
 # 1. Load raw data
-with open(JSON_PATH, "r", encoding="utf-8") as f:
+with open(JSON_PATH, encoding="utf-8") as f:
     raw_data = json.load(f)
 
 # 2. Load saved data or start empty
 if os.path.exists(SAVE_PATH):
-    with open(SAVE_PATH, "r", encoding="utf-8") as f:
+    with open(SAVE_PATH, encoding="utf-8") as f:
         saved_data = json.load(f)
 else:
     saved_data = []
@@ -56,7 +56,7 @@ for idx, item in enumerate(raw_data, 1):
     # item["y"] = xy_data.get("y", None) if xy_data else None
     # address = re.sub(r"\b\d{1,4}(?:-\d{1,4})?\b", "", address).strip()
 
-    query = f"{name}"
+    query = f"{address}"
 
     # Save kakao data or None if not found
     kakao_data = kakao_maps_api.search_data(query, x, y)
