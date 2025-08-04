@@ -4,6 +4,7 @@ import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomCreateResponseDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomResponseDto;
+import com.B108.tripwish.domain.room.entity.TravelRoom;
 
 public interface RoomService {
   TravelRoomCreateResponseDto addRoom(CustomUserDetails user);
@@ -15,4 +16,6 @@ public interface RoomService {
   void deleteRoom(CustomUserDetails user, Long roomId);
 
   String getRegionByRoomId(Long roomId);
+
+  TravelRoom findById(Long roomId);
 }
