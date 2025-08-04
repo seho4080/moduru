@@ -4,12 +4,12 @@ import './PlaceSearchPanel.css';
 import { FiSearch } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
-import { usePlaceList } from '../../../entities/place/model/usePlaceList';
-import PlaceCard from '../../../entities/place/ui/PlaceCard';
+import { usePlaceSearch } from '../../placeSearch/model/usePlaceSearch';
+import PlaceSearchCard from './PlaceSearchCard';
 
-export default function PlaceSearchPanel({ roomId }) {
+export default function PlaceSearchPanel({ roomId, setHoveredCoords }) {
   const [selectedCategory, setSelectedCategory] = useState('음식점');
-  const { places, loading } = usePlaceList(roomId, selectedCategory);
+  const { places, loading } = usePlaceSearch(roomId, selectedCategory);
 
   const filterOptions = ['전체'];
   const categoryOptions = ['음식점', '카페', '명소', '숙소', '축제'];
@@ -69,7 +69,13 @@ export default function PlaceSearchPanel({ roomId }) {
         ) : (
           <div className="card-grid">
             {places.map((place) => (
-              <PlaceCard key={place.placeId} place={place} />
+              <PlaceSearchCard
+                key={place.placeId}
+                place={place}
+                roomId={roomId} // ✅ 추가!
+                onHover={() => setHoveredCoords({ lat: place.latitude, lng: place.longitude })}
+                onHoverOut={() => setHoveredCoords(null)}
+              />
             ))}
           </div>
         )}

@@ -1,42 +1,31 @@
 import React, { useState } from 'react';
+import { login } from '../lib/authApi';
+import { useAuth } from '../../../shared/model/useAuth';
 import './LoginForm.css';
 
-export default function LoginForm({ onClose }) {
+export default function LoginForm({ onClose, onSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { setIsLoggedIn } = useAuth();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const response = await fetch('http://localhost:8080/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password }),
-    });
+    const result = await login({ email, password });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || '로그인 실패');
+    if (result.success) {
+      console.log('[✅ 로그인 성공]');
+      setIsLoggedIn(true);
+      setLoading(false);
+      onClose();
+      onSuccess?.();
+    } else {
+      console.error('[🚨 로그인 실패]', result.message);
+      setLoading(false);
     }
-
-    console.log(data.accessToken);
-    console.log(data.refreshToken);
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    onClose(); // 모달 닫기
-
-  } catch (err) {
-    console.error('[로그인 실패]', err.message);
-    // 화면에는 출력 안 함
-  }
-};
-
+  };
 
   return (
     <div className="login-overlay">
@@ -61,22 +50,10 @@ export default function LoginForm({ onClose }) {
             className="login-input"
             required
           />
-          {error && <div className="login-error">{error}</div>}
-          <button type="submit" className="login-button">
-            로그인
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
-
-        <div className="login-links">
-          <button>회원가입</button>
-          <button>아이디/비밀번호 찾기</button>
-        </div>
-
-        <div className="social-divider">
-          <hr className="divider-line" />
-          <span className="divider-text">SNS LOGIN</span>
-          <hr className="divider-line" />
-        </div>
       </div>
     </div>
   );

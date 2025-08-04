@@ -1,6 +1,6 @@
+// src/features/map/ui/Controls.jsx
 import React from 'react';
 import './MapControls.css';
-import InviteButton from './InviteButton'; // ✅ 초대 버튼 import
 import {
   FaClipboard,
   FaMapMarkerAlt,
@@ -42,11 +42,6 @@ export default function Controls({
 
   return (
     <div className="controls-container">
-      {/* ✅ 초대 버튼을 가장 위에 */}
-      <InviteButton onClick={() => alert('초대 링크 복사')} />
-
-      <div style={{ height: '20px' }}></div>
-
       <button className="map-btn" onClick={zoomIn}>
         <FaPlus className="map-icon" />
       </button>
