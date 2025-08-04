@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import MainContent from "./MainContent";
 import LoginForm from "../../features/auth/ui/LoginForm";
 import { useAuth } from "../../shared/model/useAuth"; // ✅ 추가
-import "./MainPage.css";
+import "./mainPage.css";
 
 const MainPageLayout = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);

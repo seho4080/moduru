@@ -1,12 +1,13 @@
 // src/entities/place/ui/PlaceSearchCard.jsx
-import './PlaceSearchCard.css';
-import { useWishToggle } from '../../../features/wishPlace/model/useWishToggle';
+import './placeSearchCard.css';
 import { useSelector } from 'react-redux';
-import LikedPlaceButton from '../../../features/LikedPlace/ui/LikedPlaceButton';
+import { useWishToggle } from '../../wishPlace/model/useWishToggle';
+import LikedPlaceButton from '../../likedPlace/ui/likedPlaceButton';
 
 export default function PlaceSearchCard({ place, roomId, onHover, onHoverOut }) {
   const { placeImg, placeName, category, latitude, longitude, placeId } = place;
   const { toggleWishPlace } = useWishToggle();
+  const wishPlaces = useSelector((state) => state.wishPlace.places);
 
   const handleMouseEnter = () => {
     if (onHover) onHover({ lat: latitude, lng: longitude });
@@ -16,15 +17,13 @@ export default function PlaceSearchCard({ place, roomId, onHover, onHoverOut }) 
     if (onHoverOut) onHoverOut();
   };
 
-  const wishPlaces = useSelector((state) => state.wishPlace.places);
-
-  // 공유 여부 확인
+  // NOTE: 이미 공유된 장소인지 여부 판단
   const wishedPlace = wishPlaces.find((p) => String(p.placeId) === String(placeId));
   const isAlreadyWished = Boolean(wishedPlace);
 
   const handleWishClick = async () => {
     if (isAlreadyWished) {
-      // 삭제 요청
+      // NOTE: 공유 목록에서 삭제 요청
       const { success } = await toggleWishPlace({
         roomId,
         placeId,
@@ -37,7 +36,7 @@ export default function PlaceSearchCard({ place, roomId, onHover, onHoverOut }) 
       return;
     }
 
-    // 추가 요청
+    // NOTE: 희망 장소로 추가 요청
     const { success } = await toggleWishPlace({
       roomId,
       placeId,

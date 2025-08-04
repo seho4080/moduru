@@ -1,22 +1,32 @@
-// src/features/placeSearch/ui/PlaceSearchPanel.jsx
 import React, { useState } from 'react';
-import './PlaceSearchPanel.css';
 import { FiSearch } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
-import { usePlaceSearch } from '../../placeSearch/model/usePlaceSearch';
+import { usePlaceSearch } from '../model/usePlaceSearch';
 import PlaceSearchCard from './PlaceSearchCard';
+import './placeSearchPanel.css';
 
-export default function PlaceSearchPanel({ roomId, setHoveredCoords }) {
+const PlaceSearchPanel = ({ roomId, setHoveredCoords }) => {
   const [selectedCategory, setSelectedCategory] = useState('음식점');
   const { places, loading } = usePlaceSearch(roomId, selectedCategory);
 
-  const filterOptions = ['전체'];
-  const categoryOptions = ['음식점', '카페', '명소', '숙소', '축제'];
+  const categoryOptions = ['음식점', '명소', '축제', '카페'];
+
+  const handleCategoryClick = (label) => {
+    setSelectedCategory(label);
+  };
+
+  const handleHover = (lat, lng) => {
+    setHoveredCoords({ lat, lng });
+  };
+
+  const handleHoverOut = () => {
+    setHoveredCoords(null);
+  };
 
   return (
     <div className="place-search-panel">
-      {/* ✅ 검색바 */}
+      {/* 검색 바 */}
       <div className="search-wrapper">
         <div className="input-wrapper">
           <input
@@ -32,35 +42,21 @@ export default function PlaceSearchPanel({ roomId, setHoveredCoords }) {
         </button>
       </div>
 
-      {/* ✅ 필터 버튼 */}
-      <div className="filter-buttons">
-        {filterOptions.map((label) => (
-          <button
-            key={label}
-            className={`filter-button ${selectedCategory === label ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(label)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="divider-line" />
-
-      {/* ✅ 카테고리 탭 */}
+      {/* 카테고리 탭 */}
       <div className="category-tabs">
         {categoryOptions.map((label) => (
           <button
             key={label}
             className={`category-tab ${selectedCategory === label ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(label)}
+            onClick={() => handleCategoryClick(label)}
           >
             {label}
           </button>
         ))}
       </div>
+      <div className="category-divider-line" />
 
-      {/* ✅ 장소 카드 리스트 */}
+      {/* 장소 카드 리스트 */}
       <div className="place-card-list">
         {loading ? (
           <p>장소 목록 불러오는 중...</p>
@@ -72,9 +68,9 @@ export default function PlaceSearchPanel({ roomId, setHoveredCoords }) {
               <PlaceSearchCard
                 key={place.placeId}
                 place={place}
-                roomId={roomId} // ✅ 추가!
-                onHover={() => setHoveredCoords({ lat: place.latitude, lng: place.longitude })}
-                onHoverOut={() => setHoveredCoords(null)}
+                roomId={roomId}
+                onHover={() => handleHover(place.latitude, place.longitude)}
+                onHoverOut={handleHoverOut}
               />
             ))}
           </div>
@@ -82,4 +78,6 @@ export default function PlaceSearchPanel({ roomId, setHoveredCoords }) {
       </div>
     </div>
   );
-}
+};
+
+export default PlaceSearchPanel;
