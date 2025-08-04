@@ -71,6 +71,9 @@ public class RoomServiceImpl implements RoomService {
   @Transactional
   @Override
   public TravelRoomResponseDto updateRoom(Long roomId, UpdateTravelRoomRequestDto request) {
+    log.info("🔍 요청 DTO: title={}, region={}, startDate={}, endDate={}",
+            request.getTitle(), request.getRegion(), request.getStartDate(), request.getEndDate());
+
     TravelRoom room =
         travelRoomRepository
             .findById(roomId)
@@ -92,5 +95,12 @@ public class RoomServiceImpl implements RoomService {
     }
 
     travelRoomRepository.deleteById(roomId);
+  }
+
+  @Override
+  public String getRegionByRoomId(Long roomId) {
+    TravelRoom room = travelRoomRepository.findById(roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+    return room.getRegion();
   }
 }
