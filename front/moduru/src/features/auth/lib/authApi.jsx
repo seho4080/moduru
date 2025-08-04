@@ -1,5 +1,3 @@
-// src/features/auth/lib/authApi.js
-
 export const login = async ({ email, password }) => {
   try {
     const res = await fetch('http://localhost:8080/auth/login', {
@@ -17,7 +15,6 @@ export const login = async ({ email, password }) => {
       throw new Error(data.message || '로그인 실패');
     }
 
-    // NOTE: 이후 인증 요청을 위해 accessToken과 refreshToken을 localStorage에 저장함
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
 
@@ -35,22 +32,28 @@ export const reissueToken = async () => {
     const res = await fetch('http://localhost:8080/auth/reissue', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${refreshToken}`,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${refreshToken.trim()}`,
       },
     });
 
-    const data = await res.json();
-
+    const raw = await res.text();
     if (!res.ok) {
-      throw new Error(data.message || '토큰 재발급 실패');
+      throw new Error(raw || '토큰 재발급 실패');
     }
 
-    // NOTE: accessToken과 refreshToken을 갱신하여 저장함. 이후 요청에 사용됨
+    const data = JSON.parse(raw);
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
 
-    return { success: true };
+    console.log('[accessToken 재발급 성공] 새로운 토큰으로 교체됨');
+
+    return {
+      success: true,
+      accessToken: data.accessToken,
+    };
   } catch (err) {
+    console.warn('[accessToken 재발급 실패]', err.message);
     return { success: false, message: err.message };
   }
 };

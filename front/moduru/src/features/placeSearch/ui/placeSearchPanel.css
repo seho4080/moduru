@@ -1,11 +1,12 @@
 .place-search-panel {
   display: flex;
   flex-direction: column;
+  height: 100%;             /* 부모 높이를 기준으로 스크롤 영역 확보 */
+  overflow: hidden;         /* 내부 스크롤 요소에게 위임 */
   padding: 16px;
   user-select: none;
 }
 
-/* NOTE: 검색창과 AI 버튼을 하나의 그룹으로 묶어 정렬 */
 .search-wrapper {
   display: flex;
   align-items: center;
@@ -64,39 +65,6 @@
   background: #e6f0ff;
 }
 
-/* NOTE: 전체 필터 버튼 그룹 */
-.filter-buttons {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.filter-button {
-  width: 100%;
-  padding: 8px 0;
-  border: 1px solid #ccd3ec;
-  border-radius: 12px;
-  font-size: 14px;
-  background-color: white;
-  color: #333;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: center;
-}
-
-.filter-button.active {
-  background-color: #3399CC;
-  color: white;
-  font-weight: bold;
-}
-
-.divider-line {
-  border-top: 1px solid #aaa;
-  margin: 4px 0;
-}
-
-/* NOTE: 카테고리 탭 (카테고리 전환 버튼) */
 .category-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -127,19 +95,21 @@
   font-weight: bold;
 }
 
-/* NOTE: 카테고리 섹션 하단 구분선 */
 .category-divider-line {
   border-top: 1px solid #ccd3ec;
   margin: 8px 0 0 0;
   width: 100%;
 }
 
-/* NOTE: 장소 카드 리스트 컨테이너 간격 */
+
 .place-card-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
   margin-top: 20px;
+  min-height: 0;             
 }
 
-/* NOTE: 장소 카드 그리드 스타일 */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

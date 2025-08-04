@@ -1,7 +1,6 @@
-import { FiShare2 } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { useAddWishPlace } from '../model/useWishToggle';
-import './WishAddButton.css';
+import './wishAddButton.css';
 
 export default function WishAddButton({ place, roomId }) {
   const { addWishPlace } = useAddWishPlace();
@@ -32,7 +31,7 @@ export default function WishAddButton({ place, roomId }) {
       title="희망 장소에 추가"
       className="wish-add-btn"
     >
-      <FiShare2 />
+      공유
     </button>
   );
 }

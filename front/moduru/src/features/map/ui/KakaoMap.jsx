@@ -1,39 +1,39 @@
-// ✅ src/features/map/ui/KakaoMap.jsx
 import React, {
   useRef,
   forwardRef,
   useImperativeHandle,
   useEffect,
-} from "react";
-import useMapInit from "../model/useMapInit";
-import useMarkerMode from "../model/useMarkerMode";
-import useMeasureMode from "../model/useMeasureMode";
-import useHoverMarker from "../model/useHoverMarker";
-import useRemoveMode from "../model/useRemoveMode";
-import { getLatLngFromRegion } from "../lib/regionUtils";
+} from 'react';
+import useMapInit from '../model/useMapInit';
+// import useMarkerMode from '../model/useMarkerMode'; 핀 꽂기 모드 주석 처리
+import useMeasureMode from '../model/useMeasureMode';
+import useRemoveMode from '../model/useRemoveMode';
+import { getLatLngFromRegion } from '../lib/regionUtils';
 
 /* global kakao */
 
 const KakaoMap = forwardRef(
   (
-    { mode, zoomable, region, removeMode, onSelectMarker, hoveredCoords },
+    { mode, zoomable, region, removeMode, onSelectMarker, pinCoords },
     ref
   ) => {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const markers = useRef([]);
-    const selected = useRef(new Set());
-    const hoverMarker = useRef(null);
+    const selectedMarkers = useRef(new Set());
+
     const clickLine = useRef(null);
     const moveLine = useRef(null);
     const overlay = useRef(null);
     const dots = useRef([]);
-    const drawing = useRef(false);
+    const isDrawing = useRef(false);
+    const singlePinMarker = useRef(null);
 
     const modeRef = useRef(mode);
     const prevMode = useRef(mode);
     const removeModeRef = useRef(removeMode);
 
+    // 상태 동기화
     useEffect(() => {
       modeRef.current = mode;
     }, [mode]);
@@ -42,16 +42,22 @@ const KakaoMap = forwardRef(
       removeModeRef.current = removeMode;
     }, [removeMode]);
 
-    // ✅ 지도 초기화 및 각 모드 훅 연결
+    // 지도 초기화
     useMapInit(mapRef, mapInstance);
+
+    // 핀 꽂기 모드 주석 처리
+    /*
     useMarkerMode({
       mapInstance,
       modeRef,
       removeModeRef,
       markers,
-      selected,
+      selected: selectedMarkers,
       onSelectMarker,
     });
+    */
+
+    // 거리 측정 모드
     useMeasureMode({
       mapInstance,
       modeRef,
@@ -59,19 +65,20 @@ const KakaoMap = forwardRef(
       moveLine,
       overlay,
       dots,
-      drawing,
+      drawing: isDrawing,
     });
-    useHoverMarker({ mapInstance, hoveredCoords, hoverMarkerRef: hoverMarker });
+
+    // 핀 제거 모드
     useRemoveMode({
       mapInstance,
       markers,
       removeModeRef,
-      selected,
+      selected: selectedMarkers,
       onSelectMarker,
     });
 
-    // ✅ 거리 측정 흔적 제거 함수
-    const clearMeasure = () => {
+    // 측정 도구 초기화
+    const clearMeasureTools = () => {
       clickLine.current?.setMap(null);
       moveLine.current?.setMap(null);
       overlay.current?.setMap(null);
@@ -85,26 +92,26 @@ const KakaoMap = forwardRef(
       moveLine.current = null;
       overlay.current = null;
       dots.current = [];
-      drawing.current = false;
+      isDrawing.current = false;
     };
 
-    // ✅ 모드 전환 감지: measure → 다른 모드 OR measure → measure 재진입 시
+    // 모드 전환 시 측정 도구 초기화
     useEffect(() => {
-      const m = mapInstance.current;
-      if (!m) return;
+      const map = mapInstance.current;
+      if (!map) return;
 
-      const prev = prevMode.current;
+      const previous = prevMode.current;
       prevMode.current = mode;
 
-      const isLeavingMeasure = prev === "measure" && mode !== "measure";
-      const isReenteringMeasure = prev === "measure" && mode === "measure";
+      const exitedMeasure = previous === 'measure' && mode !== 'measure';
+      const reenteredMeasure = previous === 'measure' && mode === 'measure';
 
-      if (isLeavingMeasure || isReenteringMeasure) {
-        clearMeasure();
+      if (exitedMeasure || reenteredMeasure) {
+        clearMeasureTools();
       }
     }, [mode]);
 
-    // ✅ 외부에서 확대/축소 호출 가능하도록 expose
+    // 외부에서 지도 줌 제어
     useImperativeHandle(
       ref,
       () => ({
@@ -116,23 +123,45 @@ const KakaoMap = forwardRef(
       []
     );
 
-    // ✅ 줌 가능 여부 반영
+    // 줌 가능 여부 적용
     useEffect(() => {
       mapInstance.current?.setZoomable(zoomable);
     }, [zoomable]);
 
-    // ✅ 지역 변경 시 중심 이동
+    // 지역 설정 시 지도 중심 이동
     useEffect(() => {
       if (!region || !mapInstance.current) return;
+
       const coords = getLatLngFromRegion(region);
       if (!coords) return;
-      mapInstance.current.setCenter(
-        new kakao.maps.LatLng(coords.lat, coords.lng)
-      );
+
+      const center = new kakao.maps.LatLng(coords.lat, coords.lng);
+      mapInstance.current.setCenter(center);
       mapInstance.current.setLevel(7);
     }, [region]);
 
-    return <div ref={mapRef} style={{ width: "100%", height: "100vh" }} />;
+    // 장소 클릭 시 핀 표시 및 중심 이동
+    useEffect(() => {
+      const map = mapInstance.current;
+      if (!map) return;
+
+      // 기존 마커 제거
+      if (singlePinMarker.current) {
+        singlePinMarker.current.setMap(null);
+        singlePinMarker.current = null;
+      }
+
+      // 새 좌표가 있을 경우 마커 추가 및 중심 이동
+      if (pinCoords) {
+        const pos = new kakao.maps.LatLng(pinCoords.lat, pinCoords.lng);
+        const marker = new kakao.maps.Marker({ position: pos });
+        marker.setMap(map);
+        singlePinMarker.current = marker;
+        map.panTo(pos);
+      }
+    }, [pinCoords]);
+
+    return <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
   }
 );
 
