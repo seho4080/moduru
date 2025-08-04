@@ -10,6 +10,7 @@ import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
 import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.room.service.WantPlaceService;
+import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
 
     private final PlaceSearchRepository placeSearchRepository;
     private final PlaceRepository placeRepository;
-    private final MyPlaceService myPlaceService;
+    private final MyPlaceReaderService myPlaceReaderService;
     private final WantPlaceService wantPlaceService;
     private final RoomService roomService;
 
@@ -56,7 +57,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
                 .filter(doc -> regionPlaceIds.contains(Long.parseLong(doc.getId())))
                 .map(doc -> {
                     // 각 document에서 필요한 필드 꺼냄
-                    boolean isLiked = myPlaceService.isLiked(user.getUser().getId(), Long.parseLong(doc.getId()));
+                    boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), Long.parseLong(doc.getId()));
                     boolean isWanted = wantPlaceService.isWanted(roomId, Long.parseLong(doc.getId()));
 
                     return PlaceResponseDto.builder()
