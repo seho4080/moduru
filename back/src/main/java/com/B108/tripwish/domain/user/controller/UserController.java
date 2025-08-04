@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.user.controller;
 
+import com.B108.tripwish.domain.user.dto.response.UserTravelRoomResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -98,4 +101,20 @@ public class UserController {
     userService.deleteUser(currentUser);
     return ResponseEntity.ok(new CommonResponse("USER_DELETED", "회원이 삭제되었습니다."));
   }
+
+    @Operation(
+            summary = "유저가 속한 여행 방 목록 조회",
+            description = "현재 로그인한 사용자가 속해 있는 모든 여행 방 목록을 조회합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "여행 방 목록 조회 성공"),
+                    @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
+                    @ApiResponse(responseCode = "404", description = "해당 유저 또는 여행 방을 찾을 수 없음"),
+                    @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
+            }
+    )
+    @GetMapping("/travel-rooms")
+    public ResponseEntity<List<UserTravelRoomResponseDto>> getUserTravelRooms(
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ResponseEntity.ok(userService.getUserTravelRooms(currentUser));
+    }
 }

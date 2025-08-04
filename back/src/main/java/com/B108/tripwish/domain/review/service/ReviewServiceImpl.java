@@ -1,6 +1,6 @@
 package com.B108.tripwish.domain.review.service;
 
-import com.B108.tripwish.domain.review.repository.ReviewTagRepository;
+import com.B108.tripwish.domain.review.repository.PlaceReviewTagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,10 +12,10 @@ import java.util.List;
 @Slf4j
 public class ReviewServiceImpl implements ReviewService{
 
-    private final ReviewTagRepository reviewTagRepository;
+    private final PlaceReviewTagRepository placeReviewTagRepository;
 
     @Override
     public List<String> getTagNamesByPlaceId(Long placeId) {
-        return reviewTagRepository.findTagNamesByPlaceId(placeId);
+        return placeReviewTagRepository.findTagNamesByPlaceId(placeId);
     }
 }
