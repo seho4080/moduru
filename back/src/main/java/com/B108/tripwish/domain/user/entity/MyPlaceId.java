@@ -14,6 +14,6 @@ import java.util.Objects;
 @EqualsAndHashCode
 public class MyPlaceId implements Serializable {
 
-    private Long placeId;
     private Long userId;
+    private Long placeId;
 }
