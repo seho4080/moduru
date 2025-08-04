@@ -3,9 +3,10 @@ package com.B108.tripwish.domain.user.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "users")
@@ -23,8 +24,7 @@ public class User {
   @Column(length = 100, unique = true)
   private String email;
 
-  @Column
-  private String password;
+  @Column private String password;
 
   @Column(nullable = false)
   private String provider;
@@ -44,8 +44,7 @@ public class User {
   @Column(nullable = false)
   private LocalDateTime createdAt;
 
-  @Column
-  private String phone;
+  @Column private String phone;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "role", nullable = false)

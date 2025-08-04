@@ -1,16 +1,24 @@
 // ✅ src/features/map/ui/KakaoMap.jsx
-import React, { useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
-import useMapInit from '../model/useMapInit';
-import useMarkerMode from '../model/useMarkerMode';
-import useMeasureMode from '../model/useMeasureMode';
-import useHoverMarker from '../model/useHoverMarker';
-import useRemoveMode from '../model/useRemoveMode';
-import { getLatLngFromRegion } from '../lib/regionUtils';
+import React, {
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+} from "react";
+import useMapInit from "../model/useMapInit";
+import useMarkerMode from "../model/useMarkerMode";
+import useMeasureMode from "../model/useMeasureMode";
+import useHoverMarker from "../model/useHoverMarker";
+import useRemoveMode from "../model/useRemoveMode";
+import { getLatLngFromRegion } from "../lib/regionUtils";
 
 /* global kakao */
 
 const KakaoMap = forwardRef(
-  ({ mode, zoomable, region, removeMode, onSelectMarker, hoveredCoords }, ref) => {
+  (
+    { mode, zoomable, region, removeMode, onSelectMarker, hoveredCoords },
+    ref
+  ) => {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const markers = useRef([]);
@@ -36,10 +44,31 @@ const KakaoMap = forwardRef(
 
     // ✅ 지도 초기화 및 각 모드 훅 연결
     useMapInit(mapRef, mapInstance);
-    useMarkerMode({ mapInstance, modeRef, removeModeRef, markers, selected, onSelectMarker });
-    useMeasureMode({ mapInstance, modeRef, clickLine, moveLine, overlay, dots, drawing });
+    useMarkerMode({
+      mapInstance,
+      modeRef,
+      removeModeRef,
+      markers,
+      selected,
+      onSelectMarker,
+    });
+    useMeasureMode({
+      mapInstance,
+      modeRef,
+      clickLine,
+      moveLine,
+      overlay,
+      dots,
+      drawing,
+    });
     useHoverMarker({ mapInstance, hoveredCoords, hoverMarkerRef: hoverMarker });
-    useRemoveMode({ mapInstance, markers, removeModeRef, selected, onSelectMarker });
+    useRemoveMode({
+      mapInstance,
+      markers,
+      removeModeRef,
+      selected,
+      onSelectMarker,
+    });
 
     // ✅ 거리 측정 흔적 제거 함수
     const clearMeasure = () => {
@@ -67,8 +96,8 @@ const KakaoMap = forwardRef(
       const prev = prevMode.current;
       prevMode.current = mode;
 
-      const isLeavingMeasure = prev === 'measure' && mode !== 'measure';
-      const isReenteringMeasure = prev === 'measure' && mode === 'measure';
+      const isLeavingMeasure = prev === "measure" && mode !== "measure";
+      const isReenteringMeasure = prev === "measure" && mode === "measure";
 
       if (isLeavingMeasure || isReenteringMeasure) {
         clearMeasure();
@@ -79,8 +108,10 @@ const KakaoMap = forwardRef(
     useImperativeHandle(
       ref,
       () => ({
-        zoomIn: () => mapInstance.current?.setLevel(mapInstance.current.getLevel() - 1),
-        zoomOut: () => mapInstance.current?.setLevel(mapInstance.current.getLevel() + 1),
+        zoomIn: () =>
+          mapInstance.current?.setLevel(mapInstance.current.getLevel() - 1),
+        zoomOut: () =>
+          mapInstance.current?.setLevel(mapInstance.current.getLevel() + 1),
       }),
       []
     );
@@ -95,11 +126,13 @@ const KakaoMap = forwardRef(
       if (!region || !mapInstance.current) return;
       const coords = getLatLngFromRegion(region);
       if (!coords) return;
-      mapInstance.current.setCenter(new kakao.maps.LatLng(coords.lat, coords.lng));
+      mapInstance.current.setCenter(
+        new kakao.maps.LatLng(coords.lat, coords.lng)
+      );
       mapInstance.current.setLevel(7);
     }, [region]);
 
-    return <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
+    return <div ref={mapRef} style={{ width: "100%", height: "100vh" }} />;
   }
 );
 
