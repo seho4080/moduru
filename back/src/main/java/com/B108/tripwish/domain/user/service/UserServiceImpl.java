@@ -113,5 +113,6 @@ public class UserServiceImpl implements UserService {
                     .members(room.getMembers())
                     .build())
             .toList();
+
   }
 }
