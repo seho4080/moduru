@@ -18,8 +18,9 @@ public class Place {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "category_id", nullable = false)
-  private Integer categoryId;
+  @ManyToOne
+  @JoinColumn(name = "category_id")
+  private Category category;
 
   @Column(name = "kakao_id")
   private Long kakaoId;
@@ -37,10 +38,10 @@ public class Place {
   private String roadAddressName; // 도로명 주소
 
   @Column(nullable = false)
-  private Float lng; // 경도
+  private Double lng; // 경도
 
   @Column(nullable = false)
-  private Float lat; // 위도
+  private Double lat; // 위도
 
   @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PlaceMetadataTag> metadataTags = new ArrayList<>();
