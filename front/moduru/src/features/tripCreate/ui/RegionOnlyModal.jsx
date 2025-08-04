@@ -1,32 +1,40 @@
-// src/features/tripCreate/RegionSelectModal.jsx
-
 import { useState, useRef, useEffect } from 'react';
 import { REGIONS } from '../lib/regionName';
 import { updateTripRoomRegion } from '../lib/tripRoomApi';
-import './TripCreateForm.css';
+import './tripCreateForm.css';
+
+function formatDate(date) {
+  return date.toISOString().slice(0, 10); // YYYY-MM-DD
+}
 
 export default function RegionSelectModal({ roomId, onRegionSet }) {
   const [selectedRegion, setSelectedRegion] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // NOTE: 드롭다운 외부 클릭 시 닫히도록 이벤트 등록
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
     };
+
     if (dropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [dropdownOpen]);
 
-  const handleClose = () => {
+  const handleCancel = () => {
     if (!selectedRegion) {
       alert('여행지를 선택해주세요.');
       return;
     }
+
     onRegionSet(selectedRegion);
   };
 
@@ -36,9 +44,8 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
       return;
     }
 
-    // 🟢 필수 데이터 구성
-    const title = '나의 여행'; // 실제 제목은 외부에서 받아오게 할 수도 있음
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD 형식
+    const title = '나의 여행'; // NOTE: 이후 props로 주입받도록 확장 가능
+    const today = formatDate(new Date());
 
     try {
       const data = await updateTripRoomRegion(roomId, {
@@ -47,10 +54,11 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
         startDate: today,
         endDate: today,
       });
-      console.log('✅ 여행 방 지역 업데이트 성공:', data);
+
+      console.log('여행 방 지역 업데이트 성공:', data);
       onRegionSet(selectedRegion);
     } catch (err) {
-      console.error(err);
+      console.error('지역 설정 실패:', err);
       alert('서버 오류로 인해 지역 설정에 실패했습니다.');
     }
   };
@@ -59,7 +67,7 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
     <>
       <div className="trip-modal-backdrop" />
       <div className="trip-modal">
-        <button className="close-btn" onClick={handleClose}>×</button>
+        <button className="close-btn" onClick={handleCancel}>×</button>
 
         <h3 className="region-title">여행지를 선택해주세요</h3>
 
@@ -71,18 +79,22 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
             {selectedRegion || '여행지'}
             <span className="arrow">
               {dropdownOpen ? (
-                <svg width="16" height="16" viewBox="0 0 20 20"><polyline points="6 12 10 8 14 12" fill="none" stroke="#007aff" strokeWidth="2" /></svg>
+                <svg width="16" height="16" viewBox="0 0 20 20">
+                  <polyline points="6 12 10 8 14 12" fill="none" stroke="#007aff" strokeWidth="2" />
+                </svg>
               ) : (
-                <svg width="16" height="16" viewBox="0 0 20 20"><polyline points="6 8 10 12 14 8" fill="none" stroke="#007aff" strokeWidth="2" /></svg>
+                <svg width="16" height="16" viewBox="0 0 20 20">
+                  <polyline points="6 8 10 12 14 8" fill="none" stroke="#007aff" strokeWidth="2" />
+                </svg>
               )}
             </span>
           </div>
 
           {dropdownOpen && (
             <div className="dropdown-list">
-              {REGIONS.map((r, i) => (
+              {REGIONS.map((r) => (
                 <div
-                  key={i}
+                  key={r.name}
                   className="dropdown-item"
                   onClick={() => {
                     setSelectedRegion(r.name);

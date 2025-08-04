@@ -10,9 +10,9 @@
 
 .star-icon {
   font-size: 22px;
-  color: #ccc; /* 빈 별 색상 */
+  color: #ccc;
 }
 
 .star-icon.liked {
-  color: #f8d42e; /* 네이버 지도 느낌의 노란 별 */
+  color: #f8d42e; 
 }
