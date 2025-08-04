@@ -12,6 +12,7 @@ import lombok.*;
 @Entity
 @Table(name = "travel_rooms")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder

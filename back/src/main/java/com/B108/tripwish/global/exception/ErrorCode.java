@@ -29,9 +29,12 @@ public enum ErrorCode {
   // 존재하지 않는 데이터
   ROOM_NOT_FOUND("해당 여행방 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
   ROOM_MEMBER_NOT_FOUND("해당 여행 멤버가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
-  FOOD_NOT_FOUND("음식을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-  DIET_NOT_FOUND("해당 식사를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-  BOARD_NOT_FOUND("해당 게시글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  CATEGORY_NOT_FOUND("해당 카테고리를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  RESTAURANT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  SPOT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  FESTIVAL_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
 
   // 파일 삭제 관련
   FILE_DELETE_FAIL("이미지 삭제 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
@@ -40,8 +43,8 @@ public enum ErrorCode {
   NO_PERMISSION("접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
   ROOM_DELETE_FORBIDDEN("방 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
-  INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST),
-  INVALID_BOARD_TYPE("유효하지 않은 게시판 타입입니다.", HttpStatus.BAD_REQUEST);
+  INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST);
+
 
   private final String message;
   private final HttpStatus status;
