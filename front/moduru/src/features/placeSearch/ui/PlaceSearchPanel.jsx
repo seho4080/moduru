@@ -3,10 +3,10 @@ import { FiSearch } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
 import { usePlaceSearch } from '../model/usePlaceSearch';
-import PlaceSearchCard from './PlaceSearchCard';
+import PlaceSearchList from './PlaceSearchList';
 import './placeSearchPanel.css';
 
-const PlaceSearchPanel = ({ roomId, setHoveredCoords }) => {
+const PlaceSearchPanel = ({ roomId }) => {
   const [selectedCategory, setSelectedCategory] = useState('전체');
   const { places, loading } = usePlaceSearch(roomId, selectedCategory);
 
@@ -14,14 +14,6 @@ const PlaceSearchPanel = ({ roomId, setHoveredCoords }) => {
 
   const handleCategoryClick = (label) => {
     setSelectedCategory(label);
-  };
-
-  const handleHover = (lat, lng) => {
-    setHoveredCoords({ lat, lng });
-  };
-
-  const handleHoverOut = () => {
-    setHoveredCoords(null);
   };
 
   return (
@@ -60,17 +52,7 @@ const PlaceSearchPanel = ({ roomId, setHoveredCoords }) => {
         ) : places.length === 0 ? (
           <p>해당 카테고리에 등록된 장소가 없어요.</p>
         ) : (
-          <div className="card-grid">
-            {places.map((place) => (
-              <PlaceSearchCard
-                key={place.placeId}
-                place={place}
-                roomId={roomId}
-                onHover={() => handleHover(place.latitude, place.longitude)}
-                onHoverOut={handleHoverOut}
-              />
-            ))}
-          </div>
+          <PlaceSearchList places={places} roomId={roomId} />
         )}
       </div>
     </div>
