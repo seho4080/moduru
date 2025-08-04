@@ -15,5 +15,6 @@ public interface RoomReaderService {
         LocalDate getEndDate();
         LocalDateTime getCreatedAt();
         List<String> getMembers();
+
     }
 }

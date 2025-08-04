@@ -10,4 +10,5 @@ import com.B108.tripwish.domain.room.entity.TravelMember;
 public interface TravelMemberRepository extends JpaRepository<TravelMember, Long> {
   Optional<TravelMember> findByUser_IdAndTravelRoom_Id(Long userId, Long travelRoomId);
 
+
 }

@@ -21,4 +21,5 @@ public class UserTravelRoomResponseDto {
     private List<String> members;
 
 
+
 }

@@ -100,5 +100,6 @@ public class RoomServiceImpl implements RoomService {
     TravelRoom room = travelRoomRepository.findById(roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     return room.getRegion();
+
   }
 }

@@ -18,4 +18,5 @@ public interface UserService {
   void deleteUser(CustomUserDetails currentUser);
 
   List<UserTravelRoomResponseDto> getUserTravelRooms(CustomUserDetails currentUser);
+
 }
