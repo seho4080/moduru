@@ -7,8 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // internal
 import MainPageLayout from "../pages/mainPage/MainPageLayout";
 import TripRoomPage from "../pages/tripRoomPage/TripRoomPage";
-// tailwind 확인
-import TestTailWind from "../pages/exTailwind";
+import MyPageLayout from "../pages/myPage/MyPageLayout";
 
 const RouterComponent = () => {
   return (
@@ -16,8 +15,7 @@ const RouterComponent = () => {
       <Routes>
         <Route path="/" element={<MainPageLayout />} />
         <Route path="/trip-room" element={<TripRoomPage />} />
-        <Route path="/test-tailwind" element={<TestTailWind />} />
-        {/* 테스트 경로(실행되면 삭제) */}
+        <Route path="/my-page" element={<MyPageLayout />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,41 +1,47 @@
 import React, { useState } from "react";
+import Header from "../../widgets/header";
+import Footer from "../../widgets/footer";
 import MainContent from "./MainContent";
 import LoginForm from "../../features/auth/ui/LoginForm";
-import { useAuth } from "../../shared/model/useAuth"; // ✅ 추가
-import "./mainPage.css";
+import { useAuth } from "../../shared/model/useAuth";
 
 const MainPageLayout = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { isLoggedIn } = useAuth(); // ✅ 로그인 상태 가져오기
+  const { isLoggedIn } = useAuth();
 
   const handleProfileClick = () => {
     if (!isLoggedIn) {
-      setIsLoginModalOpen(true); // ✅ 로그인 안 됐으면 모달 열기
+      setIsLoginModalOpen(true);
     } else {
-      alert("✅ 프로필 화면으로 이동 (추후 구현 예정)"); // ✅ 로그인 상태라면 다른 동작
+      alert("✅ 프로필 화면으로 이동 (추후 구현 예정)");
     }
   };
 
   return (
-    <div className="main-page-layout">
-      <div className="top-bar">
-        <div className="logo">
+    <div className="min-h-screen flex flex-col items-center bg-[#f5faff] relative">
+      {/* 상단바 */}
+      <div className="w-[90%] py-5 flex justify-between items-center">
+        <div className="w-[100px]">
           <img src="/src/assets/images/moduru-logo.png" alt="로고" />
         </div>
-
-        <div className="login-icon" onClick={handleProfileClick}>
+        <div
+          className="w-[70px] h-[70px] mr-5 mt-5 cursor-pointer"
+          onClick={handleProfileClick}
+        >
           <img src="/src/assets/icons/login-icon.png" alt="로그인" />
         </div>
       </div>
 
       <MainContent />
 
-      {/*  LoginForm 모달 조건부 렌더링 */}
+      <footer className="mt-10 text-sm text-gray-500 text-center">
+        © 2025 에잇(스파). All rights reserved
+      </footer>
+
+      {/* 로그인 모달 */}
       {isLoginModalOpen && (
         <LoginForm onClose={() => setIsLoginModalOpen(false)} />
       )}
-
-      <footer className="footer">© 2025 에잇(스파). All rights reserved</footer>
     </div>
   );
 };
