@@ -43,7 +43,8 @@ public enum ErrorCode {
   NO_PERMISSION("접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
   ROOM_DELETE_FORBIDDEN("방 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
-  INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST);
+  INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST),
+  UNSUPPORTED_CATEGORY_TYPE("지원하지 않는 카테고리 타입입니다.", HttpStatus.BAD_REQUEST);
 
 
   private final String message;
