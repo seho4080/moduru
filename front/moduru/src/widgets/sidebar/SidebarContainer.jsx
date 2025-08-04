@@ -3,8 +3,8 @@ import SidebarTabs from './SidebarTabs';
 import SidebarPanel from './SidebarPanel';
 import LoginForm from '../../features/auth/ui/LoginForm';
 
-// ✅ TripRoomPage에서 roomId를 props로 전달받도록 수정
-export default function SidebarContainer({ activeTab, onTabChange, roomId }) {
+// ✅ TripRoomPage에서 roomId, setHoveredCoords를 props로 전달받도록 수정
+export default function SidebarContainer({ activeTab, onTabChange, roomId, setHoveredCoords }) {
   const [lastTab, setLastTab] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -44,6 +44,7 @@ export default function SidebarContainer({ activeTab, onTabChange, roomId }) {
           onClosePanel={handleClosePanel}
           onOpenPanel={handleOpenPanel}
           roomId={roomId} // ✅ 추가된 부분: SidebarPanel로 roomId 전달
+          setHoveredCoords={setHoveredCoords} // ✅ 추가된 부분
         />
       </div>
 
