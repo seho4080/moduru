@@ -1,11 +1,9 @@
-// src/features/tripCreate/lib/tripRoomApi.js
 import { reissueToken } from '../../auth/lib/authApi';
 
-// NOTE: 인증 토큰이 만료되었을 경우를 대비해, 401 응답 시 토큰을 재발급받고 재시도함
-async function fetchWithAuth(url, options = {}) {
+export async function fetchWithAuth(url, options = {}) {
   let token = localStorage.getItem('accessToken');
 
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     ...options,
     headers: {
       ...options.headers,
@@ -14,13 +12,37 @@ async function fetchWithAuth(url, options = {}) {
   });
 
   if (res.status === 401) {
+    const contentType = res.headers.get('content-type');
+    let errorBody = '';
+
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        const json = await res.json();
+        errorBody = JSON.stringify(json);
+      } else {
+        errorBody = await res.text();
+      }
+    } catch (err) {
+      errorBody = '응답 파싱 실패';
+    }
+
+    const shouldReissue =
+      errorBody.includes('Access Token') || errorBody.includes('access token');
+
+    if (!shouldReissue) {
+      throw new Error(`401 에러 발생 (재발급 조건 불충족): ${errorBody}`);
+    }
+
     const result = await reissueToken();
     if (!result.success) {
       throw new Error('토큰 만료. 다시 로그인 해주세요.');
     }
 
-    token = localStorage.getItem('accessToken');
-    return await fetch(url, {
+    // ✅ reissueToken()에서 직접 받은 최신 토큰 사용
+    token = result.accessToken;
+    console.log('[fetchWithAuth] accessToken 재적용 후 재요청', token);
+
+    res = await fetch(url, {
       ...options,
       headers: {
         ...options.headers,
@@ -32,7 +54,6 @@ async function fetchWithAuth(url, options = {}) {
   return res;
 }
 
-// NOTE: 새로운 여행방을 생성함. 서버 응답은 travelRoomId를 포함
 export async function createTripRoom() {
   const url = 'http://localhost:8080/rooms';
 
@@ -54,7 +75,6 @@ export async function createTripRoom() {
   }
 }
 
-// NOTE: 여행방 ID를 기반으로 상세 정보를 조회함
 export async function getTripRoomInfo(roomId) {
   const url = `http://localhost:8080/rooms/${roomId}`;
 
@@ -76,7 +96,6 @@ export async function getTripRoomInfo(roomId) {
   }
 }
 
-// NOTE: 여행방 지역/제목/날짜 등의 정보를 업데이트함
 export async function updateTripRoomRegion(roomId, { title, region, startDate, endDate }) {
   const url = `http://localhost:8080/rooms/${roomId}/update`;
   const bodyData = { title, region, startDate, endDate };

@@ -1,4 +1,3 @@
-// src/features/LikedPlace/ui/LikedPlaceButton.jsx
 import { useSelector } from 'react-redux';
 import { FaStar, FaRegStar } from 'react-icons/fa';
 import useLikedToggle from '../model/useLikedToggle';
