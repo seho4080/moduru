@@ -10,9 +10,5 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class WantPlaceServiceImpl implements WantPlaceService{
 
-    private final WantPlaceRepository wantPlaceRepository;
-    @Override
-    public boolean isWanted(Long roomId, Long placeId) {
-        return wantPlaceRepository.existsByTravelRoom_IdAndPlace_Id(roomId, placeId);
-    }
+
 }

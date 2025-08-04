@@ -6,6 +6,7 @@ import com.B108.tripwish.domain.place.entity.*;
 import com.B108.tripwish.domain.place.respoistory.*;
 import com.B108.tripwish.domain.review.service.ReviewService;
 import com.B108.tripwish.domain.room.service.RoomService;
+import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.room.service.WantPlaceService;
 import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceService;
@@ -33,7 +34,7 @@ public class PlaceServiceImpl implements PlaceService{
     private final PlaceMetaDataTagRepository placeMetaDataTagRepository;
     private final RoomService roomService;
     private final MyPlaceReaderService myPlaceReaderService;
-    private final WantPlaceService wantPlaceService;
+    private final WantPlaceReaderService wantPlaceReaderService;
     private final ReviewService reviewService;
 
     @Transactional(readOnly = true)
@@ -61,7 +62,7 @@ public class PlaceServiceImpl implements PlaceService{
     @Override
     public PlaceResponseDto buildPlaceDto(Place place, Long userId, Long roomId) {
         boolean isLiked = myPlaceReaderService.isLiked(userId, place.getId());
-        boolean isWanted = wantPlaceService.isWanted(roomId, place.getId());
+        boolean isWanted = wantPlaceReaderService.isWanted(roomId, place.getId());
         return PlaceResponseDto.fromEntity(place, isLiked, isWanted);
     }
 
@@ -71,7 +72,7 @@ public class PlaceServiceImpl implements PlaceService{
                 .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
         boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
-        boolean isWanted = wantPlaceService.isWanted(roomId, placeId);
+        boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId);
 
         List<String> reviewTags = reviewService.getTagNamesByPlaceId(placeId);
         List<String> metaDataTags = Optional.ofNullable(placeMetaDataTagRepository.findContentByPlaceId(placeId))
@@ -114,7 +115,6 @@ public class PlaceServiceImpl implements PlaceService{
                         .businessHours(restaurant.getBusinessHours())
                         .restDate(restaurant.getRestDate())
                         .parking(restaurant.getParking())
-                        .price(restaurant.getPrice())
                         .menus(restaurant.getMenus().stream()
                                 .map(RestaurantMenu::getMenu)
                                 .collect(Collectors.toList()))

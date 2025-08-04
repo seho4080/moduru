@@ -16,7 +16,6 @@ public class RestaurantDetailResponseDto implements CategoryDetailResponseDto{
     private String businessHours;
     private String restDate;
     private String parking;
-    private String price;
     private List<String> menus;
 
 }
