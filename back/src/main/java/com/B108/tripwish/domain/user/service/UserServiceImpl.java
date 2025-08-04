@@ -1,8 +1,7 @@
 package com.B108.tripwish.domain.user.service;
 
-import com.B108.tripwish.domain.room.entity.TravelRoom;
-import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.user.dto.response.UserTravelRoomResponseDto;
+import com.B108.tripwish.domain.room.service.RoomReaderService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +15,6 @@ import com.B108.tripwish.domain.user.repository.UserRepository;
 import com.B108.tripwish.domain.user.repository.UserTokenRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
-import com.B108.tripwish.domain.room.entity.TravelMember;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +29,7 @@ public class UserServiceImpl implements UserService {
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final UserTokenRepository userTokenRepository;
-  private final TravelMemberRepository travelMemberRepository;
+  private final RoomReaderService roomReaderService;
 
   @Transactional
   @Override
@@ -98,23 +96,22 @@ public class UserServiceImpl implements UserService {
   public List<UserTravelRoomResponseDto> getUserTravelRooms(CustomUserDetails currentUser) {
     Long userId = currentUser.getUser().getId();
 
-    //유저 존재하는지 조회
     userRepository.findById(userId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-    List<TravelRoom> rooms = travelMemberRepository.findByUser_Id(userId).stream()
-            .map(TravelMember::getTravelRoom)
-            .distinct()
-            .toList();
+    // roomReaderService는 RoomView 인터페이스를 반환
+    List<RoomReaderService.RoomView> rooms = roomReaderService.getRoomsByUserId(userId);
 
-    //Dto 변환
     return rooms.stream()
-            .map(room -> UserTravelRoomResponseDto.from(
-                    room,
-                    room.getTravelMembers().stream()
-                            .map(m -> m.getUser().getNickname())
-                            .toList()
-            ))
+            .map(room -> UserTravelRoomResponseDto.builder()
+                    .travelRoomId(room.getRoomId())
+                    .title(room.getTitle())
+                    .region(room.getRegion())
+                    .startDate(room.getStartDate())
+                    .endDate(room.getEndDate())
+                    .createdAt(room.getCreatedAt())
+                    .members(room.getMembers())
+                    .build())
             .toList();
   }
 }
