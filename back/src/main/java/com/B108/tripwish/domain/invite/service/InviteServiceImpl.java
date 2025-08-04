@@ -1,6 +1,9 @@
 package com.B108.tripwish.domain.invite.service;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.invite.dto.request.InviteFriendRequestDto;
+import com.B108.tripwish.domain.invite.dto.response.FriendInviteInfoResponseDto;
+import com.B108.tripwish.domain.invite.dto.response.InvitableFriendListResponseDto;
 import com.B108.tripwish.domain.invite.dto.response.InviteLinkResponseDto;
 import com.B108.tripwish.domain.invite.dto.response.JoinRoomResponseDto;
 import com.B108.tripwish.domain.invite.entity.InviteToken;
@@ -11,6 +14,10 @@ import com.B108.tripwish.domain.room.entity.TravelMemberRole;
 import com.B108.tripwish.domain.room.entity.TravelRoom;
 import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.room.service.RoomService;
+import com.B108.tripwish.domain.user.entity.Friend;
+import com.B108.tripwish.domain.user.entity.User;
+import com.B108.tripwish.domain.user.repository.FriendRepository;
+import com.B108.tripwish.domain.user.repository.UserRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +27,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +42,8 @@ public class InviteServiceImpl implements InviteService {
 
     private final InviteTokenRepository inviteTokenRepository;
     private final TravelMemberRepository travelMemberRepository;
+    private final FriendRepository friendRepository;
+    private final UserRepository userRepository;
     private final RoomService roomService;
 
     @Transactional
@@ -98,5 +109,54 @@ public class InviteServiceImpl implements InviteService {
 
         return new JoinRoomResponseDto(roomId);
 
+    }
+
+    @Override
+    public InvitableFriendListResponseDto getFriends(CustomUserDetails user, Long roomId) {
+
+        // 로그인한 사용자의 친구 목록 조회
+        List<Friend> friends = friendRepository.findByUser(user.getUser());
+
+        // 친구들의 방 참여 여부 확인
+        List<FriendInviteInfoResponseDto> friendDtos = friends.stream()
+                .map(friend -> {
+                    User friendUser = friend.getFriend();
+                    Long friendId = friendUser.getId();
+                    boolean alreadyInvited = travelMemberRepository.existsById(
+                            new TravelMemberId(roomId, friendId)
+                    );
+
+                    return new FriendInviteInfoResponseDto(
+                            friendUser.getId(),
+                            friendUser.getNickname(),
+                            friendUser.getEmail(),
+                            alreadyInvited
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new InvitableFriendListResponseDto(friendDtos);
+    }
+
+    @Transactional
+    @Override
+    public void inviteFriends(InviteFriendRequestDto request) {
+        TravelRoom room = roomService.findById(request.getRoomId());
+
+        for (Long friendId : request.getFriendIds()) {
+            TravelMemberId memberId = new TravelMemberId(request.getRoomId(), friendId);
+
+            // 이미 초대되어 있는지 확인
+            boolean alreadyExists = travelMemberRepository.existsById(memberId);
+            if (alreadyExists) continue;
+
+            // 친구 사용자 조회
+            User friend = userRepository.findById(friendId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            // 새 TravelMember 저장
+            TravelMember member = new TravelMember(room, friend, TravelMemberRole.INVITED);
+            travelMemberRepository.save(member);
+        }
     }
 }
