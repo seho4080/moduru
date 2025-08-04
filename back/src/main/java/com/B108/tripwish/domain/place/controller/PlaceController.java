@@ -106,32 +106,5 @@ public class PlaceController {
         return ResponseEntity.ok(response); // 200
     }
 
-    @Operation(
-            summary = "장소 좋아요",
-            description = "사용자가 특정 장소에 좋아요를 누릅니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "좋아요 상태 변경 성공"),
-                    @ApiResponse(responseCode = "401", description = "로그인되지 않은 사용자", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "해당 장소를 찾을 수 없음", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
-            })
-    @PostMapping("/like/{placeId}")
-    public ResponseEntity<Void> likePlace(@PathVariable Long placeId) {
-        return ResponseEntity.ok().build();
-    }
-
-    @Operation(
-            summary = "장소 좋아요 취소",
-            description = "사용자가 특정 장소에 눌러둔 좋아요를 취소합니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "좋아요 취소 성공"),
-                    @ApiResponse(responseCode = "401", description = "로그인되지 않은 사용자", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "해당 장소를 찾을 수 없음", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
-            })
-    @DeleteMapping("/like/{placeId}")
-    public ResponseEntity<Void> unlikePlace(@PathVariable Long placeId) {
-        return ResponseEntity.ok().build();
-    }
 
 }
