@@ -1,25 +1,23 @@
-import React, { useRef, useState, useEffect } from 'react';
+// src/widgets/sidebar/SidebarPanel.jsx
+
+import React, { useRef, useEffect, useState } from 'react';
 import PlaceSearchPanel from '../../features/placeSearch/ui/PlaceSearchPanel';
+import WishPlacePanel from '../../features/wishPlace/ui/WishPlacePanel';
 import { useLocation } from 'react-router-dom';
 
-export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, setHoveredCoords }) {
+export default function SidebarPanel({
+  activeTab,
+  isOpen,
+  onClosePanel,
+  onOpenPanel,
+  setHoveredCoords,
+}) {
   const location = useLocation();
   const { travelRoomId } = location.state || {};
 
   const panelRef = useRef(null);
   const [width, setWidth] = useState(450);
-  const [isOpen, setIsOpen] = useState(true);
   const isResizing = useRef(false);
-
-  const handleClosePanel = () => {
-    setIsOpen(false);
-    onClosePanel?.();
-  };
-
-  const handleOpenPanel = () => {
-    setIsOpen(true);
-    onOpenPanel?.();
-  };
 
   const handleMouseDownResize = () => {
     isResizing.current = true;
@@ -61,7 +59,7 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
           cursor: 'pointer',
           boxShadow: '4px 0 10px rgba(0,0,0,0.08)',
         }}
-        onClick={handleOpenPanel}
+        onClick={onOpenPanel}
       >
         <button
           style={{
@@ -109,7 +107,7 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
           />
         )}
         {activeTab === 'pick' && <div>My 장소 패널 (추후 구현)</div>}
-        {activeTab === 'schedule' && <div>일정 편집 패널 (추후 구현)</div>}
+        {activeTab === 'schedule' && <WishPlacePanel />}
       </div>
 
       <div
@@ -121,7 +119,7 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
           justifyContent: 'center',
           cursor: 'pointer',
         }}
-        onClick={handleClosePanel}
+        onClick={onClosePanel}
       >
         <button
           style={{
