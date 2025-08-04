@@ -104,5 +104,11 @@ public class RoomServiceImpl implements RoomService {
     return room.getRegion();
   }
 
+  @Override
+  public TravelRoom findById(Long roomId) {
+    TravelRoom room = travelRoomRepository.findById(roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+    return room;
+  }
 }
 
