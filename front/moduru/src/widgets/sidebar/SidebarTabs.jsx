@@ -1,17 +1,27 @@
 // src/widgets/sidebar/SidebarTabs.js
 import React from 'react';
-import './SidebarTabs.css';
+import './sidebarTabs.css';
 import logo from '../../assets/moduru-logo.png';
 import { FaUser, FaCalendarAlt, FaMicrophone } from 'react-icons/fa';
 
-const SidebarTabs = ({ activeTab, onTabChange, onProfileClick }) => {
-  const steps = [
+export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) {
+  const tabList = [
     { key: 'place', step: 'STEP 2', label: '검색' },
     { key: 'pick', step: 'STEP 3', label: 'My 장소' },
     { key: 'schedule', step: 'STEP 4', label: '일정 편집' },
   ];
 
-  const handleExit = () => onTabChange('exit');
+  const handleClickTab = (tabKey) => {
+    onTabChange(tabKey);
+  };
+
+  const handleClickCalendar = () => {
+    onTabChange('openTripModal');
+  };
+
+  const handleClickVoice = () => {
+    alert('음성 기능 실행');
+  };
 
   return (
     <div className="custom-sidebar">
@@ -20,11 +30,11 @@ const SidebarTabs = ({ activeTab, onTabChange, onProfileClick }) => {
       </div>
 
       <div className="step-container">
-        {steps.map(({ key, label }) => (
+        {tabList.map(({ key, label }) => (
           <div
             key={key}
             className={`step-box ${activeTab === key ? 'active' : 'inactive'}`}
-            onClick={() => onTabChange(key)}
+            onClick={() => handleClickTab(key)}
           >
             <div className="step-label">{label}</div>
           </div>
@@ -35,15 +45,13 @@ const SidebarTabs = ({ activeTab, onTabChange, onProfileClick }) => {
         <div className="round-icon" onClick={onProfileClick}>
           <FaUser />
         </div>
-        <div className="round-icon" onClick={() => onTabChange('openTripModal')}>
+        <div className="round-icon" onClick={handleClickCalendar}>
           <FaCalendarAlt />
         </div>
-        <div className="round-icon" onClick={() => alert('음성 기능 실행')}>
+        <div className="round-icon" onClick={handleClickVoice}>
           <FaMicrophone />
         </div>
       </div>
     </div>
   );
-};
-
-export default SidebarTabs;
+}

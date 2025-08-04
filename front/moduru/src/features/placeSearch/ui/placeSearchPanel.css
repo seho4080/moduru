@@ -5,7 +5,7 @@
   user-select: none;
 }
 
-/* ✅ 검색 바 한 세트로 움직이도록 묶음 */
+/* NOTE: 검색창과 AI 버튼을 하나의 그룹으로 묶어 정렬 */
 .search-wrapper {
   display: flex;
   align-items: center;
@@ -64,10 +64,10 @@
   background: #e6f0ff;
 }
 
-/* ✅ 전체 필터 버튼 */
+/* NOTE: 전체 필터 버튼 그룹 */
 .filter-buttons {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 카테고리와 동일한 구조 */
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   margin-bottom: 4px;
 }
@@ -96,28 +96,29 @@
   margin: 4px 0;
 }
 
-/* ✅ 카테고리 탭 */
+/* NOTE: 카테고리 탭 (카테고리 전환 버튼) */
 .category-tabs {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .category-tab {
   border: 1px solid #ccd3ec;
-  padding: 8px 0;
-  border-radius: 12px;
+  padding: 10px 0;
+  border-radius: 8px;
   background-color: white;
   color: #333;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.18s, color 0.18s;
 }
 
 .category-tab.active {
@@ -126,12 +127,19 @@
   font-weight: bold;
 }
 
-/* ✅ 카드 리스트 간격 추가 */
+/* NOTE: 카테고리 섹션 하단 구분선 */
+.category-divider-line {
+  border-top: 1px solid #ccd3ec;
+  margin: 8px 0 0 0;
+  width: 100%;
+}
+
+/* NOTE: 장소 카드 리스트 컨테이너 간격 */
 .place-card-list {
   margin-top: 20px;
 }
 
-/* ✅ 카드 리스트 그리드 스타일 */
+/* NOTE: 장소 카드 그리드 스타일 */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

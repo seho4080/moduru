@@ -8,10 +8,10 @@ export const useWishToggle = () => {
   const toggleWishPlace = async ({ roomId, placeId, place, wantId }) => {
     const accessToken = localStorage.getItem('accessToken');
 
-    // ❌ 삭제 요청
+    // NOTE: wantId가 있으면 이미 공유된 장소이므로 삭제 요청
     if (wantId) {
       try {
-        const res = await fetch(
+        const response = await fetch(
           `http://localhost:8080/rooms/${roomId}/wants/${wantId}`,
           {
             method: 'DELETE',
@@ -21,48 +21,51 @@ export const useWishToggle = () => {
           }
         );
 
-        if (!res.ok) {
-          const errMsg = await res.json();
-          throw new Error(errMsg.message || '삭제 실패');
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(errorResult.message || '삭제 실패');
         }
 
         dispatch(removeWishPlace(wantId));
         return { success: true, type: 'delete' };
-      } catch (err) {
-        console.error('🚨 희망장소 삭제 오류:', err.message);
-        return { success: false, message: err.message };
+      } catch (error) {
+        console.error('희망 장소 삭제 실패:', error.message);
+        return { success: false, message: error.message };
       }
     }
 
-    // ✅ 추가 요청
+    // NOTE: wantId가 없으면 새로 공유하는 장소이므로 추가 요청
     try {
-      const res = await fetch(`http://localhost:8080/rooms/${roomId}/wants`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ placeId }),
-      });
+      const response = await fetch(
+        `http://localhost:8080/rooms/${roomId}/wants`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ placeId }),
+        }
+      );
 
-      if (!res.ok) {
-        const errMsg = await res.json();
-        throw new Error(errMsg.message || '추가 실패');
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || '추가 실패');
       }
 
-      const result = await res.json(); // { code, message } 형태
+      const result = await response.json();
 
-      const fullPlace = {
+      const newPlace = {
         ...place,
-        wantId: Date.now(), // 서버가 wantId를 안 주는 경우를 대비
+        wantId: Date.now(), // NOTE: 서버에서 wantId를 주지 않는 경우 대비
         isWanted: true,
       };
 
-      dispatch(addWishPlace(fullPlace));
-      return { success: true, data: fullPlace, type: 'add' };
-    } catch (err) {
-      console.error('🚨 희망장소 추가 오류:', err.message);
-      return { success: false, message: err.message };
+      dispatch(addWishPlace(newPlace));
+      return { success: true, data: newPlace, type: 'add' };
+    } catch (error) {
+      console.error('희망 장소 추가 실패:', error.message);
+      return { success: false, message: error.message };
     }
   };
 
