@@ -1,11 +1,10 @@
-// src/widgets/sidebar/SidebarPanel.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import PlaceSearchPanel from '../../features/placeSearch/ui/PlaceSearchPanel';
 import { useLocation } from 'react-router-dom';
 
-export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel }) {
+export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, setHoveredCoords }) {
   const location = useLocation();
-  const { travelRoomId } = location.state || {}; // ✅ 여기서 roomId 받아오기
+  const { travelRoomId } = location.state || {};
 
   const panelRef = useRef(null);
   const [width, setWidth] = useState(520);
@@ -103,7 +102,12 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel }) {
       }}
     >
       <div style={{ flex: 1, padding: '20px', overflow: 'hidden' }}>
-        {activeTab === 'place' && <PlaceSearchPanel roomId={travelRoomId} />}
+        {activeTab === 'place' && (
+          <PlaceSearchPanel
+            roomId={travelRoomId}
+            setHoveredCoords={setHoveredCoords} // ✅ 추가
+          />
+        )}
         {activeTab === 'pick' && <div>My 장소 패널 (추후 구현)</div>}
         {activeTab === 'schedule' && <div>일정 편집 패널 (추후 구현)</div>}
       </div>
