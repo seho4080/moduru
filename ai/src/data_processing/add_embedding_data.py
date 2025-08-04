@@ -1,6 +1,6 @@
 import json
 import os
-import gms_api
+import api.gms_api as gms_api
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INPUT_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "restaurant_data.json")

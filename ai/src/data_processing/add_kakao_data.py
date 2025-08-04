@@ -1,4 +1,4 @@
-import ../kakao_maps_api
+import api.kakao_maps_api as kakao_maps_api
 import os
 import re
 import json
