@@ -1,14 +1,16 @@
 package com.B108.tripwish.domain.room.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.room.dto.request.AddPlaceWantRequestDto;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.*;
+import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.global.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,16 +23,20 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/rooms")
 public class RoomController {
 
+  private final RoomService roomService;
+
   @Operation(
       summary = "여행 방 생성",
-      description = "여행 시작하기를 누르면 여행 방이 db에 생성됩니다." + "비회원도 여행 방을 생성할 수 있습니다.",
+      description = "여행 시작하기를 누르면 여행 방이 db에 생성됩니다.",
       responses = {
         @ApiResponse(responseCode = "200", description = "여행 방 생성 성공"),
+        @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content),
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
   @PostMapping
-  public ResponseEntity<TravelRoomCreateResponseDto> createRoom() {
-    TravelRoomCreateResponseDto response = new TravelRoomCreateResponseDto(1L);
+  public ResponseEntity<TravelRoomCreateResponseDto> createRoom(
+      @AuthenticationPrincipal CustomUserDetails user) {
+    TravelRoomCreateResponseDto response = roomService.addRoom(user);
     return ResponseEntity.ok(response);
   }
 
@@ -46,18 +52,9 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
   @GetMapping("/{roomId}")
-  public ResponseEntity<TravelRoomResponseDto> getTravelRoom(@PathVariable Long roomId) {
-    // 예시 응답
-    TravelRoomResponseDto response =
-        TravelRoomResponseDto.builder()
-            .travelRoomId(roomId)
-            .title("이름없는사용자_2025-07-27")
-            .region(null)
-            .startDate(null)
-            .endDate(null)
-            .createdAt(LocalDateTime.now())
-            .build();
-
+  public ResponseEntity<TravelRoomResponseDto> getTravelRoom(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
+    TravelRoomResponseDto response = roomService.enterRoom(user, roomId);
     return ResponseEntity.ok(response);
   }
 
@@ -75,17 +72,7 @@ public class RoomController {
   @PatchMapping("/{roomId}/update")
   public ResponseEntity<TravelRoomResponseDto> updateTravelRoom(
       @PathVariable Long roomId, @RequestBody UpdateTravelRoomRequestDto request) {
-    // 예시 응답
-    TravelRoomResponseDto response =
-        TravelRoomResponseDto.builder()
-            .travelRoomId(roomId)
-            .title("사용자_2025-07-24")
-            .region("대전")
-            .startDate(null)
-            .endDate(null)
-            .createdAt(LocalDateTime.now())
-            .build();
-
+    TravelRoomResponseDto response = roomService.updateRoom(roomId, request);
     return ResponseEntity.ok(response);
   }
 
@@ -124,11 +111,10 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
   @DeleteMapping("/{roomId}")
-  public ResponseEntity<CommonResponse> deleteTravelRoom(@PathVariable Long roomId) {
-    // 서비스 단에서 roomId와 userId 기준으로 방장 여부 확인 후 삭제 처리
-
-    CommonResponse response = new CommonResponse("ROOM_DELETE_SUCCESS", "여행방이 성공적으로 삭제되었습니다.");
-    return ResponseEntity.ok(response);
+  public ResponseEntity<CommonResponse> deleteTravelRoom(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
+    roomService.deleteRoom(user, roomId);
+    return ResponseEntity.ok(new CommonResponse("ROOM_DELETE_SUCCESS", "여행방이 성공적으로 삭제되었습니다."));
   }
 
   @Operation(
@@ -146,7 +132,7 @@ public class RoomController {
   @PostMapping("/{roomId}/wants")
   public ResponseEntity<CommonResponse> addPlaceWant(
       @PathVariable Long roomId, @RequestBody AddPlaceWantRequestDto request) {
-
+    // 서비스 단 미작성
     CommonResponse response = new CommonResponse("PLACE_WANT_ADD_SUCCESS", "희망 장소가 성공적으로 추가되었습니다.");
     return ResponseEntity.ok(response);
   }
@@ -164,7 +150,7 @@ public class RoomController {
       })
   @GetMapping("/{roomId}/wants")
   public ResponseEntity<PlaceWantListResponseDto> getPlaceWants(@PathVariable Long roomId) {
-
+    // 서비스단 미작성
     PlaceWantDto sample1 =
         PlaceWantDto.builder()
             .wantId(1L)
@@ -215,6 +201,7 @@ public class RoomController {
   @DeleteMapping("/{roomId}/wants/{wantId}")
   public ResponseEntity<CommonResponse> getPlaceWants(
       @PathVariable Long roomId, @PathVariable Long wantId) {
+    // 서비스단 미작성
     CommonResponse response = new CommonResponse("WANT_DELETE_SUCCESS", "희망 장소에서 성공적으로 삭제되었습니다.");
     return ResponseEntity.ok(response);
   }
@@ -238,7 +225,7 @@ public class RoomController {
         TravelMemberDto.builder()
             .userId(1L)
             .nickname("여행덕후123")
-            .profileImg("https://example.com/profile1.jpg")
+            .profileImg("\"profile_basic.png\"")
             .isFriend(false)
             .isOwner(true)
             .build();
@@ -247,7 +234,7 @@ public class RoomController {
         TravelMemberDto.builder()
             .userId(2L)
             .nickname("빵순이")
-            .profileImg("https://example.com/profile2.jpg")
+            .profileImg("\"profile_basic.png\"")
             .isFriend(true)
             .isOwner(false)
             .build();

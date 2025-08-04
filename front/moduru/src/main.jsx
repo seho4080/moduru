@@ -1,44 +1,37 @@
-// // 
-
-// import { StrictMode } from 'react'
-// import { createRoot } from 'react-dom/client'
-// import './index.css'
-// import App from './App.jsx'
-
-// createRoot(document.getElementById('root')).render(
-//   <StrictMode>
-//     <App />
-//   </StrictMode>,
-// )
-
-
-// import React from 'react';
-// import ReactDOM from 'react-dom/client';
-// import App from './App'; // 경로 주의
-// import './index.css'
-
-// ReactDOM.createRoot(document.getElementById('root')).render(
-//   <React.StrictMode>
-//     <App />
-//   </React.StrictMode>
-// );
-
-// main.jsx
+// builtin
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+
+// external
+import { Provider } from 'react-redux';
+
+// internal
+import store from './shared/model/store';
 import { AuthProvider } from './shared/model/useAuth';
-import { Provider } from 'react-redux'; // ✅ Redux Provider import
-import store from './shared/model/store'; // ✅ Redux store import
+
+// relative
+import App from './App';
+
+// styles
 import './index.css';
 
+/**
+ * Polyfill 설정
+ * STOMP, SockJS 등 global 객체 사용 대응
+ */
+import { Buffer } from 'buffer';
+import process from 'process';
+
+window.Buffer = Buffer;
+window.process = process;
+
+// Root 렌더링
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Provider store={store}>        {/* ✅ Redux context 제공 */}
+    <Provider store={store}>
       <AuthProvider>
         <App />
       </AuthProvider>
     </Provider>
   </React.StrictMode>
 );
-

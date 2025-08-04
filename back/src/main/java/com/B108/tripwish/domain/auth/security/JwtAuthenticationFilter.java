@@ -50,10 +50,8 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
       // 3. validateToken으로 토큰 유효성 검사
       if (token != null && jwtTokenProvider.validateToken(token, TokenType.ACCESS)) {
-        log.info("[JWT Filter] 토큰 유효성 검사 통과"); // 추가
         Authentication authentication = jwtTokenProvider.getAuthentication(token);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        log.info("권한 확인: {}", authentication.getAuthorities());
       } else {
         log.warn("[JWT Filter] 토큰이 없거나 유효하지 않음"); // 추가
       }
