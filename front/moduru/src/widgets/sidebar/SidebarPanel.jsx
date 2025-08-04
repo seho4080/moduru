@@ -1,4 +1,3 @@
-// src/widgets/sidebar/SidebarPanel.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import PlaceSearchPanel from '../../features/placeSearch/ui/PlaceSearchPanel';
 import { useLocation } from 'react-router-dom';
@@ -8,7 +7,7 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
   const { travelRoomId } = location.state || {};
 
   const panelRef = useRef(null);
-  const [width, setWidth] = useState(520);
+  const [width, setWidth] = useState(450);
   const [isOpen, setIsOpen] = useState(true);
   const isResizing = useRef(false);
 
