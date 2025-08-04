@@ -35,6 +35,9 @@ public enum ErrorCode {
   SPOT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   FESTIVAL_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
+  // 초대 토큰 관련
+  INVALID_INVITE_TOKEN("유효하지 않은 초대 토큰입니다.", HttpStatus.BAD_REQUEST),
+  EXPIRED_INVITE_TOKEN("만료된 초대 토큰입니다.", HttpStatus.GONE),
 
   // 파일 삭제 관련
   FILE_DELETE_FAIL("이미지 삭제 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),

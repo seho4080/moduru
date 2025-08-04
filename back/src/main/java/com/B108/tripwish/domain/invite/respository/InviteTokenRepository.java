@@ -7,4 +7,7 @@ import java.util.Optional;
 
 public interface InviteTokenRepository extends JpaRepository<InviteToken, Long> {
     Optional<InviteToken> findByToken(String token);
+
+    Optional<InviteToken> findByRoomId(Long roomId);
+
 }
