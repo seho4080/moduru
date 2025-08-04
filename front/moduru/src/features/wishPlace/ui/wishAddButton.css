@@ -1,24 +1,31 @@
 .wish-add-btn {
-  display: inline-block;
-  padding: 5px 14px;           
-  border: 2px solid #fff;        
-  border-radius: 12px;         
+  /* 브라우저 기본 스타일 완전 제거 */
+  appearance: none;
+  border: 2px solid #3498f1;
   background: #fff;
   color: #3498f1;
-  font-size: 15px;             
+  font-size: 15px;
   font-weight: 600;
   font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
-  box-shadow: 0 2px 8px rgba(52,152,241,0.07);
+  border-radius: 20px;
+  padding: 6px 18px;
+  box-shadow: none;
   cursor: pointer;
+  letter-spacing: 0.5px;
+  outline: none;
+  margin: 0;
+  text-align: center;
   transition: 
     background 0.18s,
     color 0.18s,
-    border 0.18s,
-    box-shadow 0.18s;
+    border 0.18s;
+  /* 기본 버튼 스타일 덮어쓰기 */
+  box-sizing: border-box;
+  display: inline-block;
 }
+
 .wish-add-btn:hover {
-  background: #f0f7ff;
+  background: #eaf4ff;
   color: #2176c7;
-  border-color: #fff;            
-  box-shadow: 0 4px 16px rgba(52,152,241,0.14);
+  border-color: #3498f1;
 }
