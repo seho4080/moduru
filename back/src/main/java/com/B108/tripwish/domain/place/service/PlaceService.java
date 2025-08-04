@@ -12,4 +12,6 @@ public interface PlaceService {
     PlaceResponseDto buildPlaceDto(Place place, Long userId, Long roomId);
 
     PlaceDetailResponseDto getPlaceDetail(CustomUserDetails user, Long roomId, Long placeId);
+
+
 }
