@@ -10,20 +10,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "place_votes")
+@Table(name = "vote_places")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PlaceVote {
+public class VotePlace {
 
-  @EmbeddedId private PlaceVoteId id;
+  @EmbeddedId private VotePlaceId id;
 
   @MapsId("wantId")
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "want_id")
-  private PlaceWant placeWant;
+  private WantPlace wantPlace;
 
   @MapsId("userId")
   @ManyToOne(fetch = FetchType.LAZY)
