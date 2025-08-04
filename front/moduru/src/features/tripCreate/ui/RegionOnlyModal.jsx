@@ -1,8 +1,7 @@
 // src/features/tripCreate/RegionSelectModal.jsx
-
 import { useState, useRef, useEffect } from 'react';
-import { REGIONS } from '../lib/regionName';
-import { updateTripRoomRegion } from '../lib/tripRoomApi';
+import { REGIONS } from '../lib/regionName'; // ✅ 지역 상수 import
+import { updateTripRoomRegion } from '../lib/tripRoomApi'; // ✅ API 함수 import
 import './TripCreateForm.css';
 
 export default function RegionSelectModal({ roomId, onRegionSet }) {
@@ -35,18 +34,8 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
       alert('여행지를 선택해주세요.');
       return;
     }
-
-    // 🟢 필수 데이터 구성
-    const title = '나의 여행'; // 실제 제목은 외부에서 받아오게 할 수도 있음
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD 형식
-
     try {
-      const data = await updateTripRoomRegion(roomId, {
-        title,
-        region: selectedRegion,
-        startDate: today,
-        endDate: today,
-      });
+      const data = await updateTripRoomRegion(roomId, selectedRegion);
       console.log('✅ 여행 방 지역 업데이트 성공:', data);
       onRegionSet(selectedRegion);
     } catch (err) {
