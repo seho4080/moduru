@@ -1,24 +1,23 @@
+// src/features/tripCreate/lib/tripRoomApi.js
+
 // 여행방 생성 API
 export async function createTripRoom() {
   const url = "http://localhost:8080/rooms";
-  const token = localStorage.getItem("accessToken"); // ✅ JWT 가져오기
+  const token = localStorage.getItem("accessToken");
   console.log(`[🟢 createTripRoom] POST ${url}`);
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`, // ✅ Authorization 헤더 추가
+      Authorization: `Bearer ${token}`,
     },
   });
 
   console.log(`[🟡 응답 상태] ${res.status}`);
-
   const raw = await res.text();
   console.log(`[🟡 응답 원문]`, raw);
 
-  if (!res.ok) {
-    throw new Error(`여행방 생성 실패 (status: ${res.status})`);
-  }
+  if (!res.ok) throw new Error(`여행방 생성 실패 (status: ${res.status})`);
 
   try {
     const data = JSON.parse(raw);
@@ -44,13 +43,11 @@ export async function getTripRoomInfo(roomId) {
   });
 
   console.log(`[🟡 응답 상태] ${res.status}`);
-
   const raw = await res.text();
   console.log(`[🟡 응답 원문]`, raw);
 
-  if (!res.ok) {
+  if (!res.ok)
     throw new Error(`여행방 정보 조회 실패 (status: ${res.status})`);
-  }
 
   try {
     const data = JSON.parse(raw);
@@ -62,12 +59,14 @@ export async function getTripRoomInfo(roomId) {
   }
 }
 
-// 여행방 지역 업데이트 API
-export async function updateTripRoomRegion(roomId, region) {
+// 여행방 정보 업데이트 API
+export async function updateTripRoomRegion(roomId, { title, region, startDate, endDate }) {
   const url = `http://localhost:8080/rooms/${roomId}/update`;
   const token = localStorage.getItem("accessToken");
+  const bodyData = { title, region, startDate, endDate };
+
   console.log(`[🟢 updateTripRoomRegion] PATCH ${url}`);
-  console.log(`[📦 요청 데이터]`, { region });
+  console.log(`[📦 요청 바디]`, bodyData);
 
   const res = await fetch(url, {
     method: "PATCH",
@@ -75,11 +74,10 @@ export async function updateTripRoomRegion(roomId, region) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ region }),
+    body: JSON.stringify(bodyData),
   });
 
   console.log(`[🟡 응답 상태] ${res.status}`);
-
   const raw = await res.text();
   console.log(`[🟡 응답 원문]`, raw);
 
@@ -89,7 +87,7 @@ export async function updateTripRoomRegion(roomId, region) {
 
   try {
     const data = JSON.parse(raw);
-    console.log(`[✅ 업데이트 응답]`, data);
+    console.log(`[✅ 업데이트 성공 데이터]`, data);
     return data;
   } catch (err) {
     console.error("[❌ JSON 파싱 실패]", err);
