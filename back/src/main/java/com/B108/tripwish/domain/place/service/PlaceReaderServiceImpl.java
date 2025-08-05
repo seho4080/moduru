@@ -1,8 +1,8 @@
 package com.B108.tripwish.domain.place.service;
 
-import com.B108.tripwish.domain.place.dto.PlaceInfoDto;
 import org.springframework.stereotype.Service;
 
+import com.B108.tripwish.domain.place.dto.PlaceInfoDto;
 import com.B108.tripwish.domain.place.entity.Place;
 import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
 import com.B108.tripwish.global.exception.CustomException;
@@ -18,8 +18,9 @@ public class PlaceReaderServiceImpl implements PlaceReaderService {
 
   @Override
   public Place findPlaceById(Long placeId) {
-    return placeRepository.findById(placeId)
-            .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
+    return placeRepository
+        .findById(placeId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
   }
 
   @Override

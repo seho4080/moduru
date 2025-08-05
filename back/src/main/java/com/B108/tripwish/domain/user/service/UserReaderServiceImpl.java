@@ -1,12 +1,14 @@
 package com.B108.tripwish.domain.user.service;
 
+import org.springframework.stereotype.Service;
+
 import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.domain.user.repository.UserRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,4 @@ public class UserReaderServiceImpl implements UserReaderService {
   public User getReference(Long userId) {
     return userRepository.getReferenceById(userId);
   }
-
-
 }
