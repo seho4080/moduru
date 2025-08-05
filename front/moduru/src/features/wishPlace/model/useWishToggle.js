@@ -72,17 +72,20 @@ export const useWishToggle = () => {
   return { toggleWishPlace };
 };
 
+// src/features/wishPlace/model/useWishToggle.js
+
 export const useAddWishPlace = () => {
   const { toggleWishPlace } = useWishToggle();
 
-  const addWishPlace = async (roomId, placeId) => {
+  const addWishPlace = async (roomId, place) => {
     return await toggleWishPlace({
       roomId,
-      placeId,
-      place: { placeId },
+      placeId: place.placeId,
+      place: place, 
       wantId: null,
     });
   };
 
   return { addWishPlace };
 };
+

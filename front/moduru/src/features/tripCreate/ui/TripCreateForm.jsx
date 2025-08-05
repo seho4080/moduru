@@ -9,7 +9,6 @@ export default function TripCreateForm({
   dates, setDates,
   onClose, onSubmit
 }) {
-  // NOTE: 여행 생성 모달 내 입력 폼을 구성하며, 저장 시 onSubmit 핸들러 호출
   return (
     <>
       <div className="trip-modal-backdrop" onClick={onClose} />
