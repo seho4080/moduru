@@ -1,6 +1,5 @@
-// src/features/travelSpace/ui/SearchBar.jsx
 import React, { useState } from "react";
-import { FiSearch } from "react-icons/fi"; // 검색 아이콘 사용
+import { FiSearch } from "react-icons/fi";
 
 const SearchBar = ({ onSearch }) => {
   const [keyword, setKeyword] = useState("");

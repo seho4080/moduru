@@ -1,5 +1,3 @@
-// src/widgets/footer.jsx
-
 import React from "react";
 
 const Footer = () => {
@@ -11,13 +9,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-// src/features/myPage/model/useUserInfo.js
-
-import { useSelector } from "react-redux";
-
-export const useUserInfo = () => {
-  const userInfo = useSelector((state) => state.user.userInfo);
-  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
-  return { userInfo, isLoggedIn };
-};

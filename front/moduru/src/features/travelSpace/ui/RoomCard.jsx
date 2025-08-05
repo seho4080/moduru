@@ -1,30 +1,26 @@
-// src/features/travelSpace/ui/RoomCard.jsx
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
-/**
- * 여행방 카드
- * @param {{ room: { travelRoomId, title, region, startDate, endDate, members } }} props
- */
 const RoomCard = ({ room }) => {
+  const navigate = useNavigate();
+
+  const handleEnterRoom = () => {
+    navigate(`/trip-room/${room.travelRoomId}`, { state: room });
+  };
+
   return (
-    <div className="w-64 h-44 border bg-white rounded-md shadow-md p-4 relative">
-      {/* 삭제 아이콘 자리 */}
-      <button className="absolute top-2 right-2 text-gray-400">🗑️</button>
-
-      {/* 방 제목 */}
-      <h3 className="text-lg font-semibold">{room.title}</h3>
-
-      {/* 날짜 및 지역 */}
-      <p className="text-sm text-gray-500 mt-1">
+    <div className="bg-white p-4 rounded-lg shadow-md w-[280px]">
+      <h3 className="text-xl font-bold mb-2">{room.title || "제목 없음"}</h3>
+      <p className="text-sm text-gray-600 mb-1">{room.region || "지역 미정"}</p>
+      <p className="text-sm text-gray-600">
         {room.startDate} ~ {room.endDate}
       </p>
-      <p className="text-sm text-gray-500">{room.region}</p>
-
-      {/* 버튼 영역 */}
-      <div className="flex justify-between mt-6">
-        <button className="border px-3 py-1 rounded text-sm">들어가기</button>
-        <button className="border px-3 py-1 rounded text-sm">장소 보기</button>
-      </div>
+      <button
+        onClick={handleEnterRoom}
+        className="mt-4 w-full bg-blue-500 text-white py-1 rounded hover:bg-blue-600 transition"
+      >
+        입장하기
+      </button>
     </div>
   );
 };

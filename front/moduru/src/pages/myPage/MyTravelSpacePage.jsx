@@ -1,4 +1,3 @@
-// src/pages/MyTravelSpacePage.jsx
 import React, { useEffect, useState } from "react";
 import Header from "../../widgets/header";
 import Footer from "../../widgets/footer";
