@@ -2,6 +2,10 @@ package com.B108.tripwish.domain.auth.service;
 
 import java.time.LocalDateTime;
 
+import com.B108.tripwish.global.util.CookieUtil;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -34,9 +38,9 @@ public class AuthServiceImpl implements AuthService {
   private final UserTokenRepository userTokenRepository;
   private final PasswordEncoder passwordEncoder;
 
-  @Transactional
   @Override
-  public JwtToken login(String email, String password) {
+  @Transactional
+  public JwtToken login(String email, String password, HttpServletResponse response) {
     // 1. email + password 를 기반으로 Authentication 객체 생성
     // 이때 authentication 은 인증 여부를 확인하는 authenticated 값이 false
     UsernamePasswordAuthenticationToken authenticationToken =
@@ -64,6 +68,24 @@ public class AuthServiceImpl implements AuthService {
     }
     // 3. 인증 정보를 기반으로 JWT 토큰 생성
     JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, null);
+
+    // AccessToken
+    Cookie accessTokenCookie = new Cookie("access_token", jwtToken.getAccessToken());
+    accessTokenCookie.setHttpOnly(true);
+    accessTokenCookie.setSecure(true);
+    accessTokenCookie.setPath("/");
+    accessTokenCookie.setMaxAge(60 * 60); // 1시간
+
+    // RefreshToken
+    Cookie refreshTokenCookie = new Cookie("refresh_token", jwtToken.getRefreshToken());
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setSecure(true);
+    refreshTokenCookie.setPath("/");
+    refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+
+    response.addCookie(accessTokenCookie);
+    response.addCookie(refreshTokenCookie);
+
 
     userTokenRepository.deleteByUserId(user.getId());
     userTokenRepository.save(
@@ -116,7 +138,6 @@ public class AuthServiceImpl implements AuthService {
       token.setRefreshToken(newToken.getRefreshToken());
       token.setExpiresAt(newToken.getRefreshTokenExpiresAt());
       token.setIssuedAt(LocalDateTime.now());
-
       userTokenRepository.save(token);
     }
 
