@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.B108.tripwish.domain.place.dto.response.PlaceDetailResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
-import com.B108.tripwish.domain.place.dto.response.TagSummaryDto;
+import com.B108.tripwish.domain.place.dto.response.ReviewTagResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/places")
+@RequestMapping("/places/{roomId}")
 public class PlaceController {
 
     private final PlaceService placeService;
@@ -40,7 +40,7 @@ public class PlaceController {
                             content = @Content),
                     @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
             })
-    @GetMapping("/{roomId}")
+    @GetMapping("")
     public ResponseEntity<PlaceListResponseDto> getAllPlaces(@AuthenticationPrincipal CustomUserDetails user,
                                                             @PathVariable Long roomId,
                                                             @RequestParam String category) {
@@ -48,7 +48,6 @@ public class PlaceController {
         PlaceListResponseDto response = placeService.getPlaces(user, roomId, category);
         return ResponseEntity.ok(response);
     }
-
 
 
     @Operation(
@@ -67,7 +66,7 @@ public class PlaceController {
                             content = @Content),
                     @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
             })
-    @GetMapping("/{roomId}/ai-search")
+    @GetMapping("/ai-search")
     public ResponseEntity<PlaceListResponseDto> getAISearchPlaces(
             @PathVariable Long roomId, @RequestParam String keyword) {
         PlaceResponseDto sample =
@@ -87,7 +86,6 @@ public class PlaceController {
 
         return ResponseEntity.ok(response);
     }
-
     @Operation(
             summary = "장소 상세 정보 조회",
             description = "장소의 이미지, 장소명, 리뷰 태그, 주소, 및 장소에 해당하는 설명을 조회할 수 있습니다.",
@@ -101,61 +99,12 @@ public class PlaceController {
                     @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
             })
     @GetMapping("/detail")
-    public ResponseEntity<PlaceDetailResponseDto> getDetailPlace(@RequestParam Long placeId) {
-        PlaceDetailResponseDto sample =
-                PlaceDetailResponseDto.builder()
-                        .placeImg("https://example.com/image.jpg")
-                        .placeName("성심당")
-                        .address("대전 중구 중앙로 56")
-                        .isLiked(true)
-                        .isWanted(false)
-                        .detailGPT(
-                                "{\n"
-                                        + "  \"description\": \"이곳은 대전의 명물 빵집입니다.\",\n"
-                                        + "  \"openingHours\": \"매일 08:00 ~ 22:00\",\n"
-                                        + "  \"atmosphere\": \"복고풍 감성과 활기찬 분위기, 가족 단위 방문이 많음\",\n"
-                                        + "  \"menu\": [\n"
-                                        + "    \"튀김소보로\",\n"
-                                        + "    \"부추빵\",\n"
-                                        + "    \"치즈바게트\",\n"
-                                        + "    \"햄버거스테이크빵\",\n"
-                                        + "    \"단팥빵\"\n"
-                                        + "  ],\n"
-                                        + "  \"parking\": \"주차장은 별도로 없으며 인근 공영주차장 이용 가능\"\n"
-                                        + "}")
-                        .latitude(36.331348663430305)
-                        .longitude(127.42718875120441)
-                        .tagList(List.of(new TagSummaryDto(1L, "맛있어요"), new TagSummaryDto(2L, "친절해요")))
-                        .build();
-
-        return ResponseEntity.ok(sample); // 200
+    public ResponseEntity<PlaceDetailResponseDto> getDetailPlace(@AuthenticationPrincipal CustomUserDetails user,
+                                                                 @PathVariable Long roomId,
+                                                                 @RequestParam Long placeId) {
+        PlaceDetailResponseDto response = placeService.getPlaceDetail(user, roomId, placeId);
+        return ResponseEntity.ok(response); // 200
     }
 
-    @Operation(
-            summary = "장소 좋아요",
-            description = "사용자가 특정 장소에 좋아요를 누릅니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "좋아요 상태 변경 성공"),
-                    @ApiResponse(responseCode = "401", description = "로그인되지 않은 사용자", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "해당 장소를 찾을 수 없음", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
-            })
-    @PostMapping("/like/{placeId}")
-    public ResponseEntity<Void> likePlace(@PathVariable Long placeId) {
-        return ResponseEntity.ok().build();
-    }
 
-    @Operation(
-            summary = "장소 좋아요 취소",
-            description = "사용자가 특정 장소에 눌러둔 좋아요를 취소합니다.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "좋아요 취소 성공"),
-                    @ApiResponse(responseCode = "401", description = "로그인되지 않은 사용자", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "해당 장소를 찾을 수 없음", content = @Content),
-                    @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
-            })
-    @DeleteMapping("/like/{placeId}")
-    public ResponseEntity<Void> unlikePlace(@PathVariable Long placeId) {
-        return ResponseEntity.ok().build();
-    }
 }

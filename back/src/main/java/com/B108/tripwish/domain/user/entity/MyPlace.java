@@ -14,17 +14,22 @@ import java.time.LocalDateTime;
 public class MyPlace {
 
     @EmbeddedId
+    @AttributeOverrides({
+            @AttributeOverride(name = "userId", column = @Column(name = "user_id")),
+            @AttributeOverride(name = "placeId", column = @Column(name = "place_id"))
+    })
     private MyPlaceId id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("userId") // TravelMemberId.userId 와 매핑
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("placeId") // TravelMemberId.roomId 와 매핑
     @JoinColumn(name = "place_id")
     private Place place;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("userId") // TravelMemberId.userId 와 매핑
-    @JoinColumn(name = "user_id")
-    private User user;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

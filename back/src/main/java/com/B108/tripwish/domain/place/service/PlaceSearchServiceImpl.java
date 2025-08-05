@@ -9,13 +9,16 @@ import com.B108.tripwish.domain.place.entity.Place;
 import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
 import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
 import com.B108.tripwish.domain.room.service.RoomService;
+import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.room.service.WantPlaceService;
+import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,8 +31,8 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
 
     private final PlaceSearchRepository placeSearchRepository;
     private final PlaceRepository placeRepository;
-    private final MyPlaceService myPlaceService;
-    private final WantPlaceService wantPlaceService;
+    private final MyPlaceReaderService myPlaceReaderService;
+    private final WantPlaceReaderService wantPlaceReaderService;
     private final RoomService roomService;
 
     @Transactional(readOnly = true)
@@ -43,37 +46,49 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
         Set<Long> regionPlaceIds = placeRepository.findAllByAddressNameContaining(region).stream()
                 .map(Place::getId)
                 .collect(Collectors.toSet());
-        log.debug("region: {}", region);
-        log.debug("regionPlaceIds: {}", regionPlaceIds);
 
-
-        // 키워드 기반 필터링
+        // 키워드 기반 전체 검색
         List<PlaceDocument> documents = placeSearchRepository
                 .findByPlaceNameContainingOrAddressContainingOrCategoryNameContaining(keyword, keyword, keyword);
 
-        // 교집합 (지역+키워드)
-        List<PlaceResponseDto> response = documents.stream()
+        // 1. 지역 포함된 문서(우선순위 높음)
+        List<PlaceResponseDto> regionMatched = documents.stream()
                 .filter(doc -> regionPlaceIds.contains(Long.parseLong(doc.getId())))
-                .map(doc -> {
-                    // 각 document에서 필요한 필드 꺼냄
-                    boolean isLiked = myPlaceService.isLiked(user.getUser().getId(), Long.parseLong(doc.getId()));
-                    boolean isWanted = wantPlaceService.isWanted(roomId, Long.parseLong(doc.getId()));
-
-                    return PlaceResponseDto.builder()
-                            .placeId(Long.parseLong(doc.getId()))
-                            .placeName(doc.getPlaceName())
-                            .placeImg(doc.getImageUrl()) // 이미지 필드가 있다면
-                            .category(doc.getCategoryName())
-                            .address(doc.getAddress())
-                            .latitude(doc.getLat())
-                            .longitude(doc.getLng())
-                            .isLiked(isLiked)
-                            .isWanted(isWanted)
-                            .build();
-                })
+                .map(doc -> mapToResponseDto(user, roomId, doc))
                 .toList();
+
+
+        // 2. 지역 포함되지 않은 문서 (후순위)
+        List<PlaceResponseDto> others = documents.stream()
+                .filter(doc -> !regionPlaceIds.contains(Long.parseLong(doc.getId())))
+                .map(doc -> mapToResponseDto(user, roomId, doc))
+                .toList();
+
+        // 합치기: 지역 우선 → 기타
+        List<PlaceResponseDto> response = new ArrayList<>();
+        response.addAll(regionMatched);
+        response.addAll(others);
 
         return new PlaceListResponseDto(response);
     }
+
+    private PlaceResponseDto mapToResponseDto(CustomUserDetails user, Long roomId, PlaceDocument doc) {
+        Long placeId = Long.parseLong(doc.getId());
+        boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
+        boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId);
+
+        return PlaceResponseDto.builder()
+                .placeId(placeId)
+                .placeName(doc.getPlaceName())
+                .placeImg(doc.getImageUrl())
+                .category(doc.getCategoryName())
+                .address(doc.getAddress())
+                .latitude(doc.getLat())
+                .longitude(doc.getLng())
+                .isLiked(isLiked)
+                .isWanted(isWanted)
+                .build();
+    }
+
 
 }

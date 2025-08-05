@@ -107,10 +107,10 @@ public class AuthServiceImpl implements AuthService {
             .findByRefreshToken(refreshToken)
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
 
-    List<GrantedAuthority> authorities = List.of(); // 또는 null 허용 시 null
-
+    User user = token.getUser();
+    CustomUserDetails userDetails = new CustomUserDetails(user);
     Authentication authentication =
-        new UsernamePasswordAuthenticationToken(token.getUser().getEmail(), null, authorities);
+            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
     JwtToken newToken = jwtTokenProvider.generateToken(authentication, refreshToken);
 
