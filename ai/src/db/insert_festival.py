@@ -3,7 +3,6 @@ import psycopg2
 import numpy as np
 import os
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "festival_data_embedding.json")
 
@@ -69,4 +68,4 @@ for item in data:
 conn.commit()
 cur.close()
 conn.close()
-print("✅ moduru 스키마에 festival 데이터 삽입 완료")
+print("festival 데이터 삽입 완료")
