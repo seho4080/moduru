@@ -1,9 +1,11 @@
-TRUNCATE TABLE categories RESTART IDENTITY CASCADE;
+UPDATE places SET category_id = 1 WHERE category_id = 0;
+
+TRUNCATE TABLE categories RESTART IDENTITY;
+TRUNCATE TABLE review_tags RESTART IDENTITY CASCADE;
 
 INSERT INTO categories (category_name) VALUES
                                            ('음식점(식당/카페)'),('명소'),('축제'),('공통');
 
-TRUNCATE TABLE review_tags RESTART IDENTITY CASCADE;
 
 INSERT INTO review_tags(category_id, content) VALUES (4, '친절해요');
 INSERT INTO review_tags(category_id, content) VALUES (4, '사진이 잘 나와요');
