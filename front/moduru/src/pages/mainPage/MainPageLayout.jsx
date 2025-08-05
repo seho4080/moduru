@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../widgets/header";
 import Footer from "../../widgets/footer";
 import MainContent from "./MainContent";
@@ -7,38 +8,36 @@ import { useAuth } from "../../shared/model/useAuth";
 
 const MainPageLayout = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
+  const navigate = useNavigate();
 
   const handleProfileClick = () => {
     if (!isLoggedIn) {
       setIsLoginModalOpen(true);
     } else {
-      alert("✅ 프로필 화면으로 이동 (추후 구현 예정)");
+      navigate("/my-page");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-[#f5faff] relative">
-      {/* 상단바 */}
-      <div className="w-[90%] py-5 flex justify-between items-center">
-        <div className="w-[100px]">
-          <img src="/src/assets/images/moduru-logo.png" alt="로고" />
+    <div className="min-h-screen flex flex-col items-center bg-[#f5faff]">
+      {/* NOTE: 공통 Header */}
+      <Header
+        isLoggedIn={isLoggedIn}
+        nickname={user?.nickname || "모두루"}
+        onLoginIconClick={handleProfileClick}
+      />
+
+      {/* NOTE: 가운데 정렬된 메인 콘텐츠 */}
+      <main className="flex justify-center px-4 py-12 w-full">
+        <div className="w-full max-w-[1000px]">
+          <MainContent onLoginModal={() => setIsLoginModalOpen(true)} />
         </div>
-        <div
-          className="w-[70px] h-[70px] mr-5 mt-5 cursor-pointer"
-          onClick={handleProfileClick}
-        >
-          <img src="/src/assets/icons/login-icon.png" alt="로그인" />
-        </div>
-      </div>
+      </main>
 
-      <MainContent />
+      {/* NOTE: 공통 Footer */}
+      <Footer />
 
-      <footer className="mt-10 text-sm text-gray-500 text-center">
-        © 2025 에잇(스파). All rights reserved
-      </footer>
-
-      {/* 로그인 모달 */}
       {isLoginModalOpen && (
         <LoginForm onClose={() => setIsLoginModalOpen(false)} />
       )}
