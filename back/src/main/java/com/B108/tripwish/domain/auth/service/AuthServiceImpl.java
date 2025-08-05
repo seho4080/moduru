@@ -1,13 +1,11 @@
 package com.B108.tripwish.domain.auth.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,10 +105,10 @@ public class AuthServiceImpl implements AuthService {
             .findByRefreshToken(refreshToken)
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
 
-    List<GrantedAuthority> authorities = List.of(); // 또는 null 허용 시 null
-
+    User user = token.getUser();
+    CustomUserDetails userDetails = new CustomUserDetails(user);
     Authentication authentication =
-        new UsernamePasswordAuthenticationToken(token.getUser().getEmail(), null, authorities);
+        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
     JwtToken newToken = jwtTokenProvider.generateToken(authentication, refreshToken);
 

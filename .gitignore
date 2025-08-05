@@ -61,3 +61,9 @@ pids
 *.pid.lock
 pg-data/
 init.sql
+
+# 가상환경 
+venv
+# ES 
+volumes
+insert_data

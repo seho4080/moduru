@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,jsx}", // js,jsx에서 tailwind 적용되게 함
+  ],
   theme: {
     extend: {},
   },

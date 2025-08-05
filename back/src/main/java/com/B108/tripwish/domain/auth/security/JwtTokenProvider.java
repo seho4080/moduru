@@ -8,17 +8,19 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import com.B108.tripwish.domain.auth.dto.JwtToken;
 import com.B108.tripwish.domain.auth.dto.TokenType;
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.user.entity.User;
+import com.B108.tripwish.domain.user.repository.UserRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
@@ -30,12 +32,11 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Component
 public class JwtTokenProvider {
   private final Key key;
+  private final UserRepository userRepository;
 
   @Value("${jwt.access-token-validity}")
   private long accessTokenValidityInseconds;
@@ -43,9 +44,11 @@ public class JwtTokenProvider {
   @Value("${jwt.refresh-token-validity}")
   private long refreshTokenValidityInSeconds;
 
-  public JwtTokenProvider(@Value("${jwt.secret}") String secretKey) {
+  @Autowired
+  public JwtTokenProvider(@Value("${jwt.secret}") String secretKey, UserRepository userRepository) {
     byte[] keyBytes = Decoders.BASE64.decode(secretKey);
     this.key = Keys.hmacShaKeyFor(keyBytes);
+    this.userRepository = userRepository;
   }
 
   public JwtToken generateToken(Authentication authentication, String existingRefreshToken) {
@@ -87,7 +90,6 @@ public class JwtTokenProvider {
       } catch (ExpiredJwtException e) {
         shouldIssueNewRefreshToken = true;
       } catch (Exception e) {
-        log.warn("기존 resfreshToken 파싱 실패. 새로 발급합니다.");
         shouldIssueNewRefreshToken = true;
       }
     }
@@ -126,17 +128,25 @@ public class JwtTokenProvider {
           Arrays.stream(claims.get("auth").toString().split(","))
               .map(SimpleGrantedAuthority::new)
               .collect(Collectors.toList());
+      /**
+       * // UserDetails 객체를 만들어서 Authentication return // UserDetails: interface, User: UserDetails를
+       * 구현한 class UserDetails principal = new User(claims.getSubject(), "", authorities); return
+       * new UsernamePasswordAuthenticationToken(principal, "", authorities);
+       */
+      String email = claims.getSubject();
+      User user =
+          userRepository
+              .findByEmail(email)
+              .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-      // UserDetails 객체를 만들어서 Authentication return
-      // UserDetails: interface, User: UserDetails를 구현한 class
-      UserDetails principal = new User(claims.getSubject(), "", authorities);
-      return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+      CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+      return new UsernamePasswordAuthenticationToken(
+          customUserDetails, "", customUserDetails.getAuthorities());
 
     } catch (ExpiredJwtException e) {
-      log.warn("만료된 토큰 요청");
       throw new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN);
     } catch (JwtException | IllegalArgumentException e) {
-      log.warn("유효하지 않은 토큰 요청");
       throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
     }
   }
