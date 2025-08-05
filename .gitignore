@@ -61,3 +61,6 @@ pids
 *.pid.lock
 pg-data/
 init.sql
+
+insert_data
+volumes
