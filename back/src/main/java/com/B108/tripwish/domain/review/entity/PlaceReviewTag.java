@@ -11,9 +11,11 @@ import lombok.*;
 @Builder
 public class PlaceReviewTag {
 
-  @EmbeddedId private PlaceReviewTagId id; // reviewId + tagId 복합키
+  @EmbeddedId
+  private PlaceReviewTagId id; // reviewId + tagId 복합키
 
+  @MapsId("tagId") // NOTE: EmbeddedId의 tagId 필드와 연관관계 연결
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "tag_id", insertable = false, updatable = false)
-  private ReviewTag tag; // ReviewTag는 필요 시 유지 (태그 내용 조회용)
+  @JoinColumn(name = "tag_id") // insertable/updatable 속성 제거
+  private ReviewTag tag;
 }
