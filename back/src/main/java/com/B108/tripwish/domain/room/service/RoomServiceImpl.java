@@ -46,12 +46,12 @@ public class RoomServiceImpl implements RoomService {
     travelRoomRepository.save(room);
 
     TravelMember member =
-            TravelMember.builder()
-                    .travelRoom(room)
-                    .user(user.getUser())
-                    .role(TravelMemberRole.OWNER)
-                    .id(new TravelMemberId(room.getId(), user.getUser().getId()))
-                    .build();
+        TravelMember.builder()
+            .travelRoom(room)
+            .user(user.getUser())
+            .role(TravelMemberRole.OWNER)
+            .id(new TravelMemberId(room.getId(), user.getUser().getId()))
+            .build();
     travelMemberRepository.save(member);
 
     TravelRoomCreateResponseDto response = new TravelRoomCreateResponseDto(room.getId());
@@ -61,9 +61,9 @@ public class RoomServiceImpl implements RoomService {
   @Override
   public TravelRoomResponseDto enterRoom(CustomUserDetails user, Long roomId) {
     TravelRoom room =
-            travelRoomRepository
-                    .findById(roomId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+        travelRoomRepository
+            .findById(roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     TravelRoomResponseDto response = TravelRoomResponseDto.from(room);
     return response;
   }
@@ -72,22 +72,21 @@ public class RoomServiceImpl implements RoomService {
   @Override
   public TravelRoomResponseDto updateRoom(Long roomId, UpdateTravelRoomRequestDto request) {
     TravelRoom room =
-            travelRoomRepository
-                    .findById(roomId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+        travelRoomRepository
+            .findById(roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     travelRoomMapper.updateFromDto(request, room);
     return travelRoomMapper.toDto(room);
   }
-
 
   @Transactional
   @Override
   public void deleteRoom(CustomUserDetails user, Long roomId) {
     Long userId = user.getUser().getId();
     TravelMember member =
-            travelMemberRepository
-                    .findByUser_IdAndTravelRoom_Id(userId, roomId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.ROOM_MEMBER_NOT_FOUND));
+        travelMemberRepository
+            .findByUser_IdAndTravelRoom_Id(userId, roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_MEMBER_NOT_FOUND));
     if (member.getRole() != TravelMemberRole.OWNER) {
       throw new CustomException(ErrorCode.ROOM_DELETE_FORBIDDEN); // 권한 없음
     }
@@ -97,7 +96,9 @@ public class RoomServiceImpl implements RoomService {
 
   @Override
   public String getRegionByRoomId(Long roomId) {
-    TravelRoom room = travelRoomRepository.findById(roomId)
+    TravelRoom room =
+        travelRoomRepository
+            .findById(roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     return room.getRegion();
   }

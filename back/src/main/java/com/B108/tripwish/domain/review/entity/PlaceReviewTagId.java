@@ -1,9 +1,9 @@
 package com.B108.tripwish.domain.review.entity;
 
+import java.io.Serializable;
+
 import jakarta.persistence.Embeddable;
 import lombok.*;
-
-import java.io.Serializable;
 
 @Embeddable
 @Getter
@@ -12,6 +12,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class PlaceReviewTagId implements Serializable {
-    private Long reviewId;
-    private Long tagId;
+  private Long reviewId;
+  private Long tagId;
 }

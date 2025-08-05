@@ -6,13 +6,12 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FestivalDetailResponseDto implements CategoryDetailResponseDto{
-    private String description;
-    private String descriptionShort;
-    private String infoCenter;
-    private String homepage;
-    private String period;
-    private String organizer;
-    private String sns;
-
+public class FestivalDetailResponseDto implements CategoryDetailResponseDto {
+  private String description;
+  private String descriptionShort;
+  private String infoCenter;
+  private String homepage;
+  private String period;
+  private String organizer;
+  private String sns;
 }

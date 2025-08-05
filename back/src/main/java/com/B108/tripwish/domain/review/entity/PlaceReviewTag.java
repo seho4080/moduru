@@ -11,17 +11,15 @@ import lombok.*;
 @Builder
 public class PlaceReviewTag {
 
-    @EmbeddedId
-    private PlaceReviewTagId id;
+  @EmbeddedId private PlaceReviewTagId id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("reviewId")
-    @JoinColumn(name = "review_id")
-    private Review review;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("reviewId")
+  @JoinColumn(name = "review_id")
+  private Review review;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("tagId")
-    @JoinColumn(name = "tag_id")
-    private ReviewTag tag;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("tagId")
+  @JoinColumn(name = "tag_id")
+  private ReviewTag tag;
 }
-
