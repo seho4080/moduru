@@ -12,7 +12,7 @@ const ActivityBox = () => {
       <div className="flex flex-col gap-4">
         <button
           className="bg-gray-100 hover:bg-gray-200 transition rounded-md py-3 px-4 text-gray-800 text-sm text-left font-medium shadow-sm"
-          onClick={() => navigate("/my-space")}
+          onClick={() => navigate("/my-page/my-travel-space")}
         >
           My Travel Space
         </button>

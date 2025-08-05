@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainPageLayout from "../pages/mainPage/MainPageLayout";
 import TripRoomPage from "../pages/tripRoomPage/TripRoomPage";
 import MyPageLayout from "../pages/myPage/MyPageLayout";
+import MyTravelSpacePage from "../pages/myPage/MyTravelSpacePage";
 
 const RouterComponent = () => {
   return (
@@ -16,6 +17,10 @@ const RouterComponent = () => {
         <Route path="/" element={<MainPageLayout />} />
         <Route path="/trip-room" element={<TripRoomPage />} />
         <Route path="/my-page" element={<MyPageLayout />} />
+        <Route
+          path="/my-page/my-travel-space"
+          element={<MyTravelSpacePage />}
+        />
       </Routes>
     </BrowserRouter>
   );
