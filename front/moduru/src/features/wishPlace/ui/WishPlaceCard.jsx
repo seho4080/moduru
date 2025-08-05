@@ -1,41 +1,129 @@
 // src/features/wishPlace/ui/WishPlaceCard.jsx
-import { FaThumbsUp } from 'react-icons/fa';
-import './wishAddButton.css'; // 스타일 파일에서 공통 버튼 스타일 사용 가능
 
-export default function WishPlaceCard({ place }) {
-  const { placeName, placeImg, likeCount } = place;
+import { FaHeart, FaRegHeart } from 'react-icons/fa';
+import './wishAddButton.css';
+
+export default function WishPlaceCard({ place, onRemove }) {
+  const { placeName, placeImg, category, likeCount } = place;
+  const hasLikes = likeCount > 0;
 
   return (
     <div
       style={{
         display: 'flex',
-        alignItems: 'center',
         border: '1.5px solid royalblue',
         borderRadius: '12px',
         padding: '8px',
-        marginBottom: '12px',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
+        position: 'relative',
         backgroundColor: '#fff',
+        maxWidth: '300px',
+        height: '90px',
+        marginBottom: '12px',
       }}
     >
-      <img
-        src={placeImg}
-        alt={placeName}
+      <div style={{ position: 'relative', marginRight: '12px' }}>
+        <img
+          src={placeImg}
+          alt="장소 이미지"
+          style={{
+            width: '100px',
+            aspectRatio: '4 / 3',
+            objectFit: 'cover',
+            borderRadius: '8px',
+            fontSize: '12px',
+          }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = '';
+            e.target.alt = '장소 이미지';
+            e.target.style.fontSize = '12px';
+            e.target.style.display = 'flex';
+            e.target.style.alignItems = 'center';
+            e.target.style.justifyContent = 'center';
+            e.target.style.textAlign = 'center';
+          }}
+        />
+
+        <button
+          onClick={() => onRemove(place)}
+          style={{
+            position: 'absolute',
+            top: '-6px',
+            left: '-6px',
+            backgroundColor: '#fff',
+            border: '1px solid #ccc',
+            borderRadius: '50%',
+            width: '20px',
+            height: '20px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      <div
         style={{
-          width: '54px',
-          height: '54px',
-          objectFit: 'cover',
-          borderRadius: '8px',
-          marginRight: '10px',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          position: 'relative',
         }}
-      />
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '4px' }}>
-          {placeName}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: '6px',
+            right: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          {hasLikes ? (
+            <>
+              <FaHeart style={{ color: 'red', fontSize: '20px' }} />
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#333',
+                }}
+              >
+                {likeCount}
+              </span>
+            </>
+          ) : (
+            <FaRegHeart style={{ color: '#aaa', fontSize: '20px' }} />
+          )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', fontSize: '13px', color: '#555' }}>
-          <FaThumbsUp style={{ marginRight: '4px' }} />
-          {likeCount}명이 추천했어요
+
+        <div>
+          <div
+            style={{
+              fontSize: '13px',
+              color: '#555',
+              fontWeight: '500',
+              marginBottom: '2px',
+            }}
+          >
+            {category}
+          </div>
+          <div
+            style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '170px',
+            }}
+          >
+            {placeName}
+          </div>
         </div>
       </div>
     </div>
