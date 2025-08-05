@@ -16,6 +16,7 @@ public class ReviewServiceImpl implements ReviewService{
 
     @Override
     public List<String> getTagNamesByPlaceId(Long placeId) {
-        return placeReviewTagRepository.findTagNamesByPlaceId(placeId);
+        List<String> tags = placeReviewTagRepository.findTagNamesByPlaceId(placeId);
+        return tags != null ? tags : List.of();
     }
 }
