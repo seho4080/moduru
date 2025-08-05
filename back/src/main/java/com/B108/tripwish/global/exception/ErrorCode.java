@@ -35,6 +35,9 @@ public enum ErrorCode {
   SPOT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   FESTIVAL_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
+  // 초대 토큰 관련
+  INVALID_INVITE_TOKEN("유효하지 않은 초대 토큰입니다.", HttpStatus.BAD_REQUEST),
+  EXPIRED_INVITE_TOKEN("만료된 초대 토큰입니다.", HttpStatus.GONE),
 
   // 파일 삭제 관련
   FILE_DELETE_FAIL("이미지 삭제 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
@@ -43,7 +46,8 @@ public enum ErrorCode {
   NO_PERMISSION("접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
   ROOM_DELETE_FORBIDDEN("방 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
-  INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST);
+  INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST),
+  UNSUPPORTED_CATEGORY_TYPE("지원하지 않는 카테고리 타입입니다.", HttpStatus.BAD_REQUEST);
 
 
   private final String message;

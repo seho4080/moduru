@@ -37,5 +37,6 @@ public class PlaceResponseDto {
             isLiked,
             isWanted
     );
+
   }
 }
