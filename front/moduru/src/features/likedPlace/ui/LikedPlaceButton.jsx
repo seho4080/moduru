@@ -1,18 +1,27 @@
-import { useSelector } from 'react-redux';
+// src/features/likedPlace/ui/LikedPlaceButton.jsx
+import { useSelector, useDispatch } from 'react-redux';
 import { FaStar, FaRegStar } from 'react-icons/fa';
+import { toggleLike } from '../model/likedPlaceSlice';
 import useLikedToggle from '../model/useLikedToggle';
 import './likedPlaceButton.css';
 
-export default function LikedPlaceButton({ placeId }) {
+export default function LikedPlaceButton({ place }) {
+  const dispatch = useDispatch();
+
   const isLiked = useSelector((state) =>
-    state.likedPlace.likedPlaceIds.includes(placeId)
+    state.likedPlace?.likedPlaceIds?.includes(place.placeId)
   );
+
   const { toggleLikedPlace } = useLikedToggle();
 
-  // NOTE: 좋아요 여부에 따라 버튼 UI와 기능을 전환함
+  const handleClick = () => {
+    toggleLikedPlace(place);
+    dispatch(toggleLike(place.placeId));
+  };
+
   return (
     <button
-      onClick={() => toggleLikedPlace(placeId)}
+      onClick={handleClick}
       className="liked-star-btn"
       title={isLiked ? '좋아요 취소' : '좋아요'}
     >
