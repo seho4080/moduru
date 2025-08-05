@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class PlaceInfoDto {
-    private Long placeId;
-    private String placeName;
+  private Long placeId;
+  private String placeName;
 }

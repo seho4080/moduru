@@ -47,24 +47,23 @@ public class ReviewServiceImpl implements ReviewService {
     Long placeId = request.getPlaceId();
 
     // Review 엔티티는 ID만 저장
-    Review review = Review.builder()
-            .userId(userId)
-            .placeId(placeId)
-            .build();
+    Review review = Review.builder().userId(userId).placeId(placeId).build();
     reviewRepository.save(review);
 
     // 태그 저장 및 카운트 증가
-    request.getTagIds().forEach(tagId -> {
-      ReviewTag tag = reviewTagReaderService.findTagById(tagId);
-      PlaceReviewTag prt = PlaceReviewTag.builder()
-              .id(new PlaceReviewTagId(review.getId(), tagId))
-              .reviewId(review.getId()) // Review 참조 대신 reviewId 사용
-              .tag(tag)
-              .build();
+    request
+        .getTagIds()
+        .forEach(
+            tagId -> {
+              ReviewTag tag = reviewTagReaderService.findTagById(tagId);
+              PlaceReviewTag prt = PlaceReviewTag.builder()
+                      .id(new PlaceReviewTagId(review.getId(), tagId))
+                      .tag(tag)
+                      .build();
 
-      placeReviewTagRepository.save(prt);
-      placeTagCountService.increaseTagCount(placeId, tagId);
-    });
+              placeReviewTagRepository.save(prt);
+              placeTagCountService.increaseTagCount(placeId, tagId);
+            });
 
     log.info("리뷰 작성 완료: reviewId={}, userId={}, placeId={}", review.getId(), userId, placeId);
   }
@@ -75,7 +74,9 @@ public class ReviewServiceImpl implements ReviewService {
   public void deleteMyReview(CustomUserDetails currentUser, Long reviewId) {
     Long userId = currentUser.getUser().getId();
 
-    Review review = reviewRepository.findById(reviewId)
+    Review review =
+        reviewRepository
+            .findById(reviewId)
             .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
 
     if (!review.getUserId().equals(userId)) {
@@ -83,11 +84,13 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     // 태그 조회 후 카운트 감소
-    List<PlaceReviewTag> tags = placeReviewTagRepository.findAll().stream()
-            .filter(t -> t.getReviewId().equals(reviewId))
+    List<PlaceReviewTag> tags =
+        placeReviewTagRepository.findAll().stream()
+                .filter(t -> t.getId().getReviewId().equals(reviewId))
             .toList();
 
-    tags.forEach(t -> placeTagCountService.decreaseTagCount(review.getPlaceId(), t.getTag().getId()));
+    tags.forEach(
+        t -> placeTagCountService.decreaseTagCount(review.getPlaceId(), t.getTag().getId()));
 
     tags.forEach(placeReviewTagRepository::delete);
     reviewRepository.delete(review);
@@ -102,16 +105,17 @@ public class ReviewServiceImpl implements ReviewService {
     Long userId = currentUser.getUser().getId();
 
     return reviewRepository.findByUserId(userId).stream()
-            .map(r -> {
+        .map(
+            r -> {
               var placeInfo = placeReaderService.getPlaceInfo(r.getPlaceId()); // DTO 사용
               return ReviewResponseDto.builder()
-                      .reviewId(r.getId())
-                      .placeId(placeInfo.getPlaceId())
-                      .placeName(placeInfo.getPlaceName()) // DTO에서 이름 가져옴
-                      .createdAt(r.getCreatedAt())
-                      .tags(placeReviewTagRepository.findTagNamesByPlaceId(r.getPlaceId()))
-                      .build();
+                  .reviewId(r.getId())
+                  .placeId(placeInfo.getPlaceId())
+                  .placeName(placeInfo.getPlaceName()) // DTO에서 이름 가져옴
+                  .createdAt(r.getCreatedAt())
+                  .tags(placeReviewTagRepository.findTagNamesByPlaceId(r.getPlaceId()))
+                  .build();
             })
-            .collect(Collectors.toList());
+        .collect(Collectors.toList());
   }
 }
