@@ -11,15 +11,23 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserReaderServiceImpl implements UserReaderService{
+public class UserReaderServiceImpl implements UserReaderService {
 
-    private final UserRepository userRepository;
+  private final UserRepository userRepository;
+
+  @Override
+  public User findById(Long userId) {
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    return user;
+  }
+
+  @Override
+  public User getReference(Long userId) {
+    return userRepository.getReferenceById(userId);
+  }
 
 
-    @Override
-    public User findById(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        return user;
-    }
 }

@@ -1,55 +1,47 @@
 package com.B108.tripwish.domain.place.config;
 
-import com.B108.tripwish.domain.place.document.PlaceDocument;
-import com.B108.tripwish.domain.place.entity.Place;
-import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
-import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.B108.tripwish.domain.place.document.PlaceDocument;
+import com.B108.tripwish.domain.place.entity.Place;
+import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
+import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class PlaceIndexer implements CommandLineRunner {
 
-    private final PlaceRepository placeRepository;
-    private final PlaceSearchRepository placeSearchRepository;
+  private final PlaceRepository placeRepository;
+  private final PlaceSearchRepository placeSearchRepository;
 
-    @Transactional
-    @Override
-    public void run(String... args) {
-        List<Place> places = placeRepository.findAllWithImages(); // Lazy 문제 해결됨
+  @Transactional
+  @Override
+  public void run(String... args) {
+    List<Place> places = placeRepository.findAllWithImages(); // Lazy 문제 해결됨
 
-        List<PlaceDocument> documents = places.stream()
-                .map(this::convertToPlaceDocument)
-                .toList();
+    List<PlaceDocument> documents = places.stream().map(this::convertToPlaceDocument).toList();
 
-        placeSearchRepository.saveAll(documents);
-    }
+    placeSearchRepository.saveAll(documents);
+  }
 
-    private PlaceDocument convertToPlaceDocument(Place place) {
-        return PlaceDocument.builder()
-                .id(place.getId().toString())
-                .placeName(place.getPlaceName())
-                .imageUrl(
-                        place.getImages() != null && !place.getImages().isEmpty()
-                                ? place.getImages().get(0).getImgUrl()
-                                : null
-                )
-                .address(place.getRoadAddressName())
-                .lat(place.getLat())
-                .lng(place.getLng())
-                .categoryName(
-                        place.getCategory() != null ? place.getCategory().getCategoryName() : null
-                )
-                .build();
-    }
-
-
-
-
+  private PlaceDocument convertToPlaceDocument(Place place) {
+    return PlaceDocument.builder()
+        .id(place.getId().toString())
+        .placeName(place.getPlaceName())
+        .imageUrl(
+            place.getImages() != null && !place.getImages().isEmpty()
+                ? place.getImages().get(0).getImgUrl()
+                : null)
+        .address(place.getRoadAddressName())
+        .lat(place.getLat())
+        .lng(place.getLng())
+        .categoryName(place.getCategory() != null ? place.getCategory().getCategoryName() : null)
+        .build();
+  }
 }
-

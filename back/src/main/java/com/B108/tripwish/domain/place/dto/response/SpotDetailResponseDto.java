@@ -6,13 +6,13 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SpotDetailResponseDto implements CategoryDetailResponseDto{
-    private String description;
-    private String descriptionShort;
-    private String infoCenter;
-    private String homepage;
-    private String businessHours;
-    private String restDate;
-    private String parking;
-    private String price;
+public class SpotDetailResponseDto implements CategoryDetailResponseDto {
+  private String description;
+  private String descriptionShort;
+  private String infoCenter;
+  private String homepage;
+  private String businessHours;
+  private String restDate;
+  private String parking;
+  private String price;
 }

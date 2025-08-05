@@ -1,10 +1,8 @@
 package com.B108.tripwish.domain.review.entity;
 
-import com.B108.tripwish.domain.place.entity.Place;
-import com.B108.tripwish.domain.user.entity.User;
+import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reviews")
@@ -14,26 +12,21 @@ import java.time.LocalDateTime;
 @Builder
 public class Review {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @Column(name = "user_id", nullable = false)
+  private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "place_id", nullable = false)
-    private Place place;
+  @Column(name = "place_id", nullable = false)
+  private Long placeId;
 
+  @Column(name = "created_at", nullable = false)
+  private LocalDateTime createdAt;
 
-    // 생성 시간
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
+  @PrePersist
+  protected void onCreate() {
+    this.createdAt = LocalDateTime.now();
+  }
 }

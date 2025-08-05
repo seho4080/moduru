@@ -5,5 +5,4 @@ import org.springframework.data.elasticsearch.repository.config.EnableElasticsea
 
 @Configuration
 @EnableElasticsearchRepositories(basePackages = "com.B108.tripwish.domain.place.respoistory")
-public class ElasticsearchConfig {
-}
+public class ElasticsearchConfig {}
