@@ -76,11 +76,18 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
   // Request Header에서 토큰 정보 추출
   private String resolveToken(HttpServletRequest request) {
-    String bearerToken = request.getHeader("Authorization");
-    log.info("📦 Authorization 헤더 내용: {}", bearerToken);
-    if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-      return bearerToken.substring(7);
+    String token = null;
+
+    if (request.getCookies() != null) {
+      for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+        if ("access_token".equals(cookie.getName())) {
+          token = cookie.getValue();
+          break;
+        }
+      }
     }
-    return null;
+
+    log.info("🍪 쿠키 기반 access_token: {}", token);
+    return token;
   }
 }
