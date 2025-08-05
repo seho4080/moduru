@@ -103,9 +103,14 @@ services:
       - postgresql_password=${postgresql_password}
       - REDIS_HOST=redis        # ← 여기
       - REDIS_PORT=6379
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
     depends_on:
       # - db
-      - redis
+      redis:
+        condition: service_healthy
+      elasticsearch:
+          condition: service_healthy
     networks:
       - app-network
   ##########################################
@@ -139,9 +144,35 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - app-network
 
+  ##########################################
+  # 7. 검색(es)
+  ##########################################
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.7.1
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
 
 networks:
   app-network:
