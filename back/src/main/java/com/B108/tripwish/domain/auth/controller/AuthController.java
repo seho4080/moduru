@@ -1,5 +1,9 @@
 package com.B108.tripwish.domain.auth.controller;
 
+import com.B108.tripwish.global.util.CookieUtil;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -53,15 +57,16 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
       })
   @PostMapping("/login")
-  public LoginResponseDto login(@RequestBody LoginRequestDto login) {
+  public LoginResponseDto login(@RequestBody LoginRequestDto login, HttpServletResponse response) {
     String email = login.getEmail();
     String password = login.getPassword();
-    JwtToken jwtToken = authService.login(email, password);
+    JwtToken jwtToken = authService.login(email, password, response);
     log.info(
-        "jwtToken accessToken = {}, refreshToken = {}",
-        jwtToken.getAccessToken(),
-        jwtToken.getRefreshToken());
-    return new LoginResponseDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken());
+            "jwtToken accessToken = {}, refreshToken = {}",
+            jwtToken.getAccessToken(),
+            jwtToken.getRefreshToken());
+    return new LoginResponseDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken()); // 개발 중 응답 확인용
+//    return ResponseEntity.ok(new CommonResponse("LOGIN_SUCCESS", "로그인이 완료되었습니다.");
   }
 
   @Operation(
@@ -87,12 +92,31 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/logout")
-  public ResponseEntity<CommonResponse> logout(@RequestHeader("Authorization") String authHeader) {
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+  public ResponseEntity<CommonResponse> logout(HttpServletRequest request, HttpServletResponse response) {
+    String accessToken = CookieUtil.getCookieValue(request, "access_token");
+    if (accessToken == null) {
       throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
     }
-    String accessToken = authHeader.substring(7);
+
+    // 서비스 호출
     authService.logout(accessToken);
+
+    // 쿠키 삭제 처리
+    Cookie accessTokenCookie = new Cookie("access_token", null);
+    accessTokenCookie.setMaxAge(0); // 즉시 만료
+    accessTokenCookie.setPath("/");
+    accessTokenCookie.setHttpOnly(true);
+    accessTokenCookie.setSecure(false); // 배포 시 true
+
+    Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+    refreshTokenCookie.setMaxAge(0);
+    refreshTokenCookie.setPath("/");
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setSecure(false); // 배포 시 true
+
+    response.addCookie(accessTokenCookie);
+    response.addCookie(refreshTokenCookie);
+
     return ResponseEntity.ok(new CommonResponse("SUCCESS", "로그아웃이 정상적으로 처리되었습니다."));
   }
 
@@ -121,12 +145,26 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/reissue")
-  public ReissueResponseDto reissue(@RequestHeader("Authorization") String bearerToken) {
-    if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+  public ReissueResponseDto reissue(HttpServletRequest request, HttpServletResponse response) {
+    String refreshToken = CookieUtil.getCookieValue(request, "refresh_token");
+    if (refreshToken == null) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-    String refreshToken = bearerToken.substring(7); // "Bearer " 제거
     JwtToken token = authService.reissue(refreshToken);
+    Cookie accessTokenCookie = new Cookie("access_token", token.getAccessToken());
+    accessTokenCookie.setHttpOnly(true);
+    accessTokenCookie.setSecure(false); // 배포 시 true
+    accessTokenCookie.setPath("/");
+    accessTokenCookie.setMaxAge(60 * 60); // 1시간
+    response.addCookie(accessTokenCookie);
+
+    Cookie refreshTokenCookie = new Cookie("refresh_token", token.getRefreshToken());
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setSecure(false); // 배포 시 true
+    refreshTokenCookie.setPath("/");
+    refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+    response.addCookie(refreshTokenCookie);
+
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
   }
 }
