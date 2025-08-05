@@ -1,38 +1,41 @@
-import React, { useState } from 'react'; // ✅ useState 추가
-import MainContent from './MainContent';
-import './MainPage.css';
+import React, { useState } from "react";
+import MainContent from "./MainContent";
+import LoginForm from "../../features/auth/ui/LoginForm";
+import { useAuth } from "../../shared/model/useAuth"; // ✅ 추가
+import "./mainPage.css";
 
 const MainPageLayout = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { isLoggedIn } = useAuth(); // ✅ 로그인 상태 가져오기
 
-  const handleLoginClick = () => {
-    setIsLoginModalOpen(true);
+  const handleProfileClick = () => {
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true); // ✅ 로그인 안 됐으면 모달 열기
+    } else {
+      alert("✅ 프로필 화면으로 이동 (추후 구현 예정)"); // ✅ 로그인 상태라면 다른 동작
+    }
   };
 
   return (
     <div className="main-page-layout">
       <div className="top-bar">
         <div className="logo">
-          <img src="/assets/images/moduru-logo.png" alt="로고" />
+          <img src="/src/assets/images/moduru-logo.png" alt="로고" />
         </div>
 
-        <div className="login-icon" onClick={handleLoginClick}>
-          <img src="/assets/icons/login-icon.png" alt="로그인" />
+        <div className="login-icon" onClick={handleProfileClick}>
+          <img src="/src/assets/icons/login-icon.png" alt="로그인" />
         </div>
       </div>
 
       <MainContent />
 
-      {/* ❗ 조건부 모달 렌더링 - 없으면 경고 뜸 */}
+      {/*  LoginForm 모달 조건부 렌더링 */}
       {isLoginModalOpen && (
-        <div className="login-modal">
-          <p>로그인 모달 열림 (구현 예정)</p>
-        </div>
+        <LoginForm onClose={() => setIsLoginModalOpen(false)} />
       )}
 
-      <footer className="footer">
-        © 2025 에잇(스파). All rights reserved
-      </footer>
+      <footer className="footer">© 2025 에잇(스파). All rights reserved</footer>
     </div>
   );
 };

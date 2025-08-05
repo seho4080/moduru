@@ -1,108 +1,101 @@
-// src/features/map/ui/MapControls.js
+// src/features/map/ui/Controls.jsx
 import React from 'react';
-import './MapControls.css';
+import './mapControls.css';
+import {
+  FaClipboard,
+  FaMapMarkerAlt,
+  FaCircle,
+  FaRuler,
+  FaPlus,
+  FaMinus
+} from 'react-icons/fa';
 
 export default function Controls({
   mode, setMode,
-  zoomable, setZoomable,
   zoomIn, zoomOut,
-  region, setRegion,
   removeMode, setRemoveMode,
   onDeleteConfirm
 }) {
+  const clearDistanceMode = () => {
+    if (window.kakao?.maps) {
+      const overlays = document.querySelectorAll('.dot, .dotOverlay');
+      overlays.forEach(el => el.remove());
+    }
+  };
+
   const toggleMode = (targetMode) => {
     if (removeMode) return;
-    setMode(prev => (prev === targetMode ? '' : targetMode)); // 누르면 토글됨
+    if (mode === 'measure' && targetMode === 'measure') clearDistanceMode();
+    setMode(prev => (prev === targetMode ? '' : targetMode));
     setRemoveMode(false);
+  };
+
+  const handleRemoveToggle = () => {
+    setRemoveMode(true);
+    setMode('');
+  };
+
+  const handleRemoveCancel = () => {
+    setRemoveMode(false);
+    setMode('');
   };
 
   return (
     <div className="controls-container">
-      {/* 핀 추가 모드 */}
+      <button className="map-btn" onClick={zoomIn}>
+        <FaPlus className="map-icon" />
+      </button>
+
+      <button className="map-btn" onClick={zoomOut}>
+        <FaMinus className="map-icon" />
+      </button>
+
+      <div style={{ height: '20px' }}></div>
+
+      <button className="map-btn">
+        <FaClipboard className="map-icon" />
+        <span>테마</span>
+      </button>
+
       <button
-        className={mode === 'marker' && !removeMode ? 'selected_btn' : 'btn'}
+        className={`map-btn ${mode === 'circle' ? 'selected' : ''}`}
+        onClick={() => toggleMode('circle')}
+      >
+        <FaCircle className="map-icon" />
+        <span>반경</span>
+      </button>
+
+      <button
+        className={`map-btn ${mode === 'measure' ? 'selected' : ''}`}
+        onClick={() => toggleMode('measure')}
+      >
+        <FaRuler className="map-icon" />
+        <span>거리</span>
+      </button>
+
+      <button
+        className={`map-btn ${mode === 'marker' && !removeMode ? 'selected' : ''}`}
         onClick={() => toggleMode('marker')}
         disabled={removeMode}
       >
-        핀 추가 모드
+        <FaMapMarkerAlt className="map-icon" />
+        <span>핀</span>
       </button>
 
-      {/* 거리 측정 모드 */}
-      <button
-        className={mode === 'measure' && !removeMode ? 'selected_btn' : 'btn'}
-        onClick={() => toggleMode('measure')}
-        disabled={removeMode}
-      >
-        거리 측정 모드
-      </button>
-
-      {/* 줌 ON/OFF */}
-      <button
-        className={zoomable ? 'selected_btn' : 'btn'}
-        onClick={() => setZoomable(z => !z)}
-      >
-        줌 {zoomable ? 'ON' : 'OFF'}
-      </button>
-
-      <button className="btn" onClick={zoomIn}>+</button>
-      <button className="btn" onClick={zoomOut}>–</button>
-
-      {/* 핀 제거 모드 */}
       {!removeMode ? (
-        <button
-          className="btn"
-          onClick={() => {
-            setRemoveMode(true);
-            setMode(''); // ❌ 'marker' 말고 빈 문자열로 초기화
-          }}
-        >
-          핀 제거 모드
+        <button className="map-btn" onClick={handleRemoveToggle}>
+          <span>제거</span>
         </button>
       ) : (
         <>
-          <button className="selected_btn" onClick={onDeleteConfirm}>삭제</button>
-          <button
-            className="btn"
-            onClick={() => {
-              setRemoveMode(false);
-              setMode(''); // ❌ 해제 시에도 초기화
-            }}
-          >
-            취소
+          <button className="map-btn selected" onClick={onDeleteConfirm}>
+            <span>삭제</span>
+          </button>
+          <button className="map-btn" onClick={handleRemoveCancel}>
+            <span>취소</span>
           </button>
         </>
       )}
-
-      {/* 지역 설정 */}
-      <button
-        className={region === 'seoul' ? 'selected_btn' : 'btn'}
-        onClick={() => {
-          setRemoveMode(false);
-          setRegion('seoul');
-        }}
-      >
-        서울
-      </button>
-
-      <button
-        className={region === 'daejeon' ? 'selected_btn' : 'btn'}
-        onClick={() => {
-          setRemoveMode(false);
-          setRegion('daejeon');
-        }}
-      >
-        대전
-      </button>
-
-      <button
-        className={region === 'busan' ? 'selected_btn' : 'btn'}
-        onClick={() => {
-          setRemoveMode(false);
-          setRegion('busan');
-        }}
-      >
-        부산
-      </button>
     </div>
   );
 }

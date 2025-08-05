@@ -28,4 +28,11 @@ public class TravelMember {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private TravelMemberRole role;
+
+  public TravelMember(TravelRoom travelRoom, User user, TravelMemberRole role) {
+    this.travelRoom = travelRoom;
+    this.user = user;
+    this.role = role;
+    this.id = new TravelMemberId(travelRoom.getId(), user.getId());
+  }
 }
