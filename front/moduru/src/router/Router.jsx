@@ -21,6 +21,7 @@ const RouterComponent = () => {
           path="/my-page/my-travel-space"
           element={<MyTravelSpacePage />}
         />
+        <Route path="/trip-room/:id" element={<TripRoomPage />} />
       </Routes>
     </BrowserRouter>
   );
