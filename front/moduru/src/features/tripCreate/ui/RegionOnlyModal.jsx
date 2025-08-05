@@ -1,29 +1,27 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react'; // ✅ useState 포함 여부 확인
 import { REGIONS } from '../lib/regionName';
 import { updateTripRoomRegion } from '../lib/tripRoomApi';
 import './tripCreateForm.css';
 
 function formatDate(date) {
-  return date.toISOString().slice(0, 10); // YYYY-MM-DD
+  return date.toISOString().slice(0, 10);
 }
 
-export default function RegionSelectModal({ roomId, onRegionSet }) {
+// NOTE: title prop 추가
+export default function RegionSelectModal({ roomId, title, onRegionSet }) {
   const [selectedRegion, setSelectedRegion] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // NOTE: 드롭다운 외부 클릭 시 닫히도록 이벤트 등록
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
     };
-
     if (dropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -34,7 +32,6 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
       alert('여행지를 선택해주세요.');
       return;
     }
-
     onRegionSet(selectedRegion);
   };
 
@@ -44,12 +41,11 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
       return;
     }
 
-    const title = '나의 여행'; // NOTE: 이후 props로 주입받도록 확장 가능
     const today = formatDate(new Date());
 
     try {
       const data = await updateTripRoomRegion(roomId, {
-        title,
+        title, // NOTE: 외부에서 전달받은 title 사용
         region: selectedRegion,
         startDate: today,
         endDate: today,
@@ -72,10 +68,7 @@ export default function RegionSelectModal({ roomId, onRegionSet }) {
         <h3 className="region-title">여행지를 선택해주세요</h3>
 
         <div className="dropdown-container" ref={dropdownRef}>
-          <div
-            className="dropdown-header"
-            onClick={() => setDropdownOpen(prev => !prev)}
-          >
+          <div className="dropdown-header" onClick={() => setDropdownOpen(prev => !prev)}>
             {selectedRegion || '여행지'}
             <span className="arrow">
               {dropdownOpen ? (

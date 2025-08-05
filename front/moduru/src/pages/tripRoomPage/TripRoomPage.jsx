@@ -1,4 +1,10 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+// src/pages/TripRoomPage.jsx
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+} from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { setSelectedPlace } from '../../redux/slices/mapSlice';
@@ -11,6 +17,7 @@ import RegionOnlyModal from '../../features/tripCreate/ui/RegionOnlyModal';
 import InviteButton from '../../features/invite/ui/InviteButton';
 import TestAddPin from '../../features/map/dev/TestAddPin';
 import PlaceDetailModal from '../../widgets/sidebar/PlaceDetailModal';
+import { updateTripRoomRegion } from '../../features/tripCreate/lib/tripRoomApi';
 
 export default function TripRoomPage() {
   const location = useLocation();
@@ -44,7 +51,9 @@ export default function TripRoomPage() {
   useEffect(() => {
     setTripName(title || '');
     setTripRegion(initialRegion || '');
-    setTripDates(startDate && endDate ? [new Date(startDate), new Date(endDate)] : [null, null]);
+    setTripDates(
+      startDate && endDate ? [new Date(startDate), new Date(endDate)] : [null, null]
+    );
   }, [title, initialRegion, startDate, endDate]);
 
   const handleDeleteConfirm = () => {
@@ -52,7 +61,6 @@ export default function TripRoomPage() {
       alert('삭제할 핀을 먼저 선택하세요.');
       return;
     }
-
     if (!window.confirm('삭제하시겠습니까?')) return;
 
     toRemove.forEach((marker) => marker.setMap(null));
@@ -66,31 +74,33 @@ export default function TripRoomPage() {
   }, []);
 
   const handleTabChange = (tab) => {
-    // NOTE: 탭 변경 시 상세 모달 닫음
     dispatch(setSelectedPlace(null));
 
     if (tab === 'openTripModal') {
       setShowTripModal(true);
       return;
     }
-
     if (tab === 'exit') {
       console.log('나가기');
       return;
     }
-
     setActiveTab(tab);
   };
 
-  const handleTripSave = () => {
-    // NOTE: 여행방 정보 저장 후 설정 모달 닫기
-    console.log('[여행방 정보]', {
-      travelRoomId,
-      tripName,
-      tripRegion,
-      tripDates,
-    });
-    setShowTripModal(false);
+  const handleTripSave = async () => {
+    try {
+      const res = await updateTripRoomRegion(travelRoomId, {
+        title: tripName,
+        region: tripRegion,
+        startDate: tripDates[0]?.toISOString().split('T')[0],
+        endDate: tripDates[1]?.toISOString().split('T')[0],
+      });
+      console.log('[여행방 수정 성공]', res);
+      setRegion(tripRegion);
+      setShowTripModal(false);
+    } catch (err) {
+      alert(`저장 실패: ${err.message}`);
+    }
   };
 
   return (
@@ -99,6 +109,7 @@ export default function TripRoomPage() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         roomId={travelRoomId}
+        region={region}
       />
 
       <div style={{ flex: 1, position: 'relative' }}>
@@ -141,8 +152,10 @@ export default function TripRoomPage() {
         {showRegionModal && (
           <RegionOnlyModal
             roomId={travelRoomId}
+            title={title}
             onRegionSet={(region) => {
               setTripRegion(region);
+              setRegion(region);
               setShowRegionModal(false);
             }}
           />
