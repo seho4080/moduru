@@ -10,7 +10,7 @@ import LoginForm from '../../features/auth/ui/LoginForm';
 import { useAuth } from '../../shared/model/useAuth';
 
 // styles
-import './MainPage.css';
+import './mainPage.css';
 
 /**
  * 메인 콘텐츠 컴포넌트
