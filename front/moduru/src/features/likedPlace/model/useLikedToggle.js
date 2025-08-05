@@ -1,31 +1,61 @@
-// src/features/LikedPlace/model/useLikedToggle.js
-import { useDispatch, useSelector } from 'react-redux';
-import { toggleLike } from './likedPlaceSlice';
+// src/features/likedPlace/model/useLikedToggle.js
+
+import { useDispatch } from 'react-redux';
+import { reissueToken } from '../../auth/lib/authApi';
 
 export default function useLikedToggle() {
   const dispatch = useDispatch();
-  const likedPlaceIds = useSelector((state) => state.likedPlace.likedPlaceIds);
 
-  // NOTE: 이미 좋아요한 장소인지 판단하고, 서버에 반영 후 전역 상태 업데이트
-  const toggleLikedPlace = async (placeId) => {
-    const isLiked = likedPlaceIds.includes(placeId);
+  const toggleLikedPlace = async (place) => {
+    if (!place || !place.placeId) {
+      console.error('잘못된 place 전달됨:', place);
+      return;
+    }
+
+    const { placeId, placeName, category } = place;
+    let accessToken = localStorage.getItem('accessToken');
+
+    const request = async (token) => {
+      return await fetch(`http://localhost:8080/my-places/${placeId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+    };
 
     try {
-      const res = await fetch(
-        `http://localhost:8080/places/like/${placeId}`,
-        {
-          method: isLiked ? 'DELETE' : 'POST',
-          credentials: 'include',
-        }
-      );
+      let res = await request(accessToken);
 
-      if (!res.ok) {
-        throw new Error(`좋아요 ${isLiked ? '취소' : '등록'} 실패`);
+      if (res.status === 401) {
+        const reissue = await reissueToken();
+        if (!reissue.success) throw new Error('토큰 재발급 실패');
+
+        accessToken = reissue.accessToken;
+        res = await request(accessToken);
       }
 
-      dispatch(toggleLike(placeId));
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('서버 응답 상태:', res.status);
+        console.error('서버 응답 내용:', errText);
+        throw new Error('좋아요 요청 실패');
+      }
+
+      const result = await res.json();
+
+      console.log({
+        장소명: placeName,
+        카테고리: category,
+        상태: result.message.includes('등록') ? '좋아요 등록' : '좋아요 취소',
+        응답: result.message,
+      });
+
+      // NOTE: 서버 동기화 목적의 요청이므로, Redux 상태는 외부에서 처리함
     } catch (err) {
-      console.error('좋아요 토글 요청 실패:', err);
+      console.error('좋아요 토글 실패:', err.message);
     }
   };
 

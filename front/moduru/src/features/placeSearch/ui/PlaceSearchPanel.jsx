@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
@@ -6,9 +6,11 @@ import { usePlaceSearch } from '../model/usePlaceSearch';
 import PlaceSearchList from './PlaceSearchList';
 import './placeSearchPanel.css';
 
-const PlaceSearchPanel = ({ roomId }) => {
+const PlaceSearchPanel = ({ roomId, region }) => {
   const [selectedCategory, setSelectedCategory] = useState('전체');
-  const { places, loading } = usePlaceSearch(roomId, selectedCategory);
+
+  // NOTE: 선택된 카테고리 또는 지역이 바뀔 때마다 검색 요청
+  const { places, loading } = usePlaceSearch(roomId, selectedCategory, region);
 
   const categoryOptions = ['전체', '음식점', '명소', '축제'];
 
