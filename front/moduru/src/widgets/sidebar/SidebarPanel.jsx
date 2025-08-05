@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import PlaceSearchPanel from '../../features/placeSearch/ui/PlaceSearchPanel';
 import WishPlacePanel from '../../features/wishPlace/ui/WishPlacePanel';
+// import LikedPlacePanel from '../../features/likedPlace/ui/LikedPlacePanel';
 import { useLocation } from 'react-router-dom';
 
 export default function SidebarPanel({
@@ -106,7 +107,7 @@ export default function SidebarPanel({
             setHoveredCoords={setHoveredCoords}
           />
         )}
-        {activeTab === 'pick' && <div>My 장소 패널 (추후 구현)</div>}
+        {/* {activeTab === 'pick' && <LikedPlacePanel />} */}
         {activeTab === 'schedule' && <WishPlacePanel />}
       </div>
 

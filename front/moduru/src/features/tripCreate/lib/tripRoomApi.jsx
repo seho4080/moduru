@@ -38,10 +38,8 @@ export async function fetchWithAuth(url, options = {}) {
       throw new Error('토큰 만료. 다시 로그인 해주세요.');
     }
 
-    // ✅ reissueToken()에서 직접 받은 최신 토큰 사용
+    // NOTE: 재발급 받은 토큰으로 요청을 다시 시도
     token = result.accessToken;
-    console.log('[fetchWithAuth] accessToken 재적용 후 재요청', token);
-
     res = await fetch(url, {
       ...options,
       headers: {
