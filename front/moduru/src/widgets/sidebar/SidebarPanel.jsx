@@ -1,42 +1,40 @@
-import React, { useRef, useState, useEffect } from 'react';
+// src/widgets/sidebar/SidebarPanel.jsx
+
+import React, { useRef, useEffect, useState } from 'react';
 import PlaceSearchPanel from '../../features/placeSearch/ui/PlaceSearchPanel';
+import WishPlacePanel from '../../features/wishPlace/ui/WishPlacePanel';
 import { useLocation } from 'react-router-dom';
 
-export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, setHoveredCoords }) {
+export default function SidebarPanel({
+  activeTab,
+  isOpen,
+  onClosePanel,
+  onOpenPanel,
+  setHoveredCoords,
+}) {
   const location = useLocation();
   const { travelRoomId } = location.state || {};
 
   const panelRef = useRef(null);
-  const [width, setWidth] = useState(520);
-  const [isOpen, setIsOpen] = useState(true);
+  const [width, setWidth] = useState(450);
   const isResizing = useRef(false);
 
-  const handleClose = () => {
-    setIsOpen(false);
-    onClosePanel?.();
-  };
-
-  const handleOpen = () => {
-    setIsOpen(true);
-    onOpenPanel?.();
-  };
-
-  const handleMouseDown = () => {
+  const handleMouseDownResize = () => {
     isResizing.current = true;
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMoveResize);
+    document.addEventListener('mouseup', handleMouseUpResize);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMoveResize = (e) => {
     if (!isResizing.current) return;
     const newWidth = e.clientX - panelRef.current.getBoundingClientRect().left;
     setWidth(Math.max(280, Math.min(720, newWidth)));
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUpResize = () => {
     isResizing.current = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
+    document.removeEventListener('mousemove', handleMouseMoveResize);
+    document.removeEventListener('mouseup', handleMouseUpResize);
   };
 
   useEffect(() => {
@@ -46,9 +44,9 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
     };
   }, [isResizing.current]);
 
-  const showPanel = isOpen && (activeTab === 'place' || activeTab === 'pick' || activeTab === 'schedule');
+  const isPanelVisible = isOpen && ['place', 'pick', 'schedule'].includes(activeTab);
 
-  if (!showPanel) {
+  if (!isPanelVisible) {
     return (
       <div
         style={{
@@ -61,7 +59,7 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
           cursor: 'pointer',
           boxShadow: '4px 0 10px rgba(0,0,0,0.08)',
         }}
-        onClick={handleOpen}
+        onClick={onOpenPanel}
       >
         <button
           style={{
@@ -76,8 +74,8 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
             justifyContent: 'center',
             transition: 'background 0.2s',
           }}
-          onMouseOver={e => (e.currentTarget.style.background = '#e6f0ff')}
-          onMouseOut={e => (e.currentTarget.style.background = '#fff')}
+          onMouseOver={(e) => (e.currentTarget.style.background = '#e6f0ff')}
+          onMouseOut={(e) => (e.currentTarget.style.background = '#fff')}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M7 5l6 5-6 5" stroke="#007aff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -105,11 +103,11 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
         {activeTab === 'place' && (
           <PlaceSearchPanel
             roomId={travelRoomId}
-            setHoveredCoords={setHoveredCoords} // ✅ 추가
+            setHoveredCoords={setHoveredCoords}
           />
         )}
         {activeTab === 'pick' && <div>My 장소 패널 (추후 구현)</div>}
-        {activeTab === 'schedule' && <div>일정 편집 패널 (추후 구현)</div>}
+        {activeTab === 'schedule' && <WishPlacePanel />}
       </div>
 
       <div
@@ -121,7 +119,7 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
           justifyContent: 'center',
           cursor: 'pointer',
         }}
-        onClick={handleClose}
+        onClick={onClosePanel}
       >
         <button
           style={{
@@ -136,8 +134,8 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
             justifyContent: 'center',
             transition: 'background 0.2s',
           }}
-          onMouseOver={e => (e.currentTarget.style.background = '#e6f0ff')}
-          onMouseOut={e => (e.currentTarget.style.background = '#fff')}
+          onMouseOver={(e) => (e.currentTarget.style.background = '#e6f0ff')}
+          onMouseOut={(e) => (e.currentTarget.style.background = '#fff')}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M13 5l-6 5 6 5" stroke="#007aff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -146,7 +144,7 @@ export default function SidebarPanel({ activeTab, onClosePanel, onOpenPanel, set
       </div>
 
       <div
-        onMouseDown={handleMouseDown}
+        onMouseDown={handleMouseDownResize}
         style={{
           width: '6px',
           cursor: 'col-resize',
