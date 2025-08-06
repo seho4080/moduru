@@ -3,7 +3,7 @@ package com.B108.tripwish.websocket.service;
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.place.entity.Place;
 import com.B108.tripwish.domain.place.entity.PlaceImage;
-import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
+
 import com.B108.tripwish.domain.place.service.PlaceReaderService;
 import com.B108.tripwish.domain.room.entity.CustomPlace;
 import com.B108.tripwish.domain.room.entity.WantPlace;
@@ -120,4 +120,3 @@ public class PlaceWantSocketService {
         }
     }
 }
-

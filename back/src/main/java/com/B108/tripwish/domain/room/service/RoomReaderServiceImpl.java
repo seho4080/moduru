@@ -1,5 +1,10 @@
 package com.B108.tripwish.domain.room.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.B108.tripwish.domain.room.entity.TravelMember;
 import com.B108.tripwish.domain.room.entity.TravelMemberId;
 import com.B108.tripwish.domain.room.entity.TravelRoom;
@@ -8,6 +13,7 @@ import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

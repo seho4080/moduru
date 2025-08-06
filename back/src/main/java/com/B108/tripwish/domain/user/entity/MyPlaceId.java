@@ -1,11 +1,9 @@
 package com.B108.tripwish.domain.user.entity;
 
-import jakarta.persistence.Column;
+import java.io.Serializable;
+
 import jakarta.persistence.Embeddable;
 import lombok.*;
-
-import java.io.Serializable;
-import java.util.Objects;
 
 @Embeddable
 @Getter
@@ -14,6 +12,6 @@ import java.util.Objects;
 @EqualsAndHashCode
 public class MyPlaceId implements Serializable {
 
-    private Long userId;
-    private Long placeId;
+  private Long userId;
+  private Long placeId;
 }

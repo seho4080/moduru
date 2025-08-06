@@ -1,9 +1,9 @@
 package com.B108.tripwish.domain.user.entity;
 
-import com.B108.tripwish.domain.place.entity.Place;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "my_places")
@@ -13,29 +13,27 @@ import java.time.LocalDateTime;
 @Builder
 public class MyPlace {
 
-    @EmbeddedId
-    @AttributeOverrides({
-            @AttributeOverride(name = "userId", column = @Column(name = "user_id")),
-            @AttributeOverride(name = "placeId", column = @Column(name = "place_id"))
-    })
-    private MyPlaceId id;
+  @EmbeddedId
+  @AttributeOverrides({
+          @AttributeOverride(name = "userId", column = @Column(name = "user_id")),
+          @AttributeOverride(name = "placeId", column = @Column(name = "place_id"))
+  })
+  private MyPlaceId id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("userId") // TravelMemberId.userId 와 매핑
-    @JoinColumn(name = "user_id")
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @MapsId("userId")
+  @JoinColumn(name = "user_id")
+  private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("placeId") // TravelMemberId.roomId 와 매핑
-    @JoinColumn(name = "place_id")
-    private Place place;
+  // ✅ Place 연관관계 제거, placeId 필드 추가
+  @Column(name = "place_id", nullable = false, insertable = false, updatable = false)
+  private Long placeId;
 
+  @Column(name = "created_at", nullable = false)
+  private LocalDateTime createdAt;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
+  @PrePersist
+  public void prePersist() {
+    this.createdAt = LocalDateTime.now();
+  }
 }

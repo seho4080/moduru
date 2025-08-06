@@ -36,6 +36,7 @@ public enum ErrorCode {
   FESTIVAL_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   WANT_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   CUSTOM_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  REVIEW_TAG_NOT_FOUND("리뷰 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
   // 초대 토큰 관련
   INVALID_INVITE_TOKEN("유효하지 않은 초대 토큰입니다.", HttpStatus.BAD_REQUEST),

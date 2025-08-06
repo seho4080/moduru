@@ -1,7 +1,6 @@
 package com.B108.tripwish.domain.auth.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import com.B108.tripwish.global.util.CookieUtil;
 import jakarta.servlet.http.Cookie;
@@ -11,7 +10,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -132,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
     User user = token.getUser();
     CustomUserDetails userDetails = new CustomUserDetails(user);
     Authentication authentication =
-            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
     JwtToken newToken = jwtTokenProvider.generateToken(authentication, refreshToken);
 
