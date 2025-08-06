@@ -6,5 +6,5 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class JoinRoomResponseDto {
-    private Long roomId;
+  private Long roomId;
 }

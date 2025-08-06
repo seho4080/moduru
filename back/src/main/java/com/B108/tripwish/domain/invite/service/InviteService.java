@@ -7,13 +7,11 @@ import com.B108.tripwish.domain.invite.dto.response.InviteLinkResponseDto;
 import com.B108.tripwish.domain.invite.dto.response.JoinRoomResponseDto;
 
 public interface InviteService {
-    InviteLinkResponseDto createInviteLink(Long roomId);
+  InviteLinkResponseDto createInviteLink(Long roomId);
 
-    JoinRoomResponseDto joinRoomWithToken(CustomUserDetails user, String token);
+  JoinRoomResponseDto joinRoomWithToken(CustomUserDetails user, String token);
 
-    InvitableFriendListResponseDto getFriends(CustomUserDetails user, Long roomId);
+  InvitableFriendListResponseDto getFriends(CustomUserDetails user, Long roomId);
 
-    void inviteFriends(InviteFriendRequestDto request);
-
-
+  void inviteFriends(InviteFriendRequestDto request);
 }
