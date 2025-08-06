@@ -1,9 +1,5 @@
 package com.B108.tripwish.domain.auth.controller;
 
-import com.B108.tripwish.global.util.CookieUtil;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +15,7 @@ import com.B108.tripwish.global.common.dto.CommonResponse;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import com.B108.tripwish.global.exception.ErrorResponse;
+import com.B108.tripwish.global.util.CookieUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +24,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,11 +61,12 @@ public class AuthController {
     String password = login.getPassword();
     JwtToken jwtToken = authService.login(email, password, response);
     log.info(
-            "jwtToken accessToken = {}, refreshToken = {}",
-            jwtToken.getAccessToken(),
-            jwtToken.getRefreshToken());
-    return new LoginResponseDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken()); // 개발 중 응답 확인용
-//    return ResponseEntity.ok(new CommonResponse("LOGIN_SUCCESS", "로그인이 완료되었습니다.");
+        "jwtToken accessToken = {}, refreshToken = {}",
+        jwtToken.getAccessToken(),
+        jwtToken.getRefreshToken());
+    return new LoginResponseDto(
+        jwtToken.getAccessToken(), jwtToken.getRefreshToken()); // 개발 중 응답 확인용
+    //    return ResponseEntity.ok(new CommonResponse("LOGIN_SUCCESS", "로그인이 완료되었습니다.");
   }
 
   @Operation(
@@ -91,7 +92,8 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/logout")
-  public ResponseEntity<CommonResponse> logout(HttpServletRequest request, HttpServletResponse response) {
+  public ResponseEntity<CommonResponse> logout(
+      HttpServletRequest request, HttpServletResponse response) {
     String accessToken = CookieUtil.getCookieValue(request, "access_token");
     if (accessToken == null) {
       throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
