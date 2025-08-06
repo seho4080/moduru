@@ -60,30 +60,6 @@ services:
       - app-network
 
   ##########################################
-  # 3. PostgreSQL 데이터베이스
-  ##########################################
-  # db:
-  #   image: postgres:16.9
-  #   container_name: pg-db
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: ssafy
-  #     POSTGRES_DB: mydb
-  #   volumes:
-  #     - ./pg-data:/var/lib/postgresql/data
-  #     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #   restart: always
-  #   networks:
-  #     - app-network
-
-  ##########################################
   # 4. 백엔드 (Spring Boot)
   ##########################################
   backend:
@@ -101,12 +77,18 @@ services:
       - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
       - postgresql_user=${postgresql_user}
       - postgresql_password=${postgresql_password}
-      - REDIS_HOST=redis        # ← 여기
-      - REDIS_PORT=6379
+      # - REDIS_HOST=redis        # ← 여기
+      # - REDIS_PORT=6379
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
       - ELASTICSEARCH_HOST=elasticsearch
       - ELASTICSEARCH_PORT=9200
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=${postgresql_user}
+      - SPRING_DATASOURCE_PASSWORD=${postgresql_password}
+
     depends_on:
-      # - db
       redis:
         condition: service_healthy
       elasticsearch:
