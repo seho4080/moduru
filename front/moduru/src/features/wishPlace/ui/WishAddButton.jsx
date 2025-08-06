@@ -1,5 +1,4 @@
 // src/features/wishPlace/ui/WishAddButton.jsx
-
 import { useSelector } from 'react-redux';
 import { useAddWishPlace } from '../model/useWishToggle';
 import './wishAddButton.css';
@@ -9,9 +8,10 @@ export default function WishAddButton({ place, roomId }) {
   const { addWishPlace } = useAddWishPlace();
   const wishPlaces = useSelector((state) => state.wishPlace.places);
 
-  // NOTE: 저장된 placeId는 객체이므로 .id로 비교
+  const placeIdToCompare = typeof place.placeId === 'object' ? place.placeId.placeId : place.placeId;
+
   const isAlreadyWished = wishPlaces.some(
-    (p) => Number(p.placeId.id) === Number(place.placeId)
+    (p) => Number(p.placeId.placeId) === Number(placeIdToCompare)
   );
 
   const handleClick = async () => {
@@ -20,15 +20,11 @@ export default function WishAddButton({ place, roomId }) {
       return;
     }
 
-    // NOTE: place 객체 전체를 addWishPlace에 넘김
     const { success, message } = await addWishPlace(roomId, place);
 
     if (success) {
       alert(`'${place.placeName}'이 희망 장소에 추가되었어요.`);
-
-      // NOTE: 디버깅용 상태 확인
-      const currentState = store.getState().wishPlace.places;
-      console.log('[현재 wishPlace 상태]', currentState);
+      console.log('[현재 wishPlace 상태]', store.getState().wishPlace.places);
     } else {
       alert(`추가 실패: ${message}`);
     }
