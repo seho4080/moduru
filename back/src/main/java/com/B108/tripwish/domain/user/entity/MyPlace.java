@@ -15,8 +15,8 @@ public class MyPlace {
 
   @EmbeddedId
   @AttributeOverrides({
-          @AttributeOverride(name = "userId", column = @Column(name = "user_id")),
-          @AttributeOverride(name = "placeId", column = @Column(name = "place_id"))
+    @AttributeOverride(name = "userId", column = @Column(name = "user_id")),
+    @AttributeOverride(name = "placeId", column = @Column(name = "place_id"))
   })
   private MyPlaceId id;
 

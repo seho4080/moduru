@@ -10,7 +10,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class PlaceWantAddRequestDto {
-    private Long roomId;
-    private Long id;
-    private String type;
+  private Long roomId;
+  private Long id;
+  private String type;
 }

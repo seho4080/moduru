@@ -1,6 +1,7 @@
 package com.B108.tripwish.domain.room.dto.response;
 
 import com.B108.tripwish.global.common.enums.PlaceType;
+
 import lombok.*;
 
 @Getter

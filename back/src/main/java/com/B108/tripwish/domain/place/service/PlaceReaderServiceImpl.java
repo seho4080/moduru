@@ -1,12 +1,12 @@
 package com.B108.tripwish.domain.place.service;
 
-import com.B108.tripwish.domain.user.dto.response.MyPlaceInfoResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.B108.tripwish.domain.place.dto.PlaceInfoDto;
 import com.B108.tripwish.domain.place.entity.Place;
 import com.B108.tripwish.domain.place.repository.PlaceRepository;
+import com.B108.tripwish.domain.user.dto.response.MyPlaceInfoResponse;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
@@ -21,8 +21,9 @@ public class PlaceReaderServiceImpl implements PlaceReaderService {
   @Override
   @Transactional(readOnly = true)
   public Place findPlaceById(Long placeId) {
-    return placeRepository.findWithImagesById(placeId)
-            .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
+    return placeRepository
+        .findWithImagesById(placeId)
+        .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
   }
 
   @Override
@@ -46,5 +47,4 @@ public class PlaceReaderServiceImpl implements PlaceReaderService {
     Place place = findPlaceById(placeId);
     return new MyPlaceInfoResponse(place.getId(), place.getPlaceName());
   }
-
 }
