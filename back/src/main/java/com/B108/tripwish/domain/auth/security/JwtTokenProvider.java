@@ -4,7 +4,6 @@ import java.security.Key;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -50,7 +49,6 @@ public class JwtTokenProvider {
     byte[] keyBytes = Decoders.BASE64.decode(secretKey);
     this.key = Keys.hmacShaKeyFor(keyBytes);
     this.userRepository = userRepository;
-
   }
 
   public JwtToken generateToken(Authentication authentication, String existingRefreshToken) {
@@ -143,7 +141,8 @@ public class JwtTokenProvider {
 
       CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
-      return new UsernamePasswordAuthenticationToken(customUserDetails, "", customUserDetails.getAuthorities());
+      return new UsernamePasswordAuthenticationToken(
+          customUserDetails, "", customUserDetails.getAuthorities());
 
     } catch (ExpiredJwtException e) {
       throw new CustomException(ErrorCode.EXPIRED_ACCESS_TOKEN);

@@ -4,5 +4,5 @@ import lombok.Getter;
 
 @Getter
 public class PlaceSearchRequest {
-    private String keyword;
+  private String keyword;
 }

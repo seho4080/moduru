@@ -11,5 +11,4 @@ public interface TravelRoomRepository extends JpaRepository<TravelRoom, Long> {
   Optional<TravelRoom> findById(Long roomId);
 
   void deleteById(Long roomId);
-
 }

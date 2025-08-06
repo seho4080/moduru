@@ -4,5 +4,5 @@ import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 
 public interface MyPlaceService {
 
-    void toggleLikePlace(CustomUserDetails user, Long placeId);
+  void toggleLikePlace(CustomUserDetails user, Long placeId);
 }
