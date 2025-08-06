@@ -6,9 +6,39 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "festival_data_embedding.json")
 
+# NOTE: 전체 행정구역명을 regions 테이블의 id로 매핑
+REGION_MAPPING = {
+    "서울특별시": 1,
+    "부산광역시": 2,
+    "대구광역시": 3,
+    "인천광역시": 4,
+    "광주광역시": 5,
+    "대전광역시": 6,
+    "울산광역시": 7,
+    "세종특별자치시": 8,
+    "경기도": 9,
+    "강원특별자치도": 10,
+    "충청북도": 11,
+    "충청남도": 12,
+    "경상북도": 13,
+    "경상남도": 14,
+    "전북특별자치도": 15,
+    "전라남도": 16,
+    "제주특별자치도": 17,
+}
+
 
 def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
+
+
+def extract_region_code(address):
+    if not address:
+        return None
+    for full_name, code in REGION_MAPPING.items():
+        if address.startswith(full_name):
+            return code
+    return None
 
 
 conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
@@ -27,33 +57,40 @@ for item in data:
     price = truncate(item.get("price") or None, 100)
     period = truncate(item.get("period") or None, 100)
     organizer = truncate(item.get("organizer") or None, 50)
-    address = item.get("address")
+    address = item.get("address") or ""
+    road_address = ""  # 공란 대응
     place_url = truncate(item.get("link"), 500)
-    lng = float(item.get("x"))
-    lat = float(item.get("y"))
+
+    lng = float(item.get("x")) if item.get("x") else None
+    lat = float(item.get("y")) if item.get("y") else None
+
+    region_code = extract_region_code(address)
+
     embedding = item.get("description_embedding")
     embedding = np.array(embedding, dtype=np.float32).tolist() if embedding else None
-    road_address = ""  # 필수값 대응
 
-    # moduru.places 테이블 삽입
+    # places 삽입 (region_code 포함)
     cur.execute(
         """
         INSERT INTO moduru.places (
             category_id, kakao_id, place_name, place_url,
             address_name, road_address_name,
-            lng, lat, embedding
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            lng, lat, embedding, region_code
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
-        (3, None, name, place_url, address, road_address, lng, lat, embedding),
+        (3, None, name, place_url, address, road_address, lng, lat, embedding, region_code),
     )
     place_id = cur.fetchone()[0]
 
     # 이미지 삽입
     for img_url in item.get("images", []):
-        cur.execute("INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)", (place_id, img_url))
+        cur.execute(
+            "INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)",
+            (place_id, img_url),
+        )
 
-    # festival 테이블 삽입
+    # festivals 테이블 삽입
     cur.execute(
         """
         INSERT INTO moduru.festivals (
