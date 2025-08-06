@@ -1,4 +1,4 @@
-package com.B108.tripwish.global.dto;
+package com.B108.tripwish.global.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

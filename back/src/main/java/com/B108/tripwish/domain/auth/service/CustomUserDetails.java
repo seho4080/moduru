@@ -35,7 +35,7 @@
 
     @Override
     public String getUsername() {
-      return user.getEmail(); // 로그인 시 사용하는 고유 식별자
+      return user.getUuid().toString(); // 로그인 시 사용하는 고유 식별자
     }
 
     @Override

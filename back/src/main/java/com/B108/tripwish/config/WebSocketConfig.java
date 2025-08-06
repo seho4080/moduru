@@ -1,5 +1,8 @@
 package com.B108.tripwish.config;
 
+import com.B108.tripwish.domain.auth.security.JwtHandshakeInterceptor;
+import com.B108.tripwish.domain.auth.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -12,12 +15,16 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  */
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry
                 .addEndpoint("/ws-stomp")
+                .addInterceptors(new JwtHandshakeInterceptor(jwtTokenProvider))
                 .setAllowedOriginPatterns("*") // CORS 허용 (Spring 2.4 이상은 이 메서드 사용 권장)
                 // 배포할 때는 꼭 도메인 넣기(보안이슈).setAllowedOriginPatterns("도메인 주소")
                 .withSockJS(); // WebSocket이 안 될 경우 SockJS fallback 허용
@@ -25,7 +32,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic"); // 메시지 구독용 경로 (서버 → 클라이언트)
-        registry.setApplicationDestinationPrefixes("/app"); // 메시지 송신용 경로 (클라이언트 → 서버)
+        registry.enableSimpleBroker("/topic", "/queue", "/user"); // 사용자 대상 메시지 경로 포함
+        registry.setUserDestinationPrefix("/user");               // convertAndSendToUser용 prefix
+        registry.setApplicationDestinationPrefixes("/app");       // 클라이언트 → 서버 경로
     }
 }
