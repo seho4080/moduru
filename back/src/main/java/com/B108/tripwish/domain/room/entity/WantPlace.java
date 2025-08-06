@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.B108.tripwish.domain.place.entity.Place;
 
+import com.B108.tripwish.global.common.enums.PlaceType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,12 +23,16 @@ public class WantPlace {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "place_id", nullable = false)
-  private Place place;
-
-  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "room_id", nullable = false)
   private TravelRoom travelRoom;
+
+  @Enumerated
+  @Column(nullable = false, length = 50)
+  private PlaceType type;
+
+  // 실제 장소 ID (place.id 또는 custom_place.id)
+  @Column(name = "ref_id", nullable = false)
+  private Long refId;
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;

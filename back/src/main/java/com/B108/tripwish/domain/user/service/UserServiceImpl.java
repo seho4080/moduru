@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,7 @@ public class UserServiceImpl implements UserService {
       throw new CustomException(ErrorCode.EXISTS_EMAIL);
     }
     User user = User.builder()
+            .uuid(UUID.randomUUID())
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
             .provider(request.getProvider())

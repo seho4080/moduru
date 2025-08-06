@@ -2,6 +2,7 @@ package com.B108.tripwish.domain.room.service;
 
 import com.B108.tripwish.domain.room.entity.TravelMember;
 import com.B108.tripwish.domain.room.entity.TravelRoom;
+import com.B108.tripwish.domain.user.entity.User;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,4 +27,6 @@ public interface RoomReaderService {
     void travelMemeberSave(TravelMember tm);
 
     TravelRoom findById(Long roomId);
+
+    List<User> findUsersByRoomId(Long roomId);
 }
