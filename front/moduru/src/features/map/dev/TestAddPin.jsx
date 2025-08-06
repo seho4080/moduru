@@ -24,7 +24,7 @@ const TestAddRemovePin = ({ roomId }) => {
 
     connectWebSocket(roomId, [
       {
-        handler: "place-want",
+        handler: "pin",
         action: "add",
         callback: (message) => {
           console.log("서버에서 수신한 add 메시지:", message);
@@ -33,7 +33,7 @@ const TestAddRemovePin = ({ roomId }) => {
         },
       },
       {
-        handler: "place-want",
+        handler: "pin",
         action: "remove",
         callback: (message) => {
           console.log("서버에서 수신한 remove 메시지:", message);
@@ -60,11 +60,11 @@ const TestAddRemovePin = ({ roomId }) => {
 
     const pinPayload = {
       type: "place",
-      id: 3, // 원하는 고정 id
+      id: 49, // 원하는 고정 id
       roomId,
     };
 
-    publishMessage(roomId, "place-want", "add", pinPayload);
+    publishMessage(roomId, "pin", "add", pinPayload);
   };
 
   const handleRemove = () => {
@@ -73,7 +73,7 @@ const TestAddRemovePin = ({ roomId }) => {
       return;
     }
 
-    publishMessage(roomId, "place-want", "remove", {
+    publishMessage(roomId, "pin", "remove", {
       roomId,
       wantId: lastWantId,
     });
