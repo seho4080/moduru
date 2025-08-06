@@ -7,7 +7,7 @@ import { reissueToken } from '../../auth/lib/authApi';
  * - 쿠키 인증 방식 지원 (credentials: 'include')
  */
 export async function fetchWithAuth(url, options = {}) {
-  let token = localStorage.getItem('accessToken');
+  let token = localStorage.getItem("accessToken");
 
   let res = await fetch(url, {
     ...options,
@@ -19,8 +19,8 @@ export async function fetchWithAuth(url, options = {}) {
   });
 
   if (res.status === 401) {
-    const contentType = res.headers.get('content-type');
-    let errorBody = '';
+    const contentType = res.headers.get("content-type");
+    let errorBody = "";
 
     try {
       if (contentType?.includes('application/json')) {
@@ -30,11 +30,11 @@ export async function fetchWithAuth(url, options = {}) {
         errorBody = await res.text();
       }
     } catch (err) {
-      errorBody = '응답 파싱 실패';
+      errorBody = "응답 파싱 실패";
     }
 
     const shouldReissue =
-      errorBody.includes('Access Token') || errorBody.includes('access token');
+      errorBody.includes("Access Token") || errorBody.includes("access token");
 
     if (!shouldReissue) {
       throw new Error(`401 에러 발생 (재발급 조건 불충족): ${errorBody}`);
@@ -42,7 +42,7 @@ export async function fetchWithAuth(url, options = {}) {
 
     const result = await reissueToken();
     if (!result.success) {
-      throw new Error('토큰 만료. 다시 로그인 해주세요.');
+      throw new Error("토큰 만료. 다시 로그인 해주세요.");
     }
 
     token = result.accessToken;
@@ -66,7 +66,7 @@ export async function fetchWithAuth(url, options = {}) {
  * - POST /rooms
  */
 export async function createTripRoom() {
-  const url = 'http://localhost:8080/rooms';
+  const url = "http://localhost:8080/rooms";
 
   const res = await fetchWithAuth(url, {
     method: 'POST',
@@ -83,7 +83,7 @@ export async function createTripRoom() {
     const data = JSON.parse(raw);
     return data.travelRoomId;
   } catch (err) {
-    throw new Error('응답 파싱 실패');
+    throw new Error("응답 파싱 실패");
   }
 }
 
@@ -109,7 +109,7 @@ export async function getTripRoomInfo(roomId) {
     const data = JSON.parse(raw);
     return data;
   } catch (err) {
-    throw new Error('응답 파싱 실패');
+    throw new Error("응답 파싱 실패");
   }
 }
 
@@ -125,7 +125,7 @@ export async function updateTripRoomRegion(roomId, { title, region, startDate, e
     method: 'PATCH',
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(bodyData),
   });
@@ -140,6 +140,6 @@ export async function updateTripRoomRegion(roomId, { title, region, startDate, e
     const data = JSON.parse(raw);
     return data;
   } catch (err) {
-    throw new Error('응답 파싱 실패');
+    throw new Error("응답 파싱 실패");
   }
 }
