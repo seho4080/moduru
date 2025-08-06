@@ -10,7 +10,7 @@ import com.B108.tripwish.domain.user.dto.request.SignUpRequestDto;
 import com.B108.tripwish.domain.user.dto.request.UpdateUserRequestDto;
 import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
 import com.B108.tripwish.domain.user.service.UserService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

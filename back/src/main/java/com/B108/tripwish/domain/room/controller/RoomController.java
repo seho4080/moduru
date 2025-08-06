@@ -12,7 +12,7 @@ import com.B108.tripwish.domain.room.dto.request.AddPlaceWantRequestDto;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.*;
 import com.B108.tripwish.domain.room.service.RoomService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

@@ -5,6 +5,7 @@ import com.B108.tripwish.domain.room.entity.TravelMemberId;
 import com.B108.tripwish.domain.room.entity.TravelRoom;
 import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
+import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,5 +61,14 @@ public class RoomReaderServiceImpl implements RoomReaderService {
                 .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
         return room;
     }
+
+    @Override
+    public List<User> findUsersByRoomId(Long roomId) {
+        List<TravelMember> roomUsers = travelMemberRepository.findById_RoomId(roomId);
+        return roomUsers.stream()
+                .map(TravelMember::getUser)
+                .collect(Collectors.toList());
+    }
+
 
 }

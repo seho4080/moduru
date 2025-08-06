@@ -5,15 +5,19 @@ import com.B108.tripwish.domain.place.entity.Place;
 import com.B108.tripwish.domain.room.entity.VotePlace;
 import com.B108.tripwish.domain.room.entity.VotePlaceId;
 import com.B108.tripwish.domain.room.entity.WantPlace;
+import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.domain.room.repository.VotePlaceRepository;
 import com.B108.tripwish.domain.room.repository.WantPlaceRepository;
 import com.B108.tripwish.domain.user.entity.MyPlace;
 import com.B108.tripwish.domain.user.entity.MyPlaceId;
+import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -22,11 +26,12 @@ public class WantPlaceServiceImpl implements WantPlaceService{
 
     private final WantPlaceRepository wantPlaceRepository;
     private final VotePlaceRepository votePlaceRepository;
+    private final TravelRoomRepository travelRoomRepository;
 
 
     @Override
     public void toggleVotePlace(CustomUserDetails user, Long wantId) {
-        WantPlace wantPlace = wantPlaceRepository.findByPlace_Id(wantId)
+        WantPlace wantPlace = wantPlaceRepository.findById(wantId)
                 .orElseThrow(() -> new CustomException(ErrorCode.WANT_PLACE_NOT_FOUND));
 
         VotePlaceId id = new VotePlaceId(wantPlace.getId(), user.getUser().getId());
@@ -51,5 +56,29 @@ public class WantPlaceServiceImpl implements WantPlaceService{
         }
 
         votePlaceRepository.save(votePlace);
+    }
+
+    @Override
+    public WantPlace saveWantPlace(Long roomId, PlaceType type, Long refId) {
+
+        var travelRoom = travelRoomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+
+        WantPlace wantPlace = WantPlace.builder()
+                .travelRoom(travelRoom)
+                .type(type)
+                .refId(refId)
+                .build();
+
+      return wantPlaceRepository.save(wantPlace);
+    }
+
+
+    @Override
+    public void removeWantPlace(Long roomId, Long refId, PlaceType type) {
+        WantPlace wantPlace = wantPlaceRepository.findByTravelRoom_IdAndRefIdAndType(roomId, refId, type)
+                .orElseThrow(() -> new CustomException(ErrorCode.WANT_PLACE_NOT_FOUND));
+        wantPlaceRepository.delete(wantPlace);
+
     }
 }
