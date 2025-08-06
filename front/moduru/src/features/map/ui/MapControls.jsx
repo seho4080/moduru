@@ -1,6 +1,6 @@
 // src/features/map/ui/Controls.jsx
 import React from 'react';
-import './MapControls.css';
+import './mapControls.css';
 import {
   FaClipboard,
   FaMapMarkerAlt,

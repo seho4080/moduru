@@ -1,0 +1,18 @@
+.liked-star-btn {
+  all: unset;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.liked-star-btn:hover {
+  transform: scale(1.15);
+}
+
+.star-icon {
+  font-size: 22px;
+  color: #ccc;
+}
+
+.star-icon.liked {
+  color: #f8d42e; 
+}
