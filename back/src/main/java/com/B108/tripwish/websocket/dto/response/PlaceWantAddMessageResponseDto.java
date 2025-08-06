@@ -15,6 +15,7 @@ public class PlaceWantAddMessageResponseDto{
     private Long roomId;
     private Long wantId;
     private String sendId;
+    private String category;
     private String placeName;
     private String address;
     private Double lat;
@@ -22,5 +23,6 @@ public class PlaceWantAddMessageResponseDto{
     private String imgUrl;
     private Long voteCnt;
     private boolean isVoted;
+
 
 }
