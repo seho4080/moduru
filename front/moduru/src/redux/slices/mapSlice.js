@@ -39,7 +39,7 @@ const mapSlice = createSlice({
      * @param {import('@reduxjs/toolkit').PayloadAction<string>} action
      */
     removePin: (state, action) => {
-      state.pins = state.pins.filter(pin => pin.id !== action.payload);
+      state.pins = state.pins.filter((pin) => pin.id !== action.payload);
     },
 
     /**

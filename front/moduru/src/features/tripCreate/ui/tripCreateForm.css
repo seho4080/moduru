@@ -1,0 +1,199 @@
+<<<<<<< HEAD
+.trip-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+}
+
+.trip-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px 24px;
+  z-index: 1000;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.region-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #333;
+}
+
+.submit-btn {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.dropdown-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.dropdown-header {
+  padding: 10px;
+  border: 1px solid #007aff;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1100;
+  background: white;
+  width: 100%;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid #007aff;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f7ff;
+}
+
+.arrow {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #007aff;
+  display: inline-flex;
+  align-items: center;
+}
+=======
+.trip-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+}
+
+.trip-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px 24px;
+  z-index: 1000;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.region-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #333;
+}
+
+.submit-btn {
+  margin-top: 12px;
+  padding: 10px 20px;
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.dropdown-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.dropdown-header {
+  padding: 10px;
+  border: 1px solid #007aff;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1100;
+  background: white;
+  width: 100%;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid #007aff;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  padding: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f7ff;
+}
+
+.arrow {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #007aff;
+  display: inline-flex;
+  align-items: center;
+}
+>>>>>>> 43be6ba ([FEAT] 희망장소 추가/삭제 웹소켓 테스트 로그 추가 및 성공)

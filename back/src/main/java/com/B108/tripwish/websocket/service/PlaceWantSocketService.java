@@ -72,6 +72,7 @@ public class PlaceWantSocketService {
             address = customPlace.getAddress();
         } else if (type == PlaceType.PLACE) {
             Place place = placeReaderService.findPlaceById(refId);
+            place.getImages().size();
             lat = place.getLat();
             lng = place.getLng();
             category = place.getCategory().getCategoryName();
