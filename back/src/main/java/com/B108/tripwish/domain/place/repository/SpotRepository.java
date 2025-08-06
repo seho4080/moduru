@@ -1,4 +1,4 @@
-package com.B108.tripwish.domain.place.respoistory;
+package com.B108.tripwish.domain.place.repository;
 
 import java.util.Optional;
 
