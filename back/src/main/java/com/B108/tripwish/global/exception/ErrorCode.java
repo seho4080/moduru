@@ -56,7 +56,6 @@ public enum ErrorCode {
   // 중복 방지
   DUPLICATE_WANT_PLACE("이미 희망장소에 추가된 장소입니다.", HttpStatus.CONFLICT);
 
-
   private final String message;
   private final HttpStatus status;
 
