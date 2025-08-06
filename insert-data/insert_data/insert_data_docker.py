@@ -14,7 +14,7 @@ category_code_to_id = {
 }
 
 # JSON 파일 로드
-with open('restaurant_data1.json', encoding='utf-8') as f:
+with open('restaurant_data_embedding.json', encoding='utf-8') as f:
     data = json.load(f)
 
 # PostgreSQL 연결
