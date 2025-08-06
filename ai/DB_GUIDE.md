@@ -36,6 +36,7 @@ sudo -u postgres psql
 
 CREATE SCHEMA {your_schema};
 CREATE EXTENSION vector SCHEMA {your_schema};
+ALTER ROLE postgres SET search_path TO {your_schema};
 ```
 
 ## INSERT 데이터

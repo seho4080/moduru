@@ -9,7 +9,8 @@ INSERT INTO
     categories (id, category_name)
 VALUES (1, 'restaurant'),
     (2, 'spot'),
-    (3, 'festival');
+    (3, 'festival'),
+    (4, 'common');
 
 -- 장소 테이블
 CREATE TABLE places (
