@@ -175,7 +175,7 @@ services:
   # 8. 데이터 넣을 파이썬 코드
   ##########################################
   data-loader:
-    image: python:3.10-slim
+    image: python:3.11-slim
     container_name: data_loader
     working_dir: /app
     volumes:
@@ -192,8 +192,12 @@ services:
       POSTGRES_PASSWORD: ssafy
     # command: ["python", "insert_data_docker.py"]  # 스크립트 이름
     command: >
-      sh -c "pip install psycopg2-binary && python insert_data_docker.py"
-
+        sh -c "set -x && \
+              pip install psycopg2-binary pgvector && \
+              python insert_data_docker.py && \
+              python festival_data_docker.py && \
+              sleep 300"
+# python spot_data_docker.py && \      
 networks:
   app-network:
 volumes:
