@@ -9,5 +9,5 @@ public interface AuthService {
 
   void logout(String accessToken);
 
-  JwtToken reissue(String refreshToken);
+  JwtToken reissue(String refreshToken, HttpServletResponse response);
 }
