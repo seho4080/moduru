@@ -3,7 +3,11 @@ import { configureStore } from "@reduxjs/toolkit";
 import pinReducer from "./slices/pinSlice"; // 핀 목록 관리
 import likedPlaceReducer from "./slices/likedPlaceSlice";
 import wishPlaceReducer from "./slices/wishPlaceSlice";
+import tripMemberReducer from './slices/tripMemberSlice';
+import friendReducer from './slices/friendSlice';
+import tripRoomReducer from './slices/tripRoomSlice';
 import mapReducer from "./slices/mapSlice";
+
 /**
  * Redux 전역 상태 저장소 설정
  */
@@ -12,6 +16,9 @@ const store = configureStore({
     pin: pinReducer,
     likedPlace: likedPlaceReducer,
     wishPlace: wishPlaceReducer,
+    tripMember: tripMemberReducer,
+    friend: friendReducer,
+    tripRoom: tripRoomReducer,
     map: mapReducer,
   },
 });
