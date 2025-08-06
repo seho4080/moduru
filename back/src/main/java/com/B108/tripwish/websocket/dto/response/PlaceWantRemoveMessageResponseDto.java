@@ -8,9 +8,8 @@ import lombok.ToString;
 @Getter
 @AllArgsConstructor
 @ToString
-public class PlaceWantRemoveMessageResponseDto implements PlaceWantMessage{
-    private String action = "remove";  // 항상 "remove"
+public class PlaceWantRemoveMessageResponseDto{
     private Long roomId;
-    private String type;
-    private Long id;
+    private Long wantId;
+    private String sendId;
 }

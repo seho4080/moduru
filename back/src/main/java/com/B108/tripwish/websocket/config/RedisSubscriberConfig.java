@@ -1,6 +1,7 @@
 package com.B108.tripwish.websocket.config;
 
-import com.B108.tripwish.websocket.subscriber.PlaceWantRedisSubscriber;
+import com.B108.tripwish.websocket.subscriber.PlaceWantAddSubscriber;
+import com.B108.tripwish.websocket.subscriber.PlaceWantRemoveSubscriber;
 import com.B108.tripwish.websocket.subscriber.ScheduleRedisSubscriber;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -17,15 +18,16 @@ public class RedisSubscriberConfig {
 
     @Qualifier("redisMessageListenerContainer")
     private final RedisMessageListenerContainer listenerContainer;
+
     private final ScheduleRedisSubscriber scheduleRedisSubscriber;
-    private final PlaceWantRedisSubscriber placeWantRedisSubscriber;
+    private final PlaceWantAddSubscriber placeWantAddSubscriber;
+    private final PlaceWantRemoveSubscriber placeWantRemoveSubscriber;
 
     @PostConstruct
     public void init() {
-        // 해당 채널(경로)를 구독
-        listenerContainer.addMessageListener(scheduleRedisSubscriber, new PatternTopic("room.*.schedule"));
-        listenerContainer.addMessageListener(placeWantRedisSubscriber, new PatternTopic("room.*.place-want"));
+        // RedisChannelType 기반으로 구독
+        listenerContainer.addMessageListener(scheduleRedisSubscriber, new PatternTopic("schedule"));
+        listenerContainer.addMessageListener(placeWantAddSubscriber, new PatternTopic("place-want:add"));
+        listenerContainer.addMessageListener(placeWantRemoveSubscriber, new PatternTopic("place-want:remove"));
     }
-
-
 }
