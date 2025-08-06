@@ -11,4 +11,6 @@ public interface VotePlaceRepository extends JpaRepository<VotePlace, VotePlaceI
 
     Long countByWantPlaceAndVoteIsTrue(WantPlace wantPlace);
 
+
+
 }

@@ -9,17 +9,17 @@ import lombok.ToString;
 @Builder
 @AllArgsConstructor
 @ToString
-public class PlaceWantAddMessageResponseDto implements PlaceWantMessage{
-    private Long roomId;
-    private String action = "add";  // 항상 "add"
+public class PlaceWantAddMessageResponseDto{
     private String type;
     private Long id;
+    private Long roomId;
     private Long wantId;
+    private String sendId;
+    private String placeName;
+    private String address;
     private Double lat;
     private Double lng;
-    private String placeName;
     private String imgUrl;
-    private boolean isLiked;
     private Long voteCnt;
     private boolean isVoted;
 
