@@ -2,10 +2,6 @@ package com.B108.tripwish.domain.auth.service;
 
 import java.time.LocalDateTime;
 
-import com.B108.tripwish.global.util.CookieUtil;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -24,6 +20,8 @@ import com.B108.tripwish.domain.user.repository.UserTokenRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -85,7 +83,6 @@ public class AuthServiceImpl implements AuthService {
 
     response.addCookie(accessTokenCookie);
     response.addCookie(refreshTokenCookie);
-
 
     userTokenRepository.deleteByUserId(user.getId());
     userTokenRepository.save(

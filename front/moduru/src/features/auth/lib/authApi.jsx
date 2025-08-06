@@ -1,3 +1,5 @@
+// src/features/auth/lib/authApi.js
+
 // 로그인
 export const login = async ({ email, password }) => {
   try {
@@ -6,7 +8,7 @@ export const login = async ({ email, password }) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      credentials: 'include', // ✅ 쿠키 포함
       body: JSON.stringify({ email, password }),
     });
 
@@ -18,9 +20,6 @@ export const login = async ({ email, password }) => {
       throw new Error(data.message || '로그인 실패');
     }
 
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-
     return { success: true, user: data.user };
   } catch (err) {
     console.error('로그인 실패:', err.message);
@@ -31,15 +30,12 @@ export const login = async ({ email, password }) => {
 // 토큰 재발급
 export const reissueToken = async () => {
   try {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) throw new Error('Refresh Token이 없습니다.');
-
     const res = await fetch('http://localhost:8080/auth/reissue', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${refreshToken.trim()}`,
       },
+      credentials: 'include', // 쿠키 포함
     });
 
     const raw = await res.text();
@@ -52,12 +48,9 @@ export const reissueToken = async () => {
 
     const data = JSON.parse(raw);
 
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-
     return {
       success: true,
-      accessToken: data.accessToken,
+      accessToken: data.accessToken, // NOTE: 필요 없을 수도 있음
     };
   } catch (err) {
     console.error('토큰 재발급 실패:', err.message);
@@ -68,15 +61,12 @@ export const reissueToken = async () => {
 // 로그아웃
 export const logout = async () => {
   try {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) throw new Error('Access Token이 없습니다.');
-
     const res = await fetch('http://localhost:8080/auth/logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken.trim()}`,
       },
+      credentials: 'include',
     });
 
     const raw = await res.text();
@@ -86,9 +76,6 @@ export const logout = async () => {
     if (!res.ok) {
       throw new Error(raw || '로그아웃 실패');
     }
-
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
 
     return { success: true };
   } catch (err) {
