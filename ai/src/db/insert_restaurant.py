@@ -6,9 +6,39 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "restaurant_data_embedding.json")
 
+# NOTE: 주소에서 시·도 추출 후 region_code로 매핑하기 위한 딕셔너리
+REGION_MAPPING = {
+    "서울": 1,
+    "부산": 2,
+    "대구": 3,
+    "인천": 4,
+    "광주": 5,
+    "대전": 6,
+    "울산": 7,
+    "세종": 8,
+    "경기": 9,
+    "강원": 10,
+    "충북": 11,
+    "충남": 12,
+    "경북": 13,
+    "경남": 14,
+    "전북": 15,
+    "전남": 16,
+    "제주": 17,
+}
+
 
 def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
+
+
+def extract_region_code(address):
+    if not address:
+        return None
+    for region_name, code in REGION_MAPPING.items():
+        if address.startswith(region_name):
+            return code
+    return None
 
 
 conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
@@ -37,34 +67,31 @@ for item in data:
     address_name = kakao.get("address_name") or ""
     road_address_name = kakao.get("road_address_name") or ""
 
-    # description_embedding이 없을 수 있으므로 null 허용
+    region_code = extract_region_code(address_name)
+
     embedding = item.get("description_embedding")
     embedding = np.array(embedding, dtype=np.float32).tolist() if embedding else None
 
-    # places 삽입
     cur.execute(
         """
         INSERT INTO moduru.places (
             category_id, kakao_id, place_name, place_url,
             address_name, road_address_name,
-            lng, lat, embedding
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            lng, lat, embedding, region_code
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
-        (1, kakao_id, name, place_url, address_name, road_address_name, lng, lat, embedding),
+        (1, kakao_id, name, place_url, address_name, road_address_name, lng, lat, embedding, region_code),
     )
     place_id = cur.fetchone()[0]
 
-    # 이미지들 삽입
     for img_url in item.get("images", []):
         cur.execute("INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)", (place_id, img_url))
 
-    # 태그 삽입
     for tag in tags:
         tag = truncate(tag, 30)
         cur.execute("INSERT INTO moduru.place_metadata_tags (place_id, content) VALUES (%s, %s)", (place_id, tag))
 
-    # restaurants 삽입
     cur.execute(
         """
         INSERT INTO moduru.restaurants (
@@ -76,7 +103,6 @@ for item in data:
         (place_id, description, description_short, tel, homepage, business_hours, rest_date, parking),
     )
 
-    # 메뉴 삽입
     for menu in menus:
         menu = truncate(menu, 30)
         cur.execute(
