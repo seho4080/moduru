@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,7 +15,7 @@ import com.B108.tripwish.domain.auth.dto.request.LoginRequestDto;
 import com.B108.tripwish.domain.auth.dto.response.LoginResponseDto;
 import com.B108.tripwish.domain.auth.dto.response.ReissueResponseDto;
 import com.B108.tripwish.domain.auth.service.AuthService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import com.B108.tripwish.global.exception.ErrorResponse;
