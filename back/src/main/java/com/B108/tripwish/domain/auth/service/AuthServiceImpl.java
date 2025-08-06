@@ -1,7 +1,9 @@
 package com.B108.tripwish.domain.auth.service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -67,22 +69,28 @@ public class AuthServiceImpl implements AuthService {
     // 3. 인증 정보를 기반으로 JWT 토큰 생성
     JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, null);
 
-    // AccessToken
-    Cookie accessTokenCookie = new Cookie("access_token", jwtToken.getAccessToken());
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setSecure(true);
-    accessTokenCookie.setPath("/");
-    accessTokenCookie.setMaxAge(60 * 60); // 1시간
+    // 5. 쿠키로 access_token 설정
+    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", jwtToken.getAccessToken())
+            .httpOnly(true)
+            .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
+            .sameSite("None") // Cross-Origin 허용
+            .path("/")
+            .maxAge(Duration.ofHours(1))
+            .build();
 
-    // RefreshToken
-    Cookie refreshTokenCookie = new Cookie("refresh_token", jwtToken.getRefreshToken());
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setSecure(true);
-    refreshTokenCookie.setPath("/");
-    refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+    // 6. 쿠키로 refresh_token 설정
+    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
+            .httpOnly(true)
+            .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
+            .sameSite("None")
+            .path("/")
+            .maxAge(Duration.ofDays(7))
+            .build();
 
-    response.addCookie(accessTokenCookie);
-    response.addCookie(refreshTokenCookie);
+    // 7. 응답에 Set-Cookie 헤더 추가
+    response.addHeader("Set-Cookie", accessTokenCookie.toString());
+    response.addHeader("Set-Cookie", refreshTokenCookie.toString());
+
 
     userTokenRepository.deleteByUserId(user.getId());
     userTokenRepository.save(
@@ -114,29 +122,50 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public JwtToken reissue(String refreshToken) {
+  public JwtToken reissue(String refreshToken, HttpServletResponse response) {
     if (!jwtTokenProvider.validateToken(refreshToken, TokenType.REFRESH)) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
 
     UserToken token =
-        userTokenRepository
-            .findByRefreshToken(refreshToken)
-            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
+            userTokenRepository
+                    .findByRefreshToken(refreshToken)
+                    .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
 
     User user = token.getUser();
     CustomUserDetails userDetails = new CustomUserDetails(user);
     Authentication authentication =
-        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
     JwtToken newToken = jwtTokenProvider.generateToken(authentication, refreshToken);
 
+    // RefreshToken 갱신 시 DB 업데이트
     if (!refreshToken.equals(newToken.getRefreshToken())) {
       token.setRefreshToken(newToken.getRefreshToken());
       token.setExpiresAt(newToken.getRefreshTokenExpiresAt());
       token.setIssuedAt(LocalDateTime.now());
       userTokenRepository.save(token);
     }
+
+    // 👉 새 토큰을 쿠키로 응답에 담기
+    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", newToken.getAccessToken())
+            .httpOnly(true)
+            .secure(false) // HTTPS 환경이면 true
+            .sameSite("None")
+            .path("/")
+            .maxAge(Duration.ofHours(1))
+            .build();
+
+    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", newToken.getRefreshToken())
+            .httpOnly(true)
+            .secure(false)
+            .sameSite("None")
+            .path("/")
+            .maxAge(Duration.ofDays(7))
+            .build();
+
+    response.addHeader("Set-Cookie", accessTokenCookie.toString());
+    response.addHeader("Set-Cookie", refreshTokenCookie.toString());
 
     return newToken;
   }
