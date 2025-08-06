@@ -1,13 +1,21 @@
 package com.B108.tripwish.domain.place.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.place.document.PlaceDocument;
 import com.B108.tripwish.domain.place.dto.request.PlaceSearchRequest;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.place.entity.Place;
-import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
-import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
+import com.B108.tripwish.domain.place.repository.PlaceRepository;
+import com.B108.tripwish.domain.place.repository.PlaceSearchRepository;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.room.service.WantPlaceService;

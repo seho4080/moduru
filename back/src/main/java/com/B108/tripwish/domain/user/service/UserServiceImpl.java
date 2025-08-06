@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.room.service.RoomReaderService;
 import com.B108.tripwish.domain.user.dto.request.SignUpRequestDto;
 import com.B108.tripwish.domain.user.dto.request.UpdateUserRequestDto;
 import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
+import com.B108.tripwish.domain.user.dto.response.UserTravelRoomResponseDto;
 import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.domain.user.repository.UserRepository;
 import com.B108.tripwish.domain.user.repository.UserTokenRepository;

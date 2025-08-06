@@ -6,5 +6,5 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class InviteLinkResponseDto {
-    private String inviteUrl;
+  private String inviteUrl;
 }

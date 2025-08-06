@@ -1,9 +1,16 @@
 package com.B108.tripwish.domain.place.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.place.dto.response.*;
 import com.B108.tripwish.domain.place.entity.*;
-import com.B108.tripwish.domain.place.respoistory.*;
+import com.B108.tripwish.domain.place.repository.*;
 import com.B108.tripwish.domain.review.service.ReviewService;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
@@ -13,6 +20,7 @@ import com.B108.tripwish.domain.user.service.MyPlaceService;
 import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
