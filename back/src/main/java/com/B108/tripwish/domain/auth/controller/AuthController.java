@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.auth.controller;
 
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +30,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.Duration;
 
 @Slf4j
 @RestController
@@ -151,20 +154,7 @@ public class AuthController {
     if (refreshToken == null) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-    JwtToken token = authService.reissue(refreshToken);
-    Cookie accessTokenCookie = new Cookie("access_token", token.getAccessToken());
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setSecure(false); // 배포 시 true
-    accessTokenCookie.setPath("/");
-    accessTokenCookie.setMaxAge(60 * 60); // 1시간
-    response.addCookie(accessTokenCookie);
-
-    Cookie refreshTokenCookie = new Cookie("refresh_token", token.getRefreshToken());
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setSecure(false); // 배포 시 true
-    refreshTokenCookie.setPath("/");
-    refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-    response.addCookie(refreshTokenCookie);
+    JwtToken token = authService.reissue(refreshToken, response);
 
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
   }
