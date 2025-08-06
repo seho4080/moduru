@@ -60,18 +60,21 @@ public class PlaceWantSocketService {
         String imgUrl;
         String placeName;
         String address;
+        String category;
 
         if (type == PlaceType.CUSTOM) {
             CustomPlace customPlace = wantPlaceReaderService.getCustomPlaceById(refId);
             lat = customPlace.getLat();
             lng = customPlace.getLng();
             imgUrl = null;
+            category = null;
             placeName = customPlace.getName();
             address = customPlace.getAddress();
         } else if (type == PlaceType.PLACE) {
             Place place = placeReaderService.findPlaceById(refId);
             lat = place.getLat();
             lng = place.getLng();
+            category = place.getCategory().getCategoryName();
             List<PlaceImage> images = place.getImages();
             imgUrl = (images != null && !images.isEmpty()) ? images.get(0).getImgUrl() : null;
             placeName = place.getPlaceName();
@@ -85,6 +88,7 @@ public class PlaceWantSocketService {
                 .roomId(request.getRoomId())
                 .wantId(wantId)
                 .sendId(sender.getUser().getUuid().toString())
+                .category(category)
                 .placeName(placeName)
                 .address(address)
                 .lat(lat)
