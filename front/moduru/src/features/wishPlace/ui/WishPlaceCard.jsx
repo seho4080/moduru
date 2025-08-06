@@ -4,7 +4,7 @@ import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import './wishAddButton.css';
 
 export default function WishPlaceCard({ place, onRemove }) {
-  const { placeName, placeImg, category, likeCount } = place;
+  const { placeName, placeImg, category, likeCount } = place.placeId;
   const hasLikes = likeCount > 0;
 
   return (
@@ -129,3 +129,4 @@ export default function WishPlaceCard({ place, onRemove }) {
     </div>
   );
 }
+
