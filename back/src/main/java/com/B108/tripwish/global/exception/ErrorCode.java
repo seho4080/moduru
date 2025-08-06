@@ -2,7 +2,7 @@ package com.B108.tripwish.global.exception;
 
 import org.springframework.http.HttpStatus;
 
-public enum ErrorCode {
+public enum  ErrorCode {
   // 인증 관련
   LOGIN_FAILED("아이디 또는 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
   LOGOUT_FAILED("로그아웃 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
