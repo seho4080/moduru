@@ -9,6 +9,7 @@ import MainPageLayout from "../pages/mainPage/MainPageLayout";
 import TripRoomPage from "../pages/tripRoomPage/TripRoomPage";
 import MyPageLayout from "../pages/myPage/MyPageLayout";
 import MyTravelSpacePage from "../pages/myPage/MyTravelSpacePage";
+import InvitePage from '../pages/invitePage/InvitePage';
 
 const RouterComponent = () => {
   return (
@@ -22,6 +23,7 @@ const RouterComponent = () => {
           element={<MyTravelSpacePage />}
         />
         <Route path="/trip-room/:id" element={<TripRoomPage />} />
+        <Route path="/invite/:inviteToken" element={<InvitePage />} />
       </Routes>
     </BrowserRouter>
   );

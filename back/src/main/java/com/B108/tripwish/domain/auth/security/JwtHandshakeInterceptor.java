@@ -42,7 +42,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                 for (Cookie cookie : cookies) {
                     log.info("🍪 쿠키 확인 - {}={}", cookie.getName(), cookie.getValue());
 
-                    if ("accessToken".equals(cookie.getName())) {
+                    if ("access_token".equals(cookie.getName())) {
                         String token = cookie.getValue();
                         log.info("📦 JWT 추출: {}", token);
 
@@ -51,7 +51,15 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                         } else {
                             log.info("✅ JWT 토큰 유효");
                             Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                            if (authentication == null) {
+                                log.warn("❌ [Handshake] 인증 객체 생성 실패");
+                                break;
+                            }
+
                             CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+                            log.info("👤 [Handshake] 인증된 사용자: {}", user.getUsername());
+
+
                             attributes.put("user", user);
                             return true;
                         }

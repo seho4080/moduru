@@ -36,7 +36,7 @@ public class PlaceWantSocketController {
 
 
         // 2. 서비스 위임
-        log.info("📩 WebSocket 메시지 수신: roomId={}, type={}", roomId, request.getType());
+        log.info("📩 WebSocket 메시지 수신: roomId={}, type={}, id={}", roomId, request.getType(), request.getId());
         // 2. 요청 타입에 따라 분기
         placeWantSocketService.handleAdd(user, roomId, request);
 
