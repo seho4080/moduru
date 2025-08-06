@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 
+// NOTE: 서버에서 허용하는 카테고리 매핑
 const categoryMap = {
   전체: 'all',
   음식점: 'restaurant',
@@ -23,10 +24,12 @@ export const usePlaceSearch = (roomId, selectedCategory) => {
         const url = `http://localhost:8080/places/${roomId}?category=${categoryCode}`;
 
         const res = await fetch(url, {
+          method: 'GET',
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
+          credentials: 'include', // ✅ 쿠키 인증을 위해 필수
         });
 
         const raw = await res.text();
@@ -46,7 +49,6 @@ export const usePlaceSearch = (roomId, selectedCategory) => {
         const data = JSON.parse(raw);
         const rawPlaces = Array.isArray(data.places) ? data.places : [];
 
-        // NOTE: 서버에서 전체(all) 데이터를 먼저 받아온 뒤, 클라이언트에서 카테고리별로 필터링하는 방식.
         const filteredPlaces =
           categoryCode === 'all'
             ? rawPlaces
