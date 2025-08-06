@@ -1,7 +1,7 @@
 package com.B108.tripwish.domain.user.service;
 
-import java.util.List;
-
+import com.B108.tripwish.domain.user.dto.response.UserTravelRoomResponseDto;
+import com.B108.tripwish.domain.room.service.RoomReaderService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +21,9 @@ import com.B108.tripwish.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,8 +40,8 @@ public class UserServiceImpl implements UserService {
     if (userRepository.existsByEmail(request.getEmail())) {
       throw new CustomException(ErrorCode.EXISTS_EMAIL);
     }
-    User user =
-        User.builder()
+    User user = User.builder()
+            .uuid(UUID.randomUUID())
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
             .provider(request.getProvider())
@@ -55,9 +58,7 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public void updateUser(CustomUserDetails currentUserDetails, UpdateUserRequestDto request) {
-    User currentUser =
-        userRepository
-            .findById(currentUserDetails.getUser().getId())
+    User currentUser = userRepository.findById(currentUserDetails.getUser().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     if (request.getNickname() != null && !request.getNickname().isBlank()) {
@@ -78,9 +79,7 @@ public class UserServiceImpl implements UserService {
   @Transactional
   @Override
   public void deleteUser(CustomUserDetails currentUserDetails) {
-    User currentUser =
-        userRepository
-            .findById(currentUserDetails.getUser().getId())
+    User currentUser = userRepository.findById(currentUserDetails.getUser().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     userTokenRepository.deleteByUserId(currentUser.getId());
@@ -90,9 +89,7 @@ public class UserServiceImpl implements UserService {
   @Transactional(readOnly = true)
   @Override
   public InfoUserResponseDto getUserInfo(CustomUserDetails currentUserDetails) {
-    User user =
-        userRepository
-            .findById(currentUserDetails.getUser().getId())
+    User user = userRepository.findById(currentUserDetails.getUser().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     return new InfoUserResponseDto(user);
   }
@@ -103,17 +100,14 @@ public class UserServiceImpl implements UserService {
   public List<UserTravelRoomResponseDto> getUserTravelRooms(CustomUserDetails currentUser) {
     Long userId = currentUser.getUser().getId();
 
-    userRepository
-        .findById(userId)
-        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
     // roomReaderService는 RoomView 인터페이스를 반환
     List<RoomReaderService.RoomView> rooms = roomReaderService.getRoomsByUserId(userId);
 
     return rooms.stream()
-        .map(
-            room ->
-                UserTravelRoomResponseDto.builder()
+            .map(room -> UserTravelRoomResponseDto.builder()
                     .travelRoomId(room.getRoomId())
                     .title(room.getTitle())
                     .region(room.getRegion())
@@ -122,6 +116,6 @@ public class UserServiceImpl implements UserService {
                     .createdAt(room.getCreatedAt())
                     .members(room.getMembers())
                     .build())
-        .toList();
+            .toList();
   }
 }

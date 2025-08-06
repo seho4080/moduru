@@ -2,7 +2,7 @@ package com.B108.tripwish.global.exception;
 
 import org.springframework.http.HttpStatus;
 
-public enum  ErrorCode {
+public enum ErrorCode {
   // 인증 관련
   LOGIN_FAILED("아이디 또는 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
   LOGOUT_FAILED("로그아웃 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
@@ -34,6 +34,8 @@ public enum  ErrorCode {
   RESTAURANT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   SPOT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   FESTIVAL_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  WANT_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  CUSTOM_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   REVIEW_TAG_NOT_FOUND("리뷰 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
   // 초대 토큰 관련
@@ -48,7 +50,12 @@ public enum  ErrorCode {
   ROOM_DELETE_FORBIDDEN("방 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
   INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST),
-  UNSUPPORTED_CATEGORY_TYPE("지원하지 않는 카테고리 타입입니다.", HttpStatus.BAD_REQUEST);
+  UNSUPPORTED_CATEGORY_TYPE("지원하지 않는 카테고리 타입입니다.", HttpStatus.BAD_REQUEST),
+  UNSUPPORTED_PLACE_TYPE("지원하지 않는 장소 타입입니다.", HttpStatus.BAD_REQUEST),
+
+  // 중복 방지
+  DUPLICATE_WANT_PLACE("이미 희망장소에 추가된 장소입니다.", HttpStatus.CONFLICT);
+
 
   private final String message;
   private final HttpStatus status;

@@ -2,6 +2,7 @@ package com.B108.tripwish.domain.user.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -20,6 +21,9 @@ public class User {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @Column(unique = true, nullable = false, updatable = false)
+  private UUID uuid;
 
   @Column(length = 100, unique = true)
   private String email;
