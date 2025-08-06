@@ -2,6 +2,7 @@
 -- 1. 테이블 생성부 (IF NOT EXISTS)
 -- ================================
 CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 create table if not exists categories (
     id            bigserial not null,
     category_name varchar(255) not null,
@@ -22,6 +23,7 @@ create table if not exists users (
     role          varchar(255) not null check (role in ('ROLE_USER', 'ROLE_ADMIN')),
     primary key (id)
 );
+ALTER TABLE users ADD COLUMN uuid uuid DEFAULT gen_random_uuid();
 
 create table if not exists friends (
     id            bigserial not null,
