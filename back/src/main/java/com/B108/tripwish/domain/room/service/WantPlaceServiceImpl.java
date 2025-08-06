@@ -75,8 +75,8 @@ public class WantPlaceServiceImpl implements WantPlaceService{
 
 
     @Override
-    public void removeWantPlace(Long roomId, Long refId, PlaceType type) {
-        WantPlace wantPlace = wantPlaceRepository.findByTravelRoom_IdAndRefIdAndType(roomId, refId, type)
+    public void removeWantPlace(Long roomId, Long wantId) {
+        WantPlace wantPlace = wantPlaceRepository.findById(wantId)
                 .orElseThrow(() -> new CustomException(ErrorCode.WANT_PLACE_NOT_FOUND));
         wantPlaceRepository.delete(wantPlace);
 

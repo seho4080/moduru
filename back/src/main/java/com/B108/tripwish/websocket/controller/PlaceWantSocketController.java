@@ -2,7 +2,8 @@ package com.B108.tripwish.websocket.controller;
 
 import com.B108.tripwish.domain.auth.security.JwtTokenProvider;
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.websocket.dto.request.PlaceWantMessageRequestDto;
+import com.B108.tripwish.websocket.dto.request.PlaceWantAddRequestDto;
+import com.B108.tripwish.websocket.dto.request.PlaceWantRemoveRequestDto;
 import com.B108.tripwish.websocket.service.PlaceWantSocketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class PlaceWantSocketController {
 
     @MessageMapping("/room/{roomId}/place-want/add")
     public void handlePlaceWantAddMessage(@DestinationVariable Long roomId,
-                                       @Payload PlaceWantMessageRequestDto request,
+                                       @Payload PlaceWantAddRequestDto request,
                                        MessageHeaders headers) {
 
         // 1. 사용자 정보 꺼내기
@@ -44,7 +45,7 @@ public class PlaceWantSocketController {
 
     @MessageMapping("/room/{roomId}/place-want/remove")
     public void handlePlaceWantRemoveMessage(@DestinationVariable Long roomId,
-                                       @Payload PlaceWantMessageRequestDto request,
+                                       @Payload PlaceWantRemoveRequestDto request,
                                        MessageHeaders headers) {
 
         // 1. 사용자 정보 꺼내기
@@ -53,7 +54,7 @@ public class PlaceWantSocketController {
 
 
         // 2. 서비스 위임
-        log.info("📩 WebSocket 메시지 수신: roomId={}, type={}", roomId, request.getType());
+        log.info("📩 WebSocket 메시지 수신: roomId={}, wantId={}", roomId, request.getWantId());
         // 2. 요청 타입에 따라 분기
         placeWantSocketService.handleRemove(user, roomId, request);
 
