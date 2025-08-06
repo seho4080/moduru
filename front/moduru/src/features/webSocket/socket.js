@@ -10,7 +10,9 @@ let stompClient = null;
  * @param {Array<{ handler: string, action: "add" | "remove", callback: function }>} subscriptions
  */
 export const connectWebSocket = (roomId, subscriptions = []) => {
-  const socket = new SockJS("http://localhost:8080/ws-stomp");
+  const socket = new SockJS("http://localhost:8080/ws-stomp", null, {
+  withCredentials: true 
+});
 
   stompClient = new Client({
     webSocketFactory: () => socket,
@@ -25,6 +27,7 @@ export const connectWebSocket = (roomId, subscriptions = []) => {
         stompClient.subscribe(destination, (message) => {
           try {
             const body = JSON.parse(message.body);
+            console.log(`📥 [WebSocket 수신] ${destination}`, body);
             callback?.(body);
           } catch (err) {
             console.error("메시지 파싱 오류:", err);
@@ -65,7 +68,8 @@ export const publishMessage = (roomId, handler, action, payload) => {
     }
 
     const destination = `/app/room/${roomId}/${handler}/${action}`;
-
+    console.log("📍 destination:", destination);
+    console.log("📦 payload:", payload);
     stompClient.publish({
       destination,
       body: JSON.stringify(payload),
