@@ -6,7 +6,7 @@ import com.B108.tripwish.domain.invite.dto.response.InvitableFriendListResponseD
 import com.B108.tripwish.domain.invite.dto.response.InviteLinkResponseDto;
 import com.B108.tripwish.domain.invite.dto.response.JoinRoomResponseDto;
 import com.B108.tripwish.domain.invite.service.InviteService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

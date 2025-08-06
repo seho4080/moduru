@@ -10,6 +10,7 @@ import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.room.service.WantPlaceService;
 import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceService;
+import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +63,7 @@ public class PlaceServiceImpl implements PlaceService{
     @Override
     public PlaceResponseDto buildPlaceDto(Place place, Long userId, Long roomId) {
         boolean isLiked = myPlaceReaderService.isLiked(userId, place.getId());
-        boolean isWanted = wantPlaceReaderService.isWanted(roomId, place.getId());
+        boolean isWanted = wantPlaceReaderService.isWanted(roomId, place.getId(), PlaceType.PLACE);
         return PlaceResponseDto.fromEntity(place, isLiked, isWanted);
     }
 
@@ -72,7 +73,7 @@ public class PlaceServiceImpl implements PlaceService{
                 .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
         boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
-        boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId);
+        boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId, PlaceType.PLACE);
 
         List<String> reviewTags = reviewService.getTagNamesByPlaceId(placeId);
         List<String> metaDataTags = Optional.ofNullable(placeMetaDataTagRepository.findContentByPlaceId(placeId))

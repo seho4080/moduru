@@ -10,7 +10,7 @@ public class RedisPublisher {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public void publish(String topic, Object message) {
-        redisTemplate.convertAndSend(topic, message);
+    public void publish(String redisChannel, Object message) {
+        redisTemplate.convertAndSend(redisChannel, message);
     }
 }

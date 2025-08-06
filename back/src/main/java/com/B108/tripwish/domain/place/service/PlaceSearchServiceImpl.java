@@ -13,6 +13,7 @@ import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.room.service.WantPlaceService;
 import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceService;
+import com.B108.tripwish.global.common.enums.PlaceType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -75,7 +76,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
     private PlaceResponseDto mapToResponseDto(CustomUserDetails user, Long roomId, PlaceDocument doc) {
         Long placeId = Long.parseLong(doc.getId());
         boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
-        boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId);
+        boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId, PlaceType.PLACE);
 
         return PlaceResponseDto.builder()
                 .placeId(placeId)
