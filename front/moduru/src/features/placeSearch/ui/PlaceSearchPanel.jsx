@@ -1,30 +1,27 @@
-import React, { useState, useEffect } from 'react';
+// src/features/placeSearch/ui/PlaceSearchPanel.jsx
+import React, { useState } from 'react';
+import './PlaceSearchPanel.css';
 import { FiSearch } from 'react-icons/fi';
 import { FaRobot } from 'react-icons/fa';
 
-import { usePlaceSearch } from '../model/usePlaceSearch';
-import PlaceSearchList from './PlaceSearchList';
-import './placeSearchPanel.css';
+import { usePlaceSearch } from '../../placeSearch/model/usePlaceSearch';
+import PlaceSearchCard from './PlaceSearchCard';
 
-const PlaceSearchPanel = ({ roomId, region }) => {
-  const [selectedCategory, setSelectedCategory] = useState('전체');
+export default function PlaceSearchPanel({ roomId, setHoveredCoords }) {
+  const [selectedCategory, setSelectedCategory] = useState('음식점');
+  const { places, loading } = usePlaceSearch(roomId, selectedCategory);
 
-  // NOTE: 선택된 카테고리 또는 지역이 바뀔 때마다 검색 요청
-  const { places, loading } = usePlaceSearch(roomId, selectedCategory, region);
-
-  const categoryOptions = ['전체', '음식점', '명소', '축제'];
-
-  const handleCategoryClick = (label) => {
-    setSelectedCategory(label);
-  };
+  const filterOptions = ['전체'];
+  const categoryOptions = ['음식점', '카페', '명소', '숙소', '축제'];
 
   return (
     <div className="place-search-panel">
+      {/* ✅ 검색바 */}
       <div className="search-wrapper">
         <div className="input-wrapper">
           <input
             type="text"
-            placeholder="오른쪽 AI를 활용해 검색해보세요."
+            placeholder="장소 검색 또는 오른쪽 AI를 활용해 검색해보세요."
           />
           <span className="search-icon-inside">
             <FiSearch />
@@ -35,30 +32,54 @@ const PlaceSearchPanel = ({ roomId, region }) => {
         </button>
       </div>
 
-      <div className="category-tabs">
-        {categoryOptions.map((label) => (
+      {/* ✅ 필터 버튼 */}
+      <div className="filter-buttons">
+        {filterOptions.map((label) => (
           <button
             key={label}
-            className={`category-tab ${selectedCategory === label ? 'active' : ''}`}
-            onClick={() => handleCategoryClick(label)}
+            className={`filter-button ${selectedCategory === label ? 'active' : ''}`}
+            onClick={() => setSelectedCategory(label)}
           >
             {label}
           </button>
         ))}
       </div>
-      <div className="category-divider-line" />
 
+      <div className="divider-line" />
+
+      {/* ✅ 카테고리 탭 */}
+      <div className="category-tabs">
+        {categoryOptions.map((label) => (
+          <button
+            key={label}
+            className={`category-tab ${selectedCategory === label ? 'active' : ''}`}
+            onClick={() => setSelectedCategory(label)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ✅ 장소 카드 리스트 */}
       <div className="place-card-list">
         {loading ? (
           <p>장소 목록 불러오는 중...</p>
         ) : places.length === 0 ? (
           <p>해당 카테고리에 등록된 장소가 없어요.</p>
         ) : (
-          <PlaceSearchList places={places} roomId={roomId} />
+          <div className="card-grid">
+            {places.map((place) => (
+              <PlaceSearchCard
+                key={place.placeId}
+                place={place}
+                roomId={roomId} // ✅ 추가!
+                onHover={() => setHoveredCoords({ lat: place.latitude, lng: place.longitude })}
+                onHoverOut={() => setHoveredCoords(null)}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
   );
-};
-
-export default PlaceSearchPanel;
+}

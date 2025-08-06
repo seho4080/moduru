@@ -1,34 +1,34 @@
 // src/features/wishPlace/ui/WishAddButton.jsx
-
-import { useSelector } from 'react-redux';
+import { FiShare2 } from 'react-icons/fi';
 import { useAddWishPlace } from '../model/useWishToggle';
-import './wishAddButton.css';
-import store from '../../../redux/store';
+import { useSelector } from 'react-redux';
+import './WishAddButton.css';
 
 export default function WishAddButton({ place, roomId }) {
   const { addWishPlace } = useAddWishPlace();
+
   const wishPlaces = useSelector((state) => state.wishPlace.places);
 
-  // NOTE: 저장된 placeId는 객체이므로 .id로 비교
+  // ✅ 콘솔 로그: 현재 상태와 place 정보 출력
+  console.log('🟡 현재 wishPlaces:', wishPlaces);
+  console.log('🟡 현재 클릭된 place:', place);
+
   const isAlreadyWished = wishPlaces.some(
-    (p) => Number(p.placeId.id) === Number(place.placeId)
+    (p) => String(p.placeId) === String(place.placeId)
   );
 
-  const handleClick = async () => {
+  console.log('🟢 isAlreadyWished 결과:', isAlreadyWished);
+
+  const handleAddWish = async () => {
     if (isAlreadyWished) {
-      alert('이미 공유된 장소입니다.');
+      alert(`'${place.placeName}'은(는) 이미 공유된 장소입니다.`);
       return;
     }
 
-    // NOTE: place 객체 전체를 addWishPlace에 넘김
-    const { success, message } = await addWishPlace(roomId, place);
+    const { success, message } = await addWishPlace(roomId, place.placeId);
 
     if (success) {
-      alert(`'${place.placeName}'이 희망 장소에 추가되었어요.`);
-
-      // NOTE: 디버깅용 상태 확인
-      const currentState = store.getState().wishPlace.places;
-      console.log('[현재 wishPlace 상태]', currentState);
+      alert(`'${place.placeName}'이 희망장소에 추가되었어요!`);
     } else {
       alert(`추가 실패: ${message}`);
     }
@@ -36,11 +36,11 @@ export default function WishAddButton({ place, roomId }) {
 
   return (
     <button
-      onClick={handleClick}
-      className={`wish-add-btn ${isAlreadyWished ? 'disabled' : ''}`}
-      disabled={isAlreadyWished}
+      onClick={handleAddWish}
+      title="희망장소에 추가"
+      className="wish-add-btn"
     >
-      {isAlreadyWished ? '공유됨' : '공유'}
+      공유
     </button>
   );
 }

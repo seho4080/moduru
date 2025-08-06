@@ -3,25 +3,24 @@ import SidebarTabs from './SidebarTabs';
 import SidebarPanel from './SidebarPanel';
 import LoginForm from '../../features/auth/ui/LoginForm';
 
+// ✅ TripRoomPage에서 roomId, setHoveredCoords를 props로 전달받도록 수정
 export default function SidebarContainer({ activeTab, onTabChange, roomId, setHoveredCoords }) {
+  const [lastTab, setLastTab] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
   const isLoggedIn = !!localStorage.getItem('accessToken');
 
   const handleClosePanel = () => {
-    setIsPanelOpen(false);
+    setLastTab(activeTab);
+    onTabChange(null);
   };
 
   const handleOpenPanel = () => {
-    setIsPanelOpen(true);
-  };
-
-  const handleTabClick = (tabKey) => {
-    if (!isPanelOpen) {
-      setIsPanelOpen(true); // NOTE: 패널이 닫힌 경우 탭 클릭 시 열어줌
+    if (lastTab) {
+      onTabChange(lastTab);
+    } else {
+      onTabChange('place'); // 기본 탭 fallback
     }
-    onTabChange(tabKey);
   };
 
   const handleProfileClick = () => {
@@ -37,16 +36,15 @@ export default function SidebarContainer({ activeTab, onTabChange, roomId, setHo
       <div style={{ display: 'flex', height: '100vh' }}>
         <SidebarTabs
           activeTab={activeTab}
-          onTabChange={handleTabClick}
+          onTabChange={onTabChange}
           onProfileClick={handleProfileClick}
         />
         <SidebarPanel
           activeTab={activeTab}
-          isOpen={isPanelOpen}
           onClosePanel={handleClosePanel}
           onOpenPanel={handleOpenPanel}
-          roomId={roomId}
-          setHoveredCoords={setHoveredCoords}
+          roomId={roomId} // ✅ 추가된 부분: SidebarPanel로 roomId 전달
+          setHoveredCoords={setHoveredCoords} // ✅ 추가된 부분
         />
       </div>
 

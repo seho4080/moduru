@@ -4,9 +4,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.B108.tripwish.domain.user.entity.MyPlace;
 import com.B108.tripwish.domain.user.entity.MyPlaceId;
+import java.util.List;
 
 public interface MyPlaceRepository extends JpaRepository<MyPlace, MyPlaceId> {
   boolean existsById_UserIdAndId_PlaceId(Long userId, Long placeId);
 
   void deleteById(MyPlaceId id);
+
+  List<MyPlace> findByUser_Id(Long userId);
+
+
 }

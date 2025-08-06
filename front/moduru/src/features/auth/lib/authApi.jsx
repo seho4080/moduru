@@ -1,6 +1,4 @@
 // src/features/auth/lib/authApi.js
-
-// 로그인
 export const login = async ({ email, password }) => {
   try {
     const res = await fetch('http://localhost:8080/auth/login', {
@@ -8,78 +6,23 @@ export const login = async ({ email, password }) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // ✅ 쿠키 포함
+      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
 
-    console.log('로그인 응답:', data);
-
     if (!res.ok) {
       throw new Error(data.message || '로그인 실패');
     }
 
+    // ✅ 토큰 저장
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+
+    console.log('[🟢 로그인 응답]', data);
     return { success: true, user: data.user };
   } catch (err) {
-    console.error('로그인 실패:', err.message);
-    return { success: false, message: err.message };
-  }
-};
-
-// 토큰 재발급
-export const reissueToken = async () => {
-  try {
-    const res = await fetch('http://localhost:8080/auth/reissue', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 쿠키 포함
-    });
-
-    const raw = await res.text();
-
-    console.log('토큰 재발급 응답 RAW:', raw);
-
-    if (!res.ok) {
-      throw new Error(raw || '토큰 재발급 실패');
-    }
-
-    const data = JSON.parse(raw);
-
-    return {
-      success: true,
-      accessToken: data.accessToken, // NOTE: 필요 없을 수도 있음
-    };
-  } catch (err) {
-    console.error('토큰 재발급 실패:', err.message);
-    return { success: false, message: err.message };
-  }
-};
-
-// 로그아웃
-export const logout = async () => {
-  try {
-    const res = await fetch('http://localhost:8080/auth/logout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    const raw = await res.text();
-
-    console.log('로그아웃 응답 RAW:', raw);
-
-    if (!res.ok) {
-      throw new Error(raw || '로그아웃 실패');
-    }
-
-    return { success: true };
-  } catch (err) {
-    console.error('로그아웃 실패:', err.message);
     return { success: false, message: err.message };
   }
 };
