@@ -15,7 +15,8 @@ import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
 import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
-import com.B108.tripwish.websocket.dto.request.PlaceWantMessageRequestDto;
+import com.B108.tripwish.websocket.dto.request.PlaceWantAddRequestDto;
+import com.B108.tripwish.websocket.dto.request.PlaceWantRemoveRequestDto;
 import com.B108.tripwish.websocket.dto.response.PlaceWantAddMessageResponseDto;
 import com.B108.tripwish.websocket.dto.response.PlaceWantRemoveMessageResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class PlaceWantSocketService {
     private final MyPlaceReaderService myPlaceReaderService;
     private final PlaceReaderService placeReaderService;
 
-    public void handleAdd(CustomUserDetails sender, Long roomId, PlaceWantMessageRequestDto request) {
+    public void handleAdd(CustomUserDetails sender, Long roomId, PlaceWantAddRequestDto request) {
         Long refId = request.getId();
         PlaceType type;
         try {
@@ -57,60 +58,57 @@ public class PlaceWantSocketService {
         Double lat;
         Double lng;
         String imgUrl;
+        String placeName;
+        String address;
+        String category;
 
         if (type == PlaceType.CUSTOM) {
             CustomPlace customPlace = wantPlaceReaderService.getCustomPlaceById(refId);
             lat = customPlace.getLat();
             lng = customPlace.getLng();
             imgUrl = null;
+            category = null;
+            placeName = customPlace.getName();
+            address = customPlace.getAddress();
         } else if (type == PlaceType.PLACE) {
             Place place = placeReaderService.findPlaceById(refId);
             lat = place.getLat();
             lng = place.getLng();
+            category = place.getCategory().getCategoryName();
             List<PlaceImage> images = place.getImages();
             imgUrl = (images != null && !images.isEmpty()) ? images.get(0).getImgUrl() : null;
+            placeName = place.getPlaceName();
+            address = place.getRoadAddressName();
         } else {
             throw new CustomException(ErrorCode.UNSUPPORTED_PLACE_TYPE);
         }
+        PlaceWantAddMessageResponseDto response = PlaceWantAddMessageResponseDto.builder()
+                .type(request.getType())
+                .id(request.getId())
+                .roomId(request.getRoomId())
+                .wantId(wantId)
+                .sendId(sender.getUser().getUuid().toString())
+                .category(category)
+                .placeName(placeName)
+                .address(address)
+                .lat(lat)
+                .lng(lng)
+                .imgUrl(imgUrl)
+                .voteCnt(0L)
+                .isVoted(false)
+                .build();
 
-        // 모든 사용자에게 개별 메시지 전송
-        List<User> usersInRoom = roomReaderService.findUsersByRoomId(roomId);
-
-        for (User u : usersInRoom) {
-            boolean isLiked = myPlaceReaderService.isLiked(u.getId(), refId);
-            boolean isVoted = wantPlaceReaderService.isVotedByUser(u.getId(), wantId);
-            Long voteCnt = wantPlaceReaderService.getVoteCount(wantId, saved);
-
-            PlaceWantAddMessageResponseDto response = PlaceWantAddMessageResponseDto.builder()
-                    .roomId(roomId)
-                    .type(type.name().toLowerCase())
-                    .id(refId)
-                    .wantId(saved.getId())
-                    .lat(lat)
-                    .lng(lng)
-                    .imgUrl(imgUrl)
-                    .isLiked(isLiked)
-                    .isVoted(isVoted)
-                    .voteCnt(voteCnt)
-                    .build();
-
-            messagingTemplate.convertAndSendToUser(u.getUuid().toString(), "/queue/place-want", response);
-        }
+        messagingTemplate.convertAndSend("/topic/room/" + roomId + "/place-want/add", response);
     }
 
-    public void handleRemove(CustomUserDetails sender, Long roomId, PlaceWantMessageRequestDto request){
-        Long refId = request.getId();
-        PlaceType type = PlaceType.valueOf(request.getType().toUpperCase());
+    public void handleRemove(CustomUserDetails sender, Long roomId, PlaceWantRemoveRequestDto request){
 
         // 희망장소 삭제
-        wantPlaceService.removeWantPlace(roomId, refId, type);
+        wantPlaceService.removeWantPlace(roomId, request.getWantId());
 
         // 메시지 생성
         PlaceWantRemoveMessageResponseDto response = new PlaceWantRemoveMessageResponseDto(
-                request.getAction(),
-                roomId,
-                type.toString().toLowerCase(),
-                refId
+                request.getWantId(), request.getRoomId(), sender.getUser().getUuid().toString()
         );
 
         // 방에 속한 모든 유저에게 전송
@@ -118,5 +116,6 @@ public class PlaceWantSocketService {
         for (User u : usersInRoom) {
             messagingTemplate.convertAndSendToUser(u.getUuid().toString(), "/queue/place-want", response);
         }
+        messagingTemplate.convertAndSend("/topic/room/" + roomId + "/place-want/remove", response);
     }
 }
