@@ -1,41 +1,46 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Header from "../../widgets/header";
+import Footer from "../../widgets/footer";
 import MainContent from "./MainContent";
 import LoginForm from "../../features/auth/ui/LoginForm";
-import { useAuth } from "../../shared/model/useAuth"; // ✅ 추가
-import "./mainPage.css";
+import { useAuth } from "../../shared/model/useAuth";
 
 const MainPageLayout = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { isLoggedIn } = useAuth(); // ✅ 로그인 상태 가져오기
+  const { isLoggedIn, user } = useAuth();
+  const navigate = useNavigate();
 
   const handleProfileClick = () => {
     if (!isLoggedIn) {
-      setIsLoginModalOpen(true); // ✅ 로그인 안 됐으면 모달 열기
+      setIsLoginModalOpen(true);
     } else {
-      alert("✅ 프로필 화면으로 이동 (추후 구현 예정)"); // ✅ 로그인 상태라면 다른 동작
+      navigate("/my-page");
     }
   };
 
   return (
-    <div className="main-page-layout">
-      <div className="top-bar">
-        <div className="logo">
-          <img src="/src/assets/images/moduru-logo.png" alt="로고" />
+    <div className="min-h-screen flex flex-col items-center bg-[#f5faff]">
+      {/* NOTE: 공통 Header */}
+      <Header
+        isLoggedIn={isLoggedIn}
+        nickname={user?.nickname || "모두루"}
+        onLoginIconClick={handleProfileClick}
+      />
+
+      {/* NOTE: 가운데 정렬된 메인 콘텐츠 */}
+      <main className="flex justify-center px-4 py-12 w-full">
+        <div className="w-full max-w-[1000px]">
+          <MainContent onLoginModal={() => setIsLoginModalOpen(true)} />
         </div>
+      </main>
 
-        <div className="login-icon" onClick={handleProfileClick}>
-          <img src="/src/assets/icons/login-icon.png" alt="로그인" />
-        </div>
-      </div>
+      {/* NOTE: 공통 Footer */}
+      <Footer />
 
-      <MainContent />
-
-      {/*  LoginForm 모달 조건부 렌더링 */}
       {isLoginModalOpen && (
         <LoginForm onClose={() => setIsLoginModalOpen(false)} />
       )}
-
-      <footer className="footer">© 2025 에잇(스파). All rights reserved</footer>
     </div>
   );
 };
