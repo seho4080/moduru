@@ -25,4 +25,9 @@ public class UserReaderServiceImpl implements UserReaderService {
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     return user;
   }
+
+  @Override
+  public User getReference(Long userId) {
+    return userRepository.getReferenceById(userId);
+  }
 }

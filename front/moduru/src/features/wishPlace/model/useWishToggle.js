@@ -1,63 +1,70 @@
 // src/features/wishPlace/model/useWishToggle.js
 import { useDispatch } from 'react-redux';
-import { addWishPlace } from '../../../redux/slices/wishPlaceSlice';
+import { addWishPlace, removeWishPlace } from './wishPlaceSlice';
 
 export const useWishToggle = () => {
   const dispatch = useDispatch();
 
-  const toggleWishPlace = async ({ roomId, placeId, place }) => {
+  const toggleWishPlace = async ({ roomId, placeId, place, wantId }) => {
     const accessToken = localStorage.getItem('accessToken');
 
-    try {
-      const response = await fetch(
-        `http://localhost:8080/rooms/${roomId}/wants`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-          credentials: 'include', // ✅ 쿠키 인증 추가
-          body: JSON.stringify({
-            placeId: Number(placeId), // ✅ 반드시 숫자로
-          }),
-        }
-      );
+    // ❌ 삭제 요청
+    if (wantId) {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/rooms/${roomId}/wants/${wantId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '추가 실패');
+        if (!res.ok) {
+          const errMsg = await res.json();
+          throw new Error(errMsg.message || '삭제 실패');
+        }
+
+        dispatch(removeWishPlace(wantId));
+        return { success: true, type: 'delete' };
+      } catch (err) {
+        console.error('🚨 희망장소 삭제 오류:', err.message);
+        return { success: false, message: err.message };
+      }
+    }
+
+    // ✅ 추가 요청
+    try {
+      const res = await fetch(`http://localhost:8080/rooms/${roomId}/wants`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ placeId }),
+      });
+
+      if (!res.ok) {
+        const errMsg = await res.json();
+        throw new Error(errMsg.message || '추가 실패');
       }
 
-      const result = await response.json();
+      const result = await res.json(); // { code, message } 형태
 
-      const newPlace = {
+      const fullPlace = {
         ...place,
-        wantId: result.wantId || Date.now(),
+        wantId: Date.now(), // 서버가 wantId를 안 주는 경우를 대비
         isWanted: true,
       };
 
-      dispatch(addWishPlace(newPlace));
-      return { success: true, data: newPlace, type: 'add' };
-    } catch (error) {
-      console.error('공유 장소 추가 실패:', error.message);
-      return { success: false, message: error.message };
+      dispatch(addWishPlace(fullPlace));
+      return { success: true, data: fullPlace, type: 'add' };
+    } catch (err) {
+      console.error('🚨 희망장소 추가 오류:', err.message);
+      return { success: false, message: err.message };
     }
   };
 
   return { toggleWishPlace };
-};
-
-export const useAddWishPlace = () => {
-  const { toggleWishPlace } = useWishToggle();
-
-  const addWishPlace = async (roomId, placeId) => {
-    return await toggleWishPlace({
-      roomId,
-      placeId,
-      place: { placeId },
-    });
-  };
-
-  return { addWishPlace };
 };

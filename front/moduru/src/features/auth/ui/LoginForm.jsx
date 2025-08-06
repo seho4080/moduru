@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { login } from '../lib/authApi';
 import { useAuth } from '../../../shared/model/useAuth';
-import './loginForm.css';
+import './LoginForm.css';
 
 export default function LoginForm({ onClose, onSuccess }) {
   const [email, setEmail] = useState('');
@@ -9,7 +9,6 @@ export default function LoginForm({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const { setIsLoggedIn } = useAuth();
 
-  // NOTE: 로그인 요청 결과에 따라 인증 상태를 업데이트하고, UI 전환을 처리함
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -17,16 +16,15 @@ export default function LoginForm({ onClose, onSuccess }) {
     const result = await login({ email, password });
 
     if (result.success) {
+      console.log('[✅ 로그인 성공]');
       setIsLoggedIn(true);
       setLoading(false);
       onClose();
       onSuccess?.();
-      return;
+    } else {
+      console.error('[🚨 로그인 실패]', result.message);
+      setLoading(false);
     }
-
-    // NOTE: 로그인 실패 시 사용자에게 메시지를 보여주기 위한 처리
-    console.error('로그인 실패:', result.message);
-    setLoading(false);
   };
 
   return (

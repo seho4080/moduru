@@ -10,7 +10,7 @@ import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.user.dto.request.FriendRequestDto;
 import com.B108.tripwish.domain.user.dto.response.FriendResponseDto;
 import com.B108.tripwish.domain.user.service.FriendService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;

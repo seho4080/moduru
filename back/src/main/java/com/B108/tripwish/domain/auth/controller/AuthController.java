@@ -11,7 +11,7 @@ import com.B108.tripwish.domain.auth.dto.request.LoginRequestDto;
 import com.B108.tripwish.domain.auth.dto.response.LoginResponseDto;
 import com.B108.tripwish.domain.auth.dto.response.ReissueResponseDto;
 import com.B108.tripwish.domain.auth.service.AuthService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import com.B108.tripwish.global.exception.ErrorResponse;

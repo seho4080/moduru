@@ -2,6 +2,7 @@ package com.B108.tripwish.domain.room.controller;
 
 import java.util.List;
 
+import com.B108.tripwish.domain.room.service.WantPlaceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +12,7 @@ import com.B108.tripwish.domain.room.dto.request.AddPlaceWantRequestDto;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.*;
 import com.B108.tripwish.domain.room.service.RoomService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 public class RoomController {
 
   private final RoomService roomService;
+  private final WantPlaceService wantPlaceService;
 
   @Operation(
       summary = "여행 방 생성",
@@ -280,32 +282,15 @@ public class RoomController {
             content = @Content),
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
-  @PostMapping("/{wantId}/votes")
-  public ResponseEntity<CommonResponse> votePlace(@PathVariable Long wantId) {
-    // 서비스단에서: user.getId()가 해당 roomId의 방장인지 확인 + 본인이 아닌 다른 유저인지 확인
+  @PostMapping("/{roomId}/votes/{wantId}")
+  public ResponseEntity<CommonResponse> votePlace(@AuthenticationPrincipal CustomUserDetails user,
+                                                  @PathVariable Long roomId,
+                                                  @PathVariable Long wantId) {
+    // 장소 ID 와 방 ID로 희망장소 ID 찾도록 수정 필요.
 
+    wantPlaceService.toggleVotePlace(user, wantId);
     CommonResponse response = new CommonResponse("VOTE_SUCCESS", "장소 투표가 완료되었습니다.");
     return ResponseEntity.ok(response);
   }
 
-  @Operation(
-      summary = "장소 투표 취소",
-      description = "내가 해당 희망장소에 했던 투표를 취소합니다.",
-      responses = {
-        @ApiResponse(responseCode = "200", description = "장소 투표 취소 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 누락 / 유효하지 않음 / 만료됨)"),
-        @ApiResponse(responseCode = "403", description = "투표한 적이 없는 사용자입니다.", content = @Content),
-        @ApiResponse(
-            responseCode = "404",
-            description = "해당 wantId 또는 사용자 정보를 찾을 수 없습니다.",
-            content = @Content),
-        @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-      })
-  @DeleteMapping("/{wantId}/votes/me")
-  public ResponseEntity<CommonResponse> cancelVotePlace(@PathVariable Long wantId) {
-    // 서비스단에서: userDetails.getId()가 해당 wantId에 대해 투표한 기록이 있는지 확인 후 삭제
-
-    CommonResponse response = new CommonResponse("VOTE_CANCEL_SUCCESS", "장소 투표가 취소되었습니다.");
-    return ResponseEntity.ok(response);
-  }
 }

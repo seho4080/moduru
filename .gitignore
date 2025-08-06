@@ -59,13 +59,5 @@ pids
 *.pid
 *.seed
 *.pid.lock
-
-# 가상환경 
-venv
-# ES 
-volumes
-# DB
-pgdata
-festival_data_embedding.json
-restaurant_data_embedding.json
-spot_data_embedding.json
+pg-data/
+init.sql

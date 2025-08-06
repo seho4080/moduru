@@ -1,3 +1,5 @@
+// features/tripCreate/lib/regionList.js
+
 export const REGIONS = [
   { name: '서울' }, { name: '부산' }, { name: '대구' }, { name: '인천' }, { name: '광주' },
   { name: '대전' }, { name: '울산' }, { name: '세종' }, { name: '수원' }, { name: '고양' },
