@@ -1,22 +1,22 @@
-// src/features/likedPlace/ui/LikedPlaceButton.jsx
 import { useSelector, useDispatch } from 'react-redux';
 import { FaStar, FaRegStar } from 'react-icons/fa';
-import { toggleLike } from '../model/likedPlaceSlice';
+import { toggleLike } from '../../../redux/slices/likedPlaceSlice';
 import useLikedToggle from '../model/useLikedToggle';
 import './likedPlaceButton.css';
 
 export default function LikedPlaceButton({ place }) {
   const dispatch = useDispatch();
-
   const isLiked = useSelector((state) =>
     state.likedPlace?.likedPlaceIds?.includes(place.placeId)
   );
 
   const { toggleLikedPlace } = useLikedToggle();
 
-  const handleClick = () => {
-    toggleLikedPlace(place);
-    dispatch(toggleLike(place.placeId));
+  const handleClick = async () => {
+    const success = await toggleLikedPlace(place, isLiked); // ✅ isLiked 전달
+    if (success) {
+      dispatch(toggleLike(place.placeId));
+    }
   };
 
   return (
