@@ -1,0 +1,117 @@
+.place-search-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;             /* 부모 높이를 기준으로 스크롤 영역 확보 */
+  overflow: hidden;         /* 내부 스크롤 요소에게 위임 */
+  padding: 16px;
+  user-select: none;
+}
+
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.input-wrapper input {
+  width: 100%;
+  padding: 10px 38px 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  background: #f9fafb;
+  outline: none;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-icon-inside {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #2d4d9f;
+  pointer-events: none;
+  font-size: 18px;
+}
+
+.ai-robot-btn {
+  flex-shrink: 0;
+  background: #f5f7fa;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3399CC;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ai-robot-btn:hover {
+  background: #e6f0ff;
+}
+
+.category-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.category-tab {
+  border: 1px solid #ccd3ec;
+  padding: 10px 0;
+  border-radius: 8px;
+  background-color: white;
+  color: #333;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s;
+}
+
+.category-tab.active {
+  background-color: #3399CC;
+  color: white;
+  font-weight: bold;
+}
+
+.category-divider-line {
+  border-top: 1px solid #ccd3ec;
+  margin: 8px 0 0 0;
+  width: 100%;
+}
+
+
+.place-card-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-top: 20px;
+  min-height: 0;             
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
