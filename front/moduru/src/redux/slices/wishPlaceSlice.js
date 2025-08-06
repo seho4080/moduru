@@ -1,9 +1,8 @@
 // src/redux/slices/wishPlaceSlice.js
-
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  places: [], // 희망 장소 배열: [{ placeId: {...}, wantId, isWanted }]
+  places: [], // [{ placeId: { placeId, ... }, wantId, isWanted }]
 };
 
 const wishPlaceSlice = createSlice({
@@ -17,12 +16,18 @@ const wishPlaceSlice = createSlice({
     addWishPlace(state, action) {
       const newPlace = action.payload;
 
-      // NOTE: 동일한 placeId.id를 가진 장소가 이미 있으면 추가하지 않음
-      const exists = state.places.some(
-        (place) => place.placeId.id === newPlace.placeId.id
+      const newPlaceId = typeof newPlace.placeId === 'object'
+        ? newPlace.placeId.placeId
+        : newPlace.placeId;
+
+      const alreadyExists = state.places.some(
+        (p) => {
+          const existingId = typeof p.placeId === 'object' ? p.placeId.placeId : p.placeId;
+          return Number(existingId) === Number(newPlaceId);
+        }
       );
 
-      if (!exists) {
+      if (!alreadyExists) {
         state.places.push(newPlace);
       }
     },
@@ -35,10 +40,5 @@ const wishPlaceSlice = createSlice({
   },
 });
 
-export const {
-  setWishPlaces,
-  addWishPlace,
-  removeWishPlace,
-} = wishPlaceSlice.actions;
-
+export const { setWishPlaces, addWishPlace, removeWishPlace } = wishPlaceSlice.actions;
 export default wishPlaceSlice.reducer;
