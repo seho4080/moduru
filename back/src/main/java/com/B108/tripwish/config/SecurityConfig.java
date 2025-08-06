@@ -60,7 +60,7 @@ public class SecurityConfig {
     CorsConfiguration config = new CorsConfiguration();
     config.addAllowedOrigin("http://localhost:5173");
     config.setAllowCredentials(true);
-    config.addAllowedOriginPattern("*");
+//    config.addAllowedOriginPattern("*");
     config.addAllowedHeader("*");
     config.addAllowedMethod("*");
 

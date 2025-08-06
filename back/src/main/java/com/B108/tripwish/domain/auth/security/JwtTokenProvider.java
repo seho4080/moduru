@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,6 +34,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 
+@Slf4j
 @Component
 public class JwtTokenProvider {
   private final Key key;
@@ -154,27 +156,52 @@ public class JwtTokenProvider {
   // 토큰 정보를 검증하는 메서드
   public boolean validateToken(String token, TokenType type) {
     try {
-      Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+      log.debug("🔍 [validateToken] 토큰 유효성 검사 시작 - 타입: {}, 토큰: {}", type.name(), token);
 
+      Claims claims = Jwts.parserBuilder()
+              .setSigningKey(key)
+              .build()
+              .parseClaimsJws(token)
+              .getBody();
+
+      String tokenTypeClaim = claims.get("type", String.class);
+      log.debug("🔎 [validateToken] 추출된 token type claim: {}", tokenTypeClaim);
+
+      if (!type.name().equals(tokenTypeClaim)) {
+        log.warn("❌ [validateToken] 토큰 타입 불일치 - 기대한 타입: {}, 실제 타입: {}", type.name(), tokenTypeClaim);
+        throw new CustomException(
+                type == TokenType.ACCESS
+                        ? ErrorCode.INVALID_ACCESS_TOKEN
+                        : ErrorCode.INVALID_REFRESH_TOKEN
+        );
+      }
+
+      log.info("✅ [validateToken] 토큰 유효성 통과 - subject: {}", claims.getSubject());
       return true;
 
     } catch (ExpiredJwtException e) {
+      log.warn("⏰ [validateToken] 토큰 만료됨", e);
       throw new CustomException(
-          type == TokenType.ACCESS
-              ? ErrorCode.EXPIRED_ACCESS_TOKEN
-              : ErrorCode.EXPIRED_REFRESH_TOKEN);
+              type == TokenType.ACCESS
+                      ? ErrorCode.EXPIRED_ACCESS_TOKEN
+                      : ErrorCode.EXPIRED_REFRESH_TOKEN
+      );
 
     } catch (SignatureException e) {
+      log.warn("🔐 [validateToken] 서명 검증 실패", e);
       throw new CustomException(
-          type == TokenType.ACCESS
-              ? ErrorCode.INVALID_ACCESS_SIGNATURE
-              : ErrorCode.INVALID_REFRESH_SIGNATURE);
+              type == TokenType.ACCESS
+                      ? ErrorCode.INVALID_ACCESS_SIGNATURE
+                      : ErrorCode.INVALID_REFRESH_SIGNATURE
+      );
 
-    } catch (JwtException e) { // 그 외 파싱 문제 등
+    } catch (JwtException e) {
+      log.warn("⚠️ [validateToken] 기타 JWT 파싱 오류", e);
       throw new CustomException(
-          type == TokenType.ACCESS
-              ? ErrorCode.INVALID_ACCESS_TOKEN
-              : ErrorCode.INVALID_REFRESH_TOKEN);
+              type == TokenType.ACCESS
+                      ? ErrorCode.INVALID_ACCESS_TOKEN
+                      : ErrorCode.INVALID_REFRESH_TOKEN
+      );
     }
   }
 
