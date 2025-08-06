@@ -9,5 +9,5 @@ public interface WantPlaceService {
 
     WantPlace  saveWantPlace(Long roomId, PlaceType type, Long refId);
 
-    void removeWantPlace(Long roomId, Long refId, PlaceType type);
+    void removeWantPlace(Long roomId, Long wantId);
 }
