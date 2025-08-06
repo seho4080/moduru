@@ -11,6 +11,7 @@ const store = configureStore({
     map: mapReducer,
     likedPlace: likedPlaceReducer,
     wishPlace: wishPlaceReducer,
+    user: userReducer,
   },
 });
 
