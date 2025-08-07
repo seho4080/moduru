@@ -1,6 +1,6 @@
 // src/shared/api/tripRoomApi.js
 import { reissueToken } from '../../auth/lib/authApi';
-
+const base = import.meta.env.VITE_API_BASE;
 /**
  * 공통 fetch wrapper
  * - Access Token이 만료되었을 때 자동 재발급 시도
@@ -66,7 +66,7 @@ export async function fetchWithAuth(url, options = {}) {
  * - POST /rooms
  */
 export async function createTripRoom() {
-  const url = "http://localhost:8080/rooms";
+  const url = `${base}//rooms`;
 
   const res = await fetchWithAuth(url, {
     method: 'POST',
@@ -92,7 +92,7 @@ export async function createTripRoom() {
  * - GET /rooms/{roomId}
  */
 export async function getTripRoomInfo(roomId) {
-  const url = `http://localhost:8080/rooms/${roomId}`;
+  const url = `${base}/rooms/${roomId}`;
 
   const res = await fetchWithAuth(url, {
     method: 'GET',
@@ -118,7 +118,7 @@ export async function getTripRoomInfo(roomId) {
  * - PATCH /rooms/{roomId}/update
  */
 export async function updateTripRoomRegion(roomId, { title, region, startDate, endDate }) {
-  const url = `http://localhost:8080/rooms/${roomId}/update`;
+  const url = `${base}/rooms/${roomId}/update`;
   const bodyData = { title, region, startDate, endDate };
 
   const res = await fetchWithAuth(url, {

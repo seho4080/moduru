@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+const base = import.meta.env.VITE_API_BASE;
 // NOTE: 서버에서 허용하는 카테고리 매핑
 const categoryMap = {
   전체: 'all',
@@ -21,7 +21,7 @@ export const usePlaceSearch = (roomId, selectedCategory) => {
       try {
         const accessToken = localStorage.getItem('accessToken');
         const categoryCode = categoryMap[selectedCategory];
-        const url = `http://localhost:8080/places/${roomId}?category=${categoryCode}`;
+        const url = `${base}/places/${roomId}?category=${categoryCode}`;
 
         const res = await fetch(url, {
           method: 'GET',
