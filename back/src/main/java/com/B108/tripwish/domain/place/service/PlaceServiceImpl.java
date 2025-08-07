@@ -10,11 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.place.dto.response.*;
 import com.B108.tripwish.domain.place.entity.*;
-import com.B108.tripwish.domain.place.respoistory.*;
+import com.B108.tripwish.domain.place.repository.*;
 import com.B108.tripwish.domain.review.service.ReviewService;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
+import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
@@ -62,7 +63,7 @@ public class PlaceServiceImpl implements PlaceService {
   @Override
   public PlaceResponseDto buildPlaceDto(Place place, Long userId, Long roomId) {
     boolean isLiked = myPlaceReaderService.isLiked(userId, place.getId());
-    boolean isWanted = wantPlaceReaderService.isWanted(roomId, place.getId());
+    boolean isWanted = wantPlaceReaderService.isWanted(roomId, place.getId(), PlaceType.PLACE);
     return PlaceResponseDto.fromEntity(place, isLiked, isWanted);
   }
 
@@ -74,7 +75,7 @@ public class PlaceServiceImpl implements PlaceService {
             .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
     boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
-    boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId);
+    boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId, PlaceType.PLACE);
 
     List<String> reviewTags = reviewService.getTagNamesByPlaceId(placeId);
     List<String> metaDataTags =

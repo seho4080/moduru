@@ -1,12 +1,15 @@
 package com.B108.tripwish.domain.user.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.user.dto.response.MyPlaceInfoResponse;
 import com.B108.tripwish.domain.user.service.MyPlaceService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,5 +41,23 @@ public class MyPlaceController {
     myPlaceService.toggleLikePlace(user, placeId);
     return ResponseEntity.ok(
         new CommonResponse("MYPLACE_TOGGLE_SUCCESS", "좋아요 상태가 성공적으로 변경되었습니다."));
+  }
+
+  @Operation(
+      summary = "좋아요한 장소 목록 조회",
+      description = "로그인한 사용자가 좋아요한 모든 장소 목록을 조회합니다.",
+      responses = {
+        @ApiResponse(responseCode = "200", description = "좋아요한 장소 목록 조회 성공"),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증 실패 (AccessToken 누락 / 유효하지 않음 / 만료됨)",
+            content = @Content),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류 발생", content = @Content)
+      })
+  @GetMapping
+  public ResponseEntity<List<MyPlaceInfoResponse>> getLikedPlaces(
+      @AuthenticationPrincipal CustomUserDetails user) {
+    List<MyPlaceInfoResponse> likedPlaces = myPlaceService.getLikedPlaces(user);
+    return ResponseEntity.ok(likedPlaces);
   }
 }

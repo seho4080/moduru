@@ -14,11 +14,12 @@ import com.B108.tripwish.domain.place.dto.request.PlaceSearchRequest;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.place.entity.Place;
-import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
-import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
+import com.B108.tripwish.domain.place.repository.PlaceRepository;
+import com.B108.tripwish.domain.place.repository.PlaceSearchRepository;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
+import com.B108.tripwish.global.common.enums.PlaceType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +80,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
       CustomUserDetails user, Long roomId, PlaceDocument doc) {
     Long placeId = Long.parseLong(doc.getId());
     boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
-    boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId);
+    boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId, PlaceType.PLACE);
 
     return PlaceResponseDto.builder()
         .placeId(placeId)

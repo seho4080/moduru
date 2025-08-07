@@ -58,6 +58,24 @@ services:
       - CHOKIDAR_USEPOLLING=true
     networks:
       - app-network
+  ##########################################  
+  # 3. DB (postgresql)
+  ##########################################
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ssafy
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data     # 데이터 저장 할 장소
+      - ./insert-data:/docker-entrypoint-initdb.d   # init 스크립트 자동 실행
+    networks:
+      - app-network   # 이렇게 바꾸기!
+  
 
   ##########################################
   # 4. 백엔드 (Spring Boot)
@@ -75,8 +93,6 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
-      - postgresql_user=${postgresql_user}
-      - postgresql_password=${postgresql_password}
       # - REDIS_HOST=redis        # ← 여기
       # - REDIS_PORT=6379
       - SPRING_DATA_REDIS_HOST=redis
@@ -84,7 +100,7 @@ services:
       - ELASTICSEARCH_HOST=elasticsearch
       - ELASTICSEARCH_PORT=9200
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
       - SPRING_DATASOURCE_USERNAME=${postgresql_user}
       - SPRING_DATASOURCE_PASSWORD=${postgresql_password}
 
@@ -155,6 +171,34 @@ services:
       - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
     networks:
       - app-network
-
+  ##########################################
+  # 8. 데이터 넣을 파이썬 코드
+  ##########################################
+  data-loader:
+    image: python:3.11-slim
+    container_name: data_loader
+    working_dir: /app
+    volumes:
+      - ./insert-data/insert_data:/app         # 스크립트가 있는 로컬 폴더
+    depends_on:
+      - db
+    networks:
+      - app-network
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: mydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ssafy
+    # command: ["python", "insert_data_docker.py"]  # 스크립트 이름
+    command: >
+        sh -c "set -x && \
+              pip install psycopg2-binary pgvector && \
+              python insert_data_docker.py && \
+              python festival_data_docker.py && \
+              sleep 300"
+# python spot_data_docker.py && \      
 networks:
   app-network:
+volumes:
+  pgdata:
