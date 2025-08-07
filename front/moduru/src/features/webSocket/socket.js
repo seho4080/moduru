@@ -1,7 +1,7 @@
 // external
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
-
+const base = import.meta.env.VITE_API_BASE;
 let stompClient = null;
 
 /**
@@ -10,10 +10,10 @@ let stompClient = null;
  * @param {Array<{ handler: string, action: "add" | "remove", callback: function }>} subscriptions
  */
 export const connectWebSocket = (roomId, subscriptions = []) => {
-  const socket = new SockJS("http://localhost:8080/ws-stomp", null, {
+  const socket = new SockJS(`${base}/ws-stomp`, null, {
     withCredentials: true,
   });
-
+  console.log(socket)
   stompClient = new Client({
     webSocketFactory: () => socket,
     reconnectDelay: 5000,
