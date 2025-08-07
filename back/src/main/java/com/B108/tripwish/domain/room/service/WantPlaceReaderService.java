@@ -8,18 +8,13 @@ import com.B108.tripwish.global.common.enums.PlaceType;
 
 public interface WantPlaceReaderService {
 
-    boolean isWanted(Long roomId, Long placeId, PlaceType type);
+  boolean isWanted(Long roomId, Long placeId, PlaceType type);
 
-    boolean isVotedByUser(Long userId, Long wantPlaceId);
+  boolean isVotedByUser(Long userId, Long wantPlaceId);
 
-    long getVoteCount(Long wantPlaceId, WantPlace wantPlace);
+  long getVoteCount(Long wantPlaceId, WantPlace wantPlace);
 
-    CustomPlace getCustomPlaceById(Long id);
+  CustomPlace getCustomPlaceById(Long id);
 
-    PlaceWantListResponseDto getWantList(CustomUserDetails user, Long roomId);
-
-
-
-
-
+  PlaceWantListResponseDto getWantList(CustomUserDetails user, Long roomId);
 }

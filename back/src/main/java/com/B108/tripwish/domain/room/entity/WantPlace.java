@@ -2,9 +2,8 @@ package com.B108.tripwish.domain.room.entity;
 
 import java.time.LocalDateTime;
 
-import com.B108.tripwish.domain.place.entity.Place;
-
 import com.B108.tripwish.global.common.enums.PlaceType;
+
 import jakarta.persistence.*;
 import lombok.*;
 
