@@ -1,12 +1,11 @@
 import psycopg2
-import api.gms_api as gms_api
+import pandas as pd
+from sklearn.cluster import KMeans
 
 conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
 
 
-def recommend(query):
-    query_embedding = gms_api.text_embedding(query)
-
+def cosine_similarity(region_id, query_embedding):
     cur = conn.cursor()
     cur.execute("SET search_path TO moduru")
 
@@ -14,21 +13,27 @@ def recommend(query):
         """SELECT
             p.id,
             p.place_name,
+            p.address_name,
+            COALESCE(r.business_hours, s.business_hours) AS business_hours,
             COALESCE(r.description, s.description, f.description) AS description
         FROM moduru.places p
         LEFT JOIN moduru.restaurants r ON p.id = r.place_id AND p.category_id = 1
         LEFT JOIN moduru.spots s       ON p.id = s.place_id AND p.category_id = 2
         LEFT JOIN moduru.festivals f   ON p.id = f.place_id AND p.category_id = 3
+        WHERE p.region_code = %s
         ORDER BY p.embedding <#> %s::vector
-        LIMIT 10
-    """,
-        (query_embedding,),
+        LIMIT 50
+        """,
+        (region_id, query_embedding),
     )
 
     results = cur.fetchall()
-    print(results)
+    return results
 
 
-if __name__ == "__main__":
-    query = "서울 야경이 잘 보이는 식당 추천해줘"
-    recommend(query)
+def k_means_clustering(place_list, n_clusters):
+    embeddings = [place[3] for place in place_list]  # Assuming the embedding is at index 3
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    labels = kmeans.fit_predict(embeddings)
+
+    return labels

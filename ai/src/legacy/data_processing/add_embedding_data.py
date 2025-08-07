@@ -3,8 +3,8 @@ import os
 import api.gms_api as gms_api
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-INPUT_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "restaurant_data.json")
-OUTPUT_PATH = os.path.join(BASE_DIR, "..", "..", "data", "raw", "restaurant_data_embedding.json")
+INPUT_PATH = os.path.join(BASE_DIR, "..", "data", "restaurant_data.json")
+OUTPUT_PATH = os.path.join(BASE_DIR, "..", "data", "restaurant_data_embedding.json")
 SAVE_EVERY = 2000
 START_INDEX = 0
 
@@ -22,6 +22,7 @@ else:
 # 지정한 인덱스부터 시작
 for i, item in enumerate(full_data[START_INDEX:], start=START_INDEX + 1):
     description = item.get("description")
+    description += f"\n주소: {item.get('address', '')}"
     tags = item.get("tags")
 
     if description:

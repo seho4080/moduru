@@ -43,7 +43,7 @@ VALUES (1, '서울'),
 CREATE TABLE places (
     id SERIAL PRIMARY KEY,
     category_id INT NOT NULL REFERENCES categories (id) ON DELETE CASCADE,
-    region_code INT NOT NULL REFERENCES regions (id) ON DELETE CASCADE,
+    region_id INT NOT NULL REFERENCES regions (id) ON DELETE CASCADE,
     kakao_id INT,
     place_name VARCHAR(50),
     place_url VARCHAR(500),
