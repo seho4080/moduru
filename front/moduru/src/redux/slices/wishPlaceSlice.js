@@ -1,37 +1,51 @@
 // src/redux/slices/wishPlaceSlice.js
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  places: [], // [{ placeId: { placeId, ... }, wantId, isWanted }]
+  places: [], // 각 원소: { placeId, wantId, isWanted, ... }
 };
 
 const wishPlaceSlice = createSlice({
-  name: 'wishPlace',
+  name: "wishPlace",
   initialState,
   reducers: {
+    /**
+     * 전체 찜 목록을 덮어씀
+     */
     setWishPlaces(state, action) {
       state.places = action.payload;
     },
 
+    /**
+     * 새로운 찜 장소 추가
+     */
     addWishPlace(state, action) {
       const newPlace = action.payload;
 
-      const newPlaceId = typeof newPlace.placeId === 'object'
-        ? newPlace.placeId.placeId
-        : newPlace.placeId;
+      // placeId를 안전하게 꺼냄
+      const newPlaceId =
+        typeof newPlace.placeId === "object"
+          ? newPlace.placeId.placeId
+          : newPlace.placeId;
 
-      const alreadyExists = state.places.some(
-        (p) => {
-          const existingId = typeof p.placeId === 'object' ? p.placeId.placeId : p.placeId;
-          return Number(existingId) === Number(newPlaceId);
-        }
-      );
+      // 중복 여부 확인
+      const alreadyExists = state.places.some((p) => {
+        const existingPlaceId =
+          typeof p.placeId === "object" ? p.placeId.placeId : p.placeId;
+        return Number(existingPlaceId) === Number(newPlaceId);
+      });
 
       if (!alreadyExists) {
-        state.places.push(newPlace);
+        state.places.push({
+          ...newPlace,
+          placeId: Number(newPlaceId), // 항상 숫자형 placeId로 저장
+        });
       }
     },
 
+    /**
+     * wantId 기준으로 찜 제거
+     */
     removeWishPlace(state, action) {
       state.places = state.places.filter(
         (place) => place.wantId !== action.payload
@@ -40,5 +54,6 @@ const wishPlaceSlice = createSlice({
   },
 });
 
-export const { setWishPlaces, addWishPlace, removeWishPlace } = wishPlaceSlice.actions;
+export const { setWishPlaces, addWishPlace, removeWishPlace } =
+  wishPlaceSlice.actions;
 export default wishPlaceSlice.reducer;

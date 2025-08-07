@@ -11,7 +11,7 @@ import com.B108.tripwish.domain.auth.dto.request.LoginRequestDto;
 import com.B108.tripwish.domain.auth.dto.response.LoginResponseDto;
 import com.B108.tripwish.domain.auth.dto.response.ReissueResponseDto;
 import com.B108.tripwish.domain.auth.service.AuthService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import com.B108.tripwish.global.exception.ErrorResponse;
@@ -151,20 +151,7 @@ public class AuthController {
     if (refreshToken == null) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-    JwtToken token = authService.reissue(refreshToken);
-    Cookie accessTokenCookie = new Cookie("access_token", token.getAccessToken());
-    accessTokenCookie.setHttpOnly(true);
-    accessTokenCookie.setSecure(false); // 배포 시 true
-    accessTokenCookie.setPath("/");
-    accessTokenCookie.setMaxAge(60 * 60); // 1시간
-    response.addCookie(accessTokenCookie);
-
-    Cookie refreshTokenCookie = new Cookie("refresh_token", token.getRefreshToken());
-    refreshTokenCookie.setHttpOnly(true);
-    refreshTokenCookie.setSecure(false); // 배포 시 true
-    refreshTokenCookie.setPath("/");
-    refreshTokenCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-    response.addCookie(refreshTokenCookie);
+    JwtToken token = authService.reissue(refreshToken, response);
 
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
   }

@@ -1,6 +1,7 @@
 package com.B108.tripwish.domain.user.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class UserServiceImpl implements UserService {
     }
     User user =
         User.builder()
+            .uuid(UUID.randomUUID())
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
             .provider(request.getProvider())

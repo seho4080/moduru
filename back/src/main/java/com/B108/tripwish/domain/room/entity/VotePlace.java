@@ -1,5 +1,8 @@
 package com.B108.tripwish.domain.room.entity;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.B108.tripwish.domain.user.entity.User;
 
 import jakarta.persistence.*;
@@ -23,11 +26,13 @@ public class VotePlace {
   @MapsId("wantId")
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "want_id")
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private WantPlace wantPlace;
 
   @MapsId("userId")
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id")
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private User user;
 
   @Column(nullable = false)

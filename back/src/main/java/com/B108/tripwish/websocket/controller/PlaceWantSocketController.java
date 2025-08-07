@@ -1,12 +1,16 @@
 package com.B108.tripwish.websocket.controller;
 
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
-import com.B108.tripwish.domain.auth.security.JwtTokenProvider;
-import com.B108.tripwish.websocket.dto.request.PlaceWantMessageRequestDto;
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.websocket.dto.request.PlaceWantAddRequestDto;
+import com.B108.tripwish.websocket.dto.request.PlaceWantRemoveRequestDto;
 import com.B108.tripwish.websocket.service.PlaceWantSocketService;
 
 import lombok.RequiredArgsConstructor;
@@ -18,14 +22,42 @@ import lombok.extern.slf4j.Slf4j;
 public class PlaceWantSocketController {
 
   private final PlaceWantSocketService placeWantSocketService;
-  private final JwtTokenProvider jwtTokenProvider;
 
-  @MessageMapping("/room/{roomId}/place-want")
-  public void handlePlaceWantMessage(
-      @DestinationVariable String roomId, @Payload PlaceWantMessageRequestDto request) {
+  @MessageMapping("/room/{roomId}/place-want/add")
+  public void handlePlaceWantAddMessage(
+      @DestinationVariable Long roomId,
+      @Payload PlaceWantAddRequestDto request,
+      MessageHeaders headers) {
+
+    // 1. 사용자 정보 꺼내기
+    SimpMessageHeaderAccessor accessor =
+        MessageHeaderAccessor.getAccessor(headers, SimpMessageHeaderAccessor.class);
+    CustomUserDetails user = (CustomUserDetails) accessor.getSessionAttributes().get("user");
 
     // 2. 서비스 위임
-    log.info("📩 WebSocket 메시지 수신: roomId={}, type={}", roomId, request.getType());
-    placeWantSocketService.handlePlaceWantMessage(request);
+    log.info(
+        "📩 WebSocket 메시지 수신: roomId={}, type={}, id={}",
+        roomId,
+        request.getType(),
+        request.getId());
+    // 2. 요청 타입에 따라 분기
+    placeWantSocketService.handleAdd(user, roomId, request);
+  }
+
+  @MessageMapping("/room/{roomId}/place-want/remove")
+  public void handlePlaceWantRemoveMessage(
+      @DestinationVariable Long roomId,
+      @Payload PlaceWantRemoveRequestDto request,
+      MessageHeaders headers) {
+
+    // 1. 사용자 정보 꺼내기
+    SimpMessageHeaderAccessor accessor =
+        MessageHeaderAccessor.getAccessor(headers, SimpMessageHeaderAccessor.class);
+    CustomUserDetails user = (CustomUserDetails) accessor.getSessionAttributes().get("user");
+
+    // 2. 서비스 위임
+    log.info("📩 WebSocket 메시지 수신: roomId={}, wantId={}", roomId, request.getWantId());
+    // 2. 요청 타입에 따라 분기
+    placeWantSocketService.handleRemove(user, roomId, request);
   }
 }
