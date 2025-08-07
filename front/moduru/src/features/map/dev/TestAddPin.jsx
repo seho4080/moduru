@@ -1,4 +1,4 @@
-// external
+// external 파이팅..!
 import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 
@@ -24,7 +24,7 @@ const TestAddRemovePin = ({ roomId }) => {
 
     connectWebSocket(roomId, [
       {
-        handler: "pin",
+        handler: "place-want",
         action: "add",
         callback: (message) => {
           console.log("서버에서 수신한 add 메시지:", message);
@@ -33,7 +33,7 @@ const TestAddRemovePin = ({ roomId }) => {
         },
       },
       {
-        handler: "pin",
+        handler: "place-want",
         action: "remove",
         callback: (message) => {
           console.log("서버에서 수신한 remove 메시지:", message);
@@ -60,11 +60,11 @@ const TestAddRemovePin = ({ roomId }) => {
 
     const pinPayload = {
       type: "place",
-      id: 49, // 원하는 고정 id
+      id: 3, // 원하는 고정 id
       roomId,
     };
 
-    publishMessage(roomId, "pin", "add", pinPayload);
+    publishMessage(roomId, "place-want", "add", pinPayload);
   };
 
   const handleRemove = () => {
@@ -73,7 +73,7 @@ const TestAddRemovePin = ({ roomId }) => {
       return;
     }
 
-    publishMessage(roomId, "pin", "remove", {
+    publishMessage(roomId, "place-want", "remove", {
       roomId,
       wantId: lastWantId,
     });
