@@ -1,29 +1,18 @@
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
-import ai
+# main.py
+from fastapi import FastAPI, Query
+import modules.gms_api as gms_api
+import modules.utils as utils
 
 app = FastAPI()
 
 
-class PlaceRecommendationRequest(BaseModel):
-    region_code: int
-    query: str
+def recommend_places(region_id: int, query: str):
+    query_embedding = gms_api.text_embedding(query)
+    similar_places = utils.cosine_similarity(region_id, query_embedding)
+    place_list = gms_api.filter_valid(similar_places, query)
+    return place_list
 
 
-class ScheduleRecommendationRequest(BaseModel):
-    region_code: int
-    query: str
-
-
-class RouteRecommendationRequest(BaseModel):
-    region_code: int
-    query: str
-
-
-@app.post("/recommend/places")
-def recommend_places(req: PlaceRecommendationRequest):
-    try:
-        results = ai.recommend_places(req.region_code, req.query)
-        return {"status": "success", "results": results}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+@app.get("/recommend/places")
+def get_recommendations(region_id: int = Query(...), query: str = Query(...)):
+    return {"results": recommend_places(region_id, query)}
