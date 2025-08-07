@@ -214,12 +214,9 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/{roomId}/votes/{wantId}")
-  public ResponseEntity<CommonResponse> votePlace(
-      @AuthenticationPrincipal CustomUserDetails user,
-      @PathVariable Long roomId,
-      @PathVariable Long wantId) {
-    // 장소 ID 와 방 ID로 희망장소 ID 찾도록 수정 필요.
-
+  public ResponseEntity<CommonResponse> votePlace(@AuthenticationPrincipal CustomUserDetails user,
+                                                  @PathVariable Long roomId,
+                                                  @PathVariable Long wantId) {
     wantPlaceService.toggleVotePlace(user, wantId);
     CommonResponse response = new CommonResponse("VOTE_SUCCESS", "장소 투표가 완료되었습니다.");
     return ResponseEntity.ok(response);
