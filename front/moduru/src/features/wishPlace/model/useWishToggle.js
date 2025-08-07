@@ -1,23 +1,23 @@
 // src/features/wishPlace/model/useWishToggle.js
-import { useDispatch } from 'react-redux';
-import { addWishPlace } from '../../../redux/slices/wishPlaceSlice';
+import { useDispatch } from "react-redux";
+import { addWishPlace } from "../../../redux/slices/wishPlaceSlice";
 
 export const useWishToggle = () => {
   const dispatch = useDispatch();
 
   const toggleWishPlace = async ({ roomId, placeId, place }) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = localStorage.getItem("accessToken");
 
     try {
       const response = await fetch(
         `http://localhost:8080/rooms/${roomId}/wants`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          credentials: 'include', // ✅ 쿠키 인증 추가
+          credentials: "include", // ✅ 쿠키 인증 추가
           body: JSON.stringify({
             placeId: Number(placeId), // ✅ 반드시 숫자로
           }),
@@ -26,7 +26,7 @@ export const useWishToggle = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || '추가 실패');
+        throw new Error(errorData.message || "추가 실패");
       }
 
       const result = await response.json();
@@ -38,9 +38,9 @@ export const useWishToggle = () => {
       };
 
       dispatch(addWishPlace(newPlace));
-      return { success: true, data: newPlace, type: 'add' };
+      return { success: true, data: newPlace, type: "add" };
     } catch (error) {
-      console.error('공유 장소 추가 실패:', error.message);
+      console.error("공유 장소 추가 실패:", error.message);
       return { success: false, message: error.message };
     }
   };

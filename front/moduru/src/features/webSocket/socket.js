@@ -11,8 +11,8 @@ let stompClient = null;
  */
 export const connectWebSocket = (roomId, subscriptions = []) => {
   const socket = new SockJS("http://localhost:8080/ws-stomp", null, {
-  withCredentials: true 
-});
+    withCredentials: true,
+  });
 
   stompClient = new Client({
     webSocketFactory: () => socket,
