@@ -4,6 +4,7 @@ import modules.utils as utils
 
 def recommend_places(region_id, query):
     query_embedding = gms_api.text_embedding(query)
+    print(len(query_embedding))
     similar_places = utils.cosine_similarity(region_id, query_embedding)
     place_list = gms_api.filter_valid(similar_places, query)
 
