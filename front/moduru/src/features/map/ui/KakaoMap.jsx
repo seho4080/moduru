@@ -5,10 +5,10 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useEffect,
-} from 'react';
-import useMapInit from '../model/useMapInit';
-import useMeasureMode from '../model/useMeasureMode';
-import useRemoveMode from '../model/useRemoveMode';
+} from "react";
+import useMapInit from "../model/useMapInit";
+import useMeasureMode from "../model/useMeasureMode";
+import useRemoveMode from "../model/useRemoveMode";
 
 /* global kakao */
 
@@ -85,8 +85,8 @@ const KakaoMap = forwardRef(
       const previous = prevMode.current;
       prevMode.current = mode;
 
-      const exitedMeasure = previous === 'measure' && mode !== 'measure';
-      const reenteredMeasure = previous === 'measure' && mode === 'measure';
+      const exitedMeasure = previous === "measure" && mode !== "measure";
+      const reenteredMeasure = previous === "measure" && mode === "measure";
 
       if (exitedMeasure || reenteredMeasure) {
         clearMeasureTools();
@@ -136,7 +136,7 @@ const KakaoMap = forwardRef(
       }
     }, [pinCoords]);
 
-    return <div ref={mapRef} style={{ width: '100%', height: '100vh' }} />;
+    return <div ref={mapRef} style={{ width: "100%", height: "100vh" }} />;
   }
 );
 

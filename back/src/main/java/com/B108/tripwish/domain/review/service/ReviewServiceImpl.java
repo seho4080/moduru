@@ -56,7 +56,8 @@ public class ReviewServiceImpl implements ReviewService {
         .forEach(
             tagId -> {
               ReviewTag tag = reviewTagReaderService.findTagById(tagId);
-              PlaceReviewTag prt = PlaceReviewTag.builder()
+              PlaceReviewTag prt =
+                  PlaceReviewTag.builder()
                       .id(new PlaceReviewTagId(review.getId(), tagId))
                       .tag(tag)
                       .build();
@@ -86,7 +87,7 @@ public class ReviewServiceImpl implements ReviewService {
     // 태그 조회 후 카운트 감소
     List<PlaceReviewTag> tags =
         placeReviewTagRepository.findAll().stream()
-                .filter(t -> t.getId().getReviewId().equals(reviewId))
+            .filter(t -> t.getId().getReviewId().equals(reviewId))
             .toList();
 
     tags.forEach(

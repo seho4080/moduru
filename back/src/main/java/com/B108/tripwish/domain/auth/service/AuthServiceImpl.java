@@ -22,7 +22,6 @@ import com.B108.tripwish.domain.user.repository.UserTokenRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +36,11 @@ public class AuthServiceImpl implements AuthService {
   private final JwtTokenProvider jwtTokenProvider;
   private final UserTokenRepository userTokenRepository;
   private final PasswordEncoder passwordEncoder;
-
   @Override
   @Transactional
   public JwtToken login(String email, String password, HttpServletResponse response) {
+    System.out.println(">>> [DEBUG] login() email    : '" + email + "'");
+    System.out.println(">>> [DEBUG] login() rawPass : '" + password + "'");
     // 1. email + password 를 기반으로 Authentication 객체 생성
     // 이때 authentication 은 인증 여부를 확인하는 authenticated 값이 false
     UsernamePasswordAuthenticationToken authenticationToken =
@@ -55,7 +55,10 @@ public class AuthServiceImpl implements AuthService {
                   log.warn("사용자 DB 조회 실패 - 이메일: {}", email);
                   return new CustomException(ErrorCode.USER_NOT_FOUND);
                 });
-
+    System.out.println(">>> [DEBUG] DB 해시 “user.getPassword()”: '" + user.getPassword() + "'");
+    boolean match = passwordEncoder.matches(password, user.getPassword());
+    System.out.println(">>> [DEBUG] passwordEncoder.matches? " + match);
+    
     // 2-1. 실제 검증. authenticate() 메서드를 통해 요청된 User에 대한 검증 진행
     // authenticate 메서드가 실행될 때 CustomUserDetailsService에서 만든 loadUserByUsername 메서드
     // 실행
@@ -70,7 +73,8 @@ public class AuthServiceImpl implements AuthService {
     JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, null);
 
     // 5. 쿠키로 access_token 설정
-    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", jwtToken.getAccessToken())
+    ResponseCookie accessTokenCookie =
+        ResponseCookie.from("access_token", jwtToken.getAccessToken())
             .httpOnly(true)
             .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
             .sameSite("None") // Cross-Origin 허용
@@ -79,7 +83,8 @@ public class AuthServiceImpl implements AuthService {
             .build();
 
     // 6. 쿠키로 refresh_token 설정
-    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
+    ResponseCookie refreshTokenCookie =
+        ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
             .httpOnly(true)
             .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
             .sameSite("None")
@@ -90,7 +95,6 @@ public class AuthServiceImpl implements AuthService {
     // 7. 응답에 Set-Cookie 헤더 추가
     response.addHeader("Set-Cookie", accessTokenCookie.toString());
     response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-
 
     userTokenRepository.deleteByUserId(user.getId());
     userTokenRepository.save(
@@ -128,14 +132,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     UserToken token =
-            userTokenRepository
-                    .findByRefreshToken(refreshToken)
-                    .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
+        userTokenRepository
+            .findByRefreshToken(refreshToken)
+            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
 
     User user = token.getUser();
     CustomUserDetails userDetails = new CustomUserDetails(user);
     Authentication authentication =
-            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
     JwtToken newToken = jwtTokenProvider.generateToken(authentication, refreshToken);
 
@@ -148,7 +152,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 👉 새 토큰을 쿠키로 응답에 담기
-    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", newToken.getAccessToken())
+    ResponseCookie accessTokenCookie =
+        ResponseCookie.from("access_token", newToken.getAccessToken())
             .httpOnly(true)
             .secure(false) // HTTPS 환경이면 true
             .sameSite("None")
@@ -156,7 +161,8 @@ public class AuthServiceImpl implements AuthService {
             .maxAge(Duration.ofHours(1))
             .build();
 
-    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", newToken.getRefreshToken())
+    ResponseCookie refreshTokenCookie =
+        ResponseCookie.from("refresh_token", newToken.getRefreshToken())
             .httpOnly(true)
             .secure(false)
             .sameSite("None")

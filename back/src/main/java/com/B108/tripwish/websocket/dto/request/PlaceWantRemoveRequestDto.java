@@ -10,6 +10,6 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class PlaceWantRemoveRequestDto {
-    private Long roomId;
-    private Long wantId;
+  private Long roomId;
+  private Long wantId;
 }

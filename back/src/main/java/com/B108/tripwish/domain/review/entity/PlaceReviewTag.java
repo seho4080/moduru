@@ -11,8 +11,7 @@ import lombok.*;
 @Builder
 public class PlaceReviewTag {
 
-  @EmbeddedId
-  private PlaceReviewTagId id; // reviewId + tagId 복합키
+  @EmbeddedId private PlaceReviewTagId id; // reviewId + tagId 복합키
 
   @MapsId("tagId") // NOTE: EmbeddedId의 tagId 필드와 연관관계 연결
   @ManyToOne(fetch = FetchType.LAZY)
