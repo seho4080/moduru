@@ -10,12 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlaceWantMetaDto {
-    private String placeName;
-    private String placeImg;
-    private String address;
-    private String category;
-    private Double lat;
-    private Double lng;
-    private Boolean isLiked;
+  private String placeName;
+  private String placeImg;
+  private String address;
+  private String category;
+  private Double lat;
+  private Double lng;
+  private Boolean isLiked;
 }
-

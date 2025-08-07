@@ -8,8 +8,8 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class PlaceSummaryDto {
-    private Long id;
-    private String name;
-    private String address;
-    private String imageUrl;
+  private Long id;
+  private String name;
+  private String address;
+  private String imageUrl;
 }

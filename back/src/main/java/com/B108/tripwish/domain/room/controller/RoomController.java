@@ -2,17 +2,16 @@ package com.B108.tripwish.domain.room.controller;
 
 import java.util.List;
 
-import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
-import com.B108.tripwish.domain.room.service.WantPlaceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.domain.room.dto.request.AddPlaceWantRequestDto;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.*;
 import com.B108.tripwish.domain.room.service.RoomService;
+import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
+import com.B108.tripwish.domain.room.service.WantPlaceService;
 import com.B108.tripwish.global.common.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -133,13 +132,12 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @GetMapping("/{roomId}/wants")
-  public ResponseEntity<PlaceWantListResponseDto> getPlaceWants(@AuthenticationPrincipal CustomUserDetails user,
-                                                                @PathVariable Long roomId) {
+  public ResponseEntity<PlaceWantListResponseDto> getPlaceWants(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
 
     PlaceWantListResponseDto response = wantPlaceReaderService.getWantList(user, roomId);
     return ResponseEntity.ok(response);
   }
-
 
   @Operation(
       summary = "동행자 목록 조회",
@@ -216,14 +214,14 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/{roomId}/votes/{wantId}")
-  public ResponseEntity<CommonResponse> votePlace(@AuthenticationPrincipal CustomUserDetails user,
-                                                  @PathVariable Long roomId,
-                                                  @PathVariable Long wantId) {
+  public ResponseEntity<CommonResponse> votePlace(
+      @AuthenticationPrincipal CustomUserDetails user,
+      @PathVariable Long roomId,
+      @PathVariable Long wantId) {
     // 장소 ID 와 방 ID로 희망장소 ID 찾도록 수정 필요.
 
     wantPlaceService.toggleVotePlace(user, wantId);
     CommonResponse response = new CommonResponse("VOTE_SUCCESS", "장소 투표가 완료되었습니다.");
     return ResponseEntity.ok(response);
   }
-
 }
