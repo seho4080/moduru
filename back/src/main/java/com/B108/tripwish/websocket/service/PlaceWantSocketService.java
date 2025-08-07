@@ -88,7 +88,7 @@ public class PlaceWantSocketService {
                 .id(request.getId())
                 .roomId(request.getRoomId())
                 .wantId(wantId)
-                .sendId(sender.getUser().getUuid().toString())
+                .sendId(sender.getUuid())
                 .category(category)
                 .placeName(placeName)
                 .address(address)
@@ -115,7 +115,7 @@ public class PlaceWantSocketService {
         // 방에 속한 모든 유저에게 전송
         List<User> usersInRoom = roomReaderService.findUsersByRoomId(roomId);
         for (User u : usersInRoom) {
-            messagingTemplate.convertAndSendToUser(u.getUuid().toString(), "/queue/place-want", response);
+            messagingTemplate.convertAndSendToUser(sender.getUuid(), "/queue/place-want", response);
         }
         messagingTemplate.convertAndSend("/topic/room/" + roomId + "/place-want/remove", response);
     }

@@ -219,8 +219,6 @@ public class RoomController {
   public ResponseEntity<CommonResponse> votePlace(@AuthenticationPrincipal CustomUserDetails user,
                                                   @PathVariable Long roomId,
                                                   @PathVariable Long wantId) {
-    // 장소 ID 와 방 ID로 희망장소 ID 찾도록 수정 필요.
-
     wantPlaceService.toggleVotePlace(user, wantId);
     CommonResponse response = new CommonResponse("VOTE_SUCCESS", "장소 투표가 완료되었습니다.");
     return ResponseEntity.ok(response);
