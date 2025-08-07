@@ -22,7 +22,7 @@ db = SQLDatabase.from_uri(
         "spots",
         "festivals",
     ],
-    sample_rows_in_table_info=0,
+    sample_rows_in_table_info=2,
     # NOTE: sample 데이터로 embedding이 들어가면서 토큰이 크게 늘어나 따로 처리.
     custom_table_info={
         "places": """CREATE TABLE places (
@@ -41,12 +41,13 @@ prompt = PromptTemplate(
 - You must return ONLY a SQL query. NO markdown. NO explanations.
 - Use WHERE clauses ONLY for structured fields that exist in the table schema (e.g., address_name, category_id).
 - DO NOT filter by vague, subjective, or likely missing keywords (e.g., '야경', '뷰 좋은', '로맨틱').
-- If the question contains such ambiguous terms, IGNORE them and answer with the best structured approximation.
-
+- You must use **mapped values** for fields like `category_id` and `region_code`.
+Category name mapping (category_id):
+- 식당 → 1 (restaurant)
+- 관광지 → 2 (spot)
+- 축제 → 3 (festival)
 Tables: {table_info}
-
 User question: {input}
-
 Write a {dialect} query (NO ``` symbols):
 """,
 )
@@ -58,5 +59,5 @@ llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, openai_api_key=GMS_API_KEY,
 db_chain = SQLDatabaseChain.from_llm(llm=llm, db=db, prompt=prompt)
 
 # 질문 실행
-result = db_chain.invoke("서울 야경이 잘 보이는 식당 추천해줘")
+result = db_chain.invoke("22시에 운영하는 식당 5개 추천해줘")
 print(result["result"])
