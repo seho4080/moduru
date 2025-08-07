@@ -22,7 +22,6 @@ import com.B108.tripwish.domain.user.repository.UserTokenRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +73,8 @@ public class AuthServiceImpl implements AuthService {
     JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, null);
 
     // 5. 쿠키로 access_token 설정
-    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", jwtToken.getAccessToken())
+    ResponseCookie accessTokenCookie =
+        ResponseCookie.from("access_token", jwtToken.getAccessToken())
             .httpOnly(true)
             .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
             .sameSite("None") // Cross-Origin 허용
@@ -83,7 +83,8 @@ public class AuthServiceImpl implements AuthService {
             .build();
 
     // 6. 쿠키로 refresh_token 설정
-    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
+    ResponseCookie refreshTokenCookie =
+        ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
             .httpOnly(true)
             .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
             .sameSite("None")
@@ -94,7 +95,6 @@ public class AuthServiceImpl implements AuthService {
     // 7. 응답에 Set-Cookie 헤더 추가
     response.addHeader("Set-Cookie", accessTokenCookie.toString());
     response.addHeader("Set-Cookie", refreshTokenCookie.toString());
-
 
     userTokenRepository.deleteByUserId(user.getId());
     userTokenRepository.save(
@@ -132,14 +132,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     UserToken token =
-            userTokenRepository
-                    .findByRefreshToken(refreshToken)
-                    .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
+        userTokenRepository
+            .findByRefreshToken(refreshToken)
+            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN_REQUEST));
 
     User user = token.getUser();
     CustomUserDetails userDetails = new CustomUserDetails(user);
     Authentication authentication =
-            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
     JwtToken newToken = jwtTokenProvider.generateToken(authentication, refreshToken);
 
@@ -152,7 +152,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 👉 새 토큰을 쿠키로 응답에 담기
-    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", newToken.getAccessToken())
+    ResponseCookie accessTokenCookie =
+        ResponseCookie.from("access_token", newToken.getAccessToken())
             .httpOnly(true)
             .secure(false) // HTTPS 환경이면 true
             .sameSite("None")
@@ -160,7 +161,8 @@ public class AuthServiceImpl implements AuthService {
             .maxAge(Duration.ofHours(1))
             .build();
 
-    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", newToken.getRefreshToken())
+    ResponseCookie refreshTokenCookie =
+        ResponseCookie.from("refresh_token", newToken.getRefreshToken())
             .httpOnly(true)
             .secure(false)
             .sameSite("None")

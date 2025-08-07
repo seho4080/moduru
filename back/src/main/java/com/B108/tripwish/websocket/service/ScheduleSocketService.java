@@ -14,7 +14,6 @@ public class ScheduleSocketService {
 
   public void broadcastSchedule(String roomId, ScheduleMessageRequestDto message) {
 
-
     // Redis 발행 시에는 WebSocket topic이 아닌 Redis 채널명을 써야 함
     redisPublisher.publish(RedisChannelType.SCHEDULE_UPDATE, message);
   }

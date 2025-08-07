@@ -1,20 +1,19 @@
 package com.B108.tripwish.domain.room.repository;
 
-import com.B108.tripwish.domain.room.entity.WantPlace;
-import com.B108.tripwish.global.common.enums.PlaceType;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.B108.tripwish.domain.room.entity.WantPlace;
+import com.B108.tripwish.global.common.enums.PlaceType;
+
 public interface WantPlaceRepository extends JpaRepository<WantPlace, Long> {
-    boolean existsByTravelRoom_IdAndRefIdAndType(Long roomId, Long placeId, PlaceType type);
+  boolean existsByTravelRoom_IdAndRefIdAndType(Long roomId, Long placeId, PlaceType type);
 
-    Optional<WantPlace> findById(Long wantId);
+  Optional<WantPlace> findById(Long wantId);
 
-    Optional<WantPlace> findByTravelRoom_IdAndRefIdAndType(Long roomId, Long refId, PlaceType type);
+  Optional<WantPlace> findByTravelRoom_IdAndRefIdAndType(Long roomId, Long refId, PlaceType type);
 
-    List<WantPlace> findAllByTravelRoom_Id(Long roomId);
-
-
+  List<WantPlace> findAllByTravelRoom_Id(Long roomId);
 }
