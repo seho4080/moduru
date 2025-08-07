@@ -14,12 +14,14 @@
   public class CustomUserDetails implements UserDetails {
 
     private final User user;
+    private final String uuid;
 
     public CustomUserDetails(User user) {
       if (user == null) {
         System.out.println("[!] user is NULL in CustomUserDetails constructor");
       }
       this.user = user;
+      this.uuid = user.getUuid().toString();
     }
 
     @Override
