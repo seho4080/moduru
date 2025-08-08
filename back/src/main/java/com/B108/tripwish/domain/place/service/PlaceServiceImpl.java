@@ -46,7 +46,7 @@ public class PlaceServiceImpl implements PlaceService {
     List<Place> places;
     if (category.equals("all")) {
       // 카테고리 상관없이 지역만 필터
-      places = placeRepository.findAllByAddressNameContaining(region);
+      places = placeRepository.findTop5ByAddressNameContaining(region);
     } else {
       Category categoryEntity =
           categoryRepository

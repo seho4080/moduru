@@ -4,8 +4,9 @@ services:
   ##########################################
   livekit:
     image: livekit/livekit-server
+    expose:
+      - "7880"                 # 내부에서만 노출
     ports:
-      - "7880:7880"                     # WebSocket signaling
       - "7881:7881"                     # ICE TCP
       - "7882:7882/udp"                 # ICE UDP
       - "30000-30010:30000-30010/udp"   # Media UDP 포트 범위
@@ -16,8 +17,9 @@ services:
       - LIVEKIT_UDP_PORT_RANGE=30000-30010
       - LIVEKIT_PUBLIC_IP=host.docker.internal  # 로컬 개발용
       - LIVEKIT_STUN_URIS=stun:stun.l.google.com:19302
-      - LIVEKIT_WEBHOOK_URLS=http://host.docker.internal:3001/webhook/livekit
-    command: ["--dev", "--bind", "0.0.0.0"]
+      # 운영용: docker 네트워크 안에서 node로 직접 콜 (더 안정적)
+      - LIVEKIT_WEBHOOK_URLS=http://node:3001/api/livekit/webhook
+    command: ["--bind", "0.0.0.0"]
     networks:
       - app-network
   ##########################################
@@ -86,7 +88,7 @@ services:
     ports:
       - "8080:8080"
     container_name: backend
-    restart: always
+    # restart: always
     env_file: .env
     environment:
       - JWT_SECRET=${JWT_SECRET}

@@ -28,6 +28,15 @@ export const AuthProvider = ({ children }) => {
     console.log('[🟢 토큰 만료 검사 결과]', { accessValid, refreshValid });
 
     setIsLoggedIn(valid);
+    if (accessValid && accessToken) {
+          try {
+            const payload = JSON.parse(atob(accessToken.split('.')[1])); // JWT 디코딩
+            setUserId(payload.id);  // payload에서 userId 추출
+          } catch (err) {
+            console.error('JWT 디코딩 실패:', err);
+            setUserId(null);
+          }
+        }
   }, []);
 
   return (
