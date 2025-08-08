@@ -18,9 +18,9 @@ app.use(express.json());       // JSON 요청 바디 파싱 미들웨어
 
 // 📍 라우터 등록
 app.use('/get-token', tokenRouter);            // 토큰 발급 요청 (GET)
-app.use('/webhook/livekit', webhookRouter);    // LiveKit Webhook 처리 요청 (POST)
+app.use('/livekit/webhook', webhookRouter);    // LiveKit Webhook 처리 요청 (POST)
 
 // 🚀 서버 실행 (포트: 3001)
-app.listen(3001, () => {
-  console.log('✅ 서버 실행 중: http://localhost:3001');
+app.listen(4000, () => {
+  console.log('✅ 서버 실행 중: http://node-backend:4000');
 });
