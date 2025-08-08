@@ -5,7 +5,8 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const [userId, setUserId] = useState(null); // ✅ userId state 추가
+  
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
@@ -26,21 +27,22 @@ export const AuthProvider = ({ children }) => {
 
     const valid = accessValid && refreshValid;
     console.log('[🟢 토큰 만료 검사 결과]', { accessValid, refreshValid });
+    setIsLoggedIn(accessValid && refreshValid);
 
-    setIsLoggedIn(valid);
     if (accessValid && accessToken) {
-          try {
-            const payload = JSON.parse(atob(accessToken.split('.')[1])); // JWT 디코딩
-            setUserId(payload.id);  // payload에서 userId 추출
-          } catch (err) {
-            console.error('JWT 디코딩 실패:', err);
-            setUserId(null);
-          }
-        }
+      try {
+        const payload = JSON.parse(atob(accessToken.split('.')[1]));
+        setUserId(payload.id); // ✅ userId 저장
+        console.log("payload",payload)
+      } catch (err) {
+        console.error('JWT 디코딩 실패:', err);
+        setUserId(null);
+      }
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
+    <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn, userId  }}>
       {children}
     </AuthContext.Provider>
   );

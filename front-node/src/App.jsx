@@ -4,7 +4,7 @@ import { Room, createLocalAudioTrack } from 'livekit-client';
 export default function App() {
   // 🔗 연결 상태 플래그
   const [connected, setConnected] = useState(false);
-
+  
   // 💾 Room 인스턴스를 유지하기 위한 ref
   const roomRef = useRef(null);
 
