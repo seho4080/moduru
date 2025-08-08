@@ -6,7 +6,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.B108.tripwish.domain.place.entity.Place;
 import com.B108.tripwish.domain.place.entity.Restaurant;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
-  Optional<Restaurant> findByPlace(Place place);
+  @Query("""
+    SELECT r FROM Restaurant r
+    LEFT JOIN FETCH r.menus
+    WHERE r.place.id = :placeId
+""")
+  Optional<Restaurant> findByPlaceId(@Param("placeId") Long placeId);
+
+
+  @Query("""
+  SELECT r FROM Restaurant r
+  LEFT JOIN FETCH r.menus
+  WHERE r.place.id = :placeId
+""")
+  Optional<Restaurant> findWithMenusByPlaceId(@Param("placeId") Long placeId);
+
 }

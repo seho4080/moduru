@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.room.service;
 
+import com.B108.tripwish.websocket.service.VotePlaceSocketService;
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
@@ -25,8 +26,10 @@ public class WantPlaceServiceImpl implements WantPlaceService {
   private final VotePlaceRepository votePlaceRepository;
   private final TravelRoomRepository travelRoomRepository;
 
+  private final VotePlaceSocketService votePlaceSocketService;
+
   @Override
-  public void toggleVotePlace(CustomUserDetails user, Long wantId) {
+  public void toggleVotePlace(CustomUserDetails user, Long roomId, Long wantId) {
     WantPlace wantPlace =
         wantPlaceRepository
             .findById(wantId)
@@ -60,6 +63,11 @@ public class WantPlaceServiceImpl implements WantPlaceService {
     }
 
     votePlaceRepository.save(votePlace);
+
+    int voteCnt = votePlaceRepository.countByWantPlaceAndVoteIsTrue(wantPlace).intValue();
+
+    String receiverId = user.getUuid().toString();
+    votePlaceSocketService.sendVoteResult(roomId, wantId, voteCnt, receiverId);
   }
 
   @Override

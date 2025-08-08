@@ -22,7 +22,7 @@ public class PlaceReaderServiceImpl implements PlaceReaderService {
   @Transactional(readOnly = true)
   public Place findPlaceById(Long placeId) {
     return placeRepository
-        .findWithImagesById(placeId)
+        .findWithImagesAndCategoryById(placeId)
         .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
   }
 

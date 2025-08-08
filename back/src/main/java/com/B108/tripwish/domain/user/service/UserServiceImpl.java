@@ -3,16 +3,16 @@ package com.B108.tripwish.domain.user.service;
 import java.util.List;
 import java.util.UUID;
 
+import com.B108.tripwish.domain.room.service.RoomReaderService;
+import com.B108.tripwish.domain.user.dto.response.UserTravelRoomResponseDto;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.domain.room.service.RoomReaderService;
 import com.B108.tripwish.domain.user.dto.request.SignUpRequestDto;
 import com.B108.tripwish.domain.user.dto.request.UpdateUserRequestDto;
 import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
-import com.B108.tripwish.domain.user.dto.response.UserTravelRoomResponseDto;
 import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.domain.user.repository.UserRepository;
 import com.B108.tripwish.domain.user.repository.UserTokenRepository;
@@ -32,14 +32,41 @@ public class UserServiceImpl implements UserService {
   private final UserTokenRepository userTokenRepository;
   private final RoomReaderService roomReaderService;
 
+
+  // 비밀번호 형식 검증 (영문자 + 숫자 포함, 8~20자)
+  private void validatePasswordFormat(String password) {
+    if (!password.matches("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*?&]{8,20}$")) {
+      throw new CustomException(ErrorCode.INVALID_PASSWORD_FORMAT);
+    }
+  }
+
+  // 닉네임 형식 검증 (한글/영문/숫자 조합, 2~10자)
+  private void validateNicknameFormat(String nickname) {
+    if (!nickname.matches("^[가-힣a-zA-Z0-9]{2,10}$")) {
+      throw new CustomException(ErrorCode.INVALID_NICKNAME_FORMAT);
+    }
+  }
+
   @Transactional
   @Override
   public void addUser(SignUpRequestDto request) {
+    // 이메일 중복 방지, 닉네임 중복 방지, 비밀번호 형식 지정, 닉네임 형식 지정
+
     if (userRepository.existsByEmail(request.getEmail())) {
       throw new CustomException(ErrorCode.EXISTS_EMAIL);
     }
-    User user =
-        User.builder()
+
+    if (userRepository.existsByNickname(request.getNickname())) {
+      throw new CustomException(ErrorCode.EXISTS_NICKNAME);
+    }
+
+
+    // 비밀번호, 닉네임 형식 검사 추가
+    validatePasswordFormat(request.getPassword());
+    validateNicknameFormat(request.getNickname());
+
+
+    User user = User.builder()
             .uuid(UUID.randomUUID())
             .email(request.getEmail())
             .password(passwordEncoder.encode(request.getPassword()))
@@ -61,6 +88,15 @@ public class UserServiceImpl implements UserService {
         userRepository
             .findById(currentUserDetails.getUser().getId())
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+    if (request.getNickname() != null && !request.getNickname().isBlank()) {
+      validateNicknameFormat(request.getNickname());
+      currentUser.setNickname(request.getNickname());
+    }
+    if (request.getPassword() != null && !request.getPassword().isBlank()) {
+      validatePasswordFormat(request.getPassword());
+      currentUser.setPassword(passwordEncoder.encode(request.getPassword()));
+    }
 
     if (request.getNickname() != null && !request.getNickname().isBlank()) {
       currentUser.setNickname(request.getNickname());

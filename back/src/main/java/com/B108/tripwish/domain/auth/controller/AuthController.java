@@ -7,9 +7,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.B108.tripwish.domain.auth.dto.JwtToken;
+import com.B108.tripwish.domain.auth.dto.request.EmailRequestDto;
+import com.B108.tripwish.domain.auth.dto.request.EmailVerifyRequestDto;
 import com.B108.tripwish.domain.auth.dto.request.LoginRequestDto;
 import com.B108.tripwish.domain.auth.dto.response.LoginResponseDto;
 import com.B108.tripwish.domain.auth.dto.response.ReissueResponseDto;
+import com.B108.tripwish.domain.auth.service.AuthMailService;
 import com.B108.tripwish.domain.auth.service.AuthService;
 import com.B108.tripwish.global.common.dto.CommonResponse;
 import com.B108.tripwish.global.exception.CustomException;
@@ -36,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/auth")
 public class AuthController {
   private final AuthService authService;
+  private final AuthMailService authMailService;
 
   @Operation(
       summary = "로그인",
@@ -154,5 +158,50 @@ public class AuthController {
     JwtToken token = authService.reissue(refreshToken, response);
 
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
+  }
+
+  @Operation(
+      summary = "이메일 인증 코드 전송",
+      description = "회원가입 시 이메일로 인증 코드를 발송합니다.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              required = true,
+              description = "이메일 주소",
+              content = @Content(schema = @Schema(implementation = EmailRequestDto.class))),
+      responses = {
+        @ApiResponse(responseCode = "200", description = "인증 코드 전송 성공"),
+        @ApiResponse(responseCode = "429", description = "요청 제한 초과"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+      })
+  @PostMapping("/email/send")
+  public ResponseEntity<CommonResponse> sendAuthCode(@RequestBody EmailRequestDto requestDto) {
+    Long key = (long) requestDto.getEmail().hashCode(); // NOTE: Redis 저장 키
+    authMailService.sendCodeEmail(requestDto.getEmail(), key); // NOTE: 인증번호 반환값은 무시
+    return ResponseEntity.ok(new CommonResponse("CODE_SENT", "인증번호가 발송되었습니다."));
+  }
+
+  // 이메일 인증 확인
+  @Operation(
+      summary = "이메일 인증 코드 검증",
+      description = "사용자가 입력한 인증 코드가 이메일에 발송된 코드와 일치하는지 확인합니다.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              required = true,
+              description = "이메일 주소와 인증 코드",
+              content = @Content(schema = @Schema(implementation = EmailVerifyRequestDto.class))),
+      responses = {
+        @ApiResponse(responseCode = "200", description = "이메일 인증 성공"),
+        @ApiResponse(responseCode = "400", description = "인증 코드 불일치 또는 인증 실패"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+      })
+  @PostMapping("/email/verify")
+  public ResponseEntity<CommonResponse> verifyAuthCode(
+      @RequestBody EmailVerifyRequestDto requestDto) {
+    boolean result = authMailService.verifyCode(requestDto.getEmail(), requestDto.getCode());
+    if (result) {
+      return ResponseEntity.ok(new CommonResponse("EMAIL_VERIFIED", "이메일 인증이 완료되었습니다."));
+    } else {
+      throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+    }
   }
 }

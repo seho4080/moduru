@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.B108.tripwish.global.common.entity.Region;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,34 +39,40 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
   @Transactional(readOnly = true)
   @Override
   public PlaceListResponseDto searchPlaces(
-      CustomUserDetails user, Long roomId, PlaceSearchRequest request) {
+          CustomUserDetails user, Long roomId, PlaceSearchRequest request) {
 
     String keyword = request.getKeyword();
-    String region = roomService.getRegionByRoomId(roomId);
+    Region region = roomService.getRegionByRoomId(roomId);
 
     // 지역 기반 필터링
     Set<Long> regionPlaceIds =
-        placeRepository.findTop5ByAddressNameContaining(region).stream()
-            .map(Place::getId)
-            .collect(Collectors.toSet());
+            placeRepository.findAllByRegion_Id(region.getId()).stream()
+                    .map(Place::getId)
+                    .collect(Collectors.toSet());
 
     // 키워드 기반 전체 검색
     List<PlaceDocument> documents =
-        placeSearchRepository.findByPlaceNameContainingOrAddressContainingOrCategoryNameContaining(
-            keyword, keyword, keyword);
+            placeSearchRepository.findByPlaceNameContainingOrAddressContainingOrCategoryNameContaining(
+                    keyword, keyword, keyword);
 
-    // 1. 지역 포함된 문서(우선순위 높음)
-    List<PlaceResponseDto> regionMatched =
-        documents.stream()
-            .filter(doc -> regionPlaceIds.contains(Long.parseLong(doc.getId())))
-            .map(doc -> mapToResponseDto(user, roomId, doc))
+    // 모든 placeId 추출
+    List<Long> placeIds = documents.stream()
+            .map(doc -> Long.parseLong(doc.getId()))
             .toList();
 
-    // 2. 지역 포함되지 않은 문서 (후순위)
-    List<PlaceResponseDto> others =
-        documents.stream()
+    // liked/wanted placeId 한 번에 가져오기
+    Set<Long> likedPlaceIds = myPlaceReaderService.getMyPlaceIds(user.getUser().getId(), placeIds);
+    Set<Long> wantedPlaceIds = wantPlaceReaderService.getWantPlaceIds(roomId, placeIds, PlaceType.PLACE);
+
+    // DTO 매핑 함수 개선된 버전 사용
+    List<PlaceResponseDto> regionMatched = documents.stream()
+            .filter(doc -> regionPlaceIds.contains(Long.parseLong(doc.getId())))
+            .map(doc -> mapToResponseDto(doc, likedPlaceIds, wantedPlaceIds))
+            .toList();
+
+    List<PlaceResponseDto> others = documents.stream()
             .filter(doc -> !regionPlaceIds.contains(Long.parseLong(doc.getId())))
-            .map(doc -> mapToResponseDto(user, roomId, doc))
+            .map(doc -> mapToResponseDto(doc, likedPlaceIds, wantedPlaceIds))
             .toList();
 
     // 합치기: 지역 우선 → 기타
@@ -76,22 +83,24 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
     return new PlaceListResponseDto(response);
   }
 
+
   private PlaceResponseDto mapToResponseDto(
-      CustomUserDetails user, Long roomId, PlaceDocument doc) {
+          PlaceDocument doc,
+          Set<Long> likedPlaceIds,
+          Set<Long> wantedPlaceIds
+  ) {
     Long placeId = Long.parseLong(doc.getId());
-    boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
-    boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId, PlaceType.PLACE);
 
     return PlaceResponseDto.builder()
-        .placeId(placeId)
-        .placeName(doc.getPlaceName())
-        .placeImg(doc.getImageUrl())
-        .category(doc.getCategoryName())
-        .address(doc.getAddress())
-        .latitude(doc.getLat())
-        .longitude(doc.getLng())
-        .isLiked(isLiked)
-        .isWanted(isWanted)
-        .build();
+            .placeId(placeId)
+            .placeName(doc.getPlaceName())
+            .placeImg(doc.getImageUrl())
+            .category(doc.getCategoryName())
+            .address(doc.getAddress())
+            .latitude(doc.getLat())
+            .longitude(doc.getLng())
+            .isLiked(likedPlaceIds.contains(placeId))
+            .isWanted(wantedPlaceIds.contains(placeId))
+            .build();
   }
 }

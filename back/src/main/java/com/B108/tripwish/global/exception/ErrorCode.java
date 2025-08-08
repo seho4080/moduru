@@ -1,12 +1,16 @@
 package com.B108.tripwish.global.exception;
 
+
 import org.springframework.http.HttpStatus;
+
 
 public enum ErrorCode {
   // 인증 관련
   LOGIN_FAILED("아이디 또는 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
   LOGOUT_FAILED("로그아웃 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   USER_NOT_FOUND("해당 사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+  TOO_MANY_REQUESTS("요청이 너무 많습니다.", HttpStatus.TOO_MANY_REQUESTS),
 
   // Access Token 예외
   EXPIRED_ACCESS_TOKEN("만료된 Access Token입니다.", HttpStatus.UNAUTHORIZED),
@@ -25,6 +29,9 @@ public enum ErrorCode {
   EXISTS_EMAIL("이미 가입된 이메일입니다.", HttpStatus.CONFLICT),
   EXISTS_NICKNAME("이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT),
   INVALID_NICKNAME("올바르지 않은 닉네임 형식입니다.", HttpStatus.BAD_REQUEST),
+  EMAIL_NOT_VERIFIED("이메일 인증이 완료되지 않았습니다.", HttpStatus.FORBIDDEN),
+  INVALID_NICKNAME_FORMAT("올바르지 않은 닉네임 형식입니다.", HttpStatus.BAD_REQUEST),
+  INVALID_PASSWORD_FORMAT("올바르지 않은 비밀번호 형식입니다.", HttpStatus.BAD_REQUEST),
 
   // 존재하지 않는 데이터
   ROOM_NOT_FOUND("해당 여행방 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
@@ -37,6 +44,7 @@ public enum ErrorCode {
   WANT_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   CUSTOM_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   REVIEW_TAG_NOT_FOUND("리뷰 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  REGION_NOT_FOUND("해당 지역을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
   // 초대 토큰 관련
   INVALID_INVITE_TOKEN("유효하지 않은 초대 토큰입니다.", HttpStatus.BAD_REQUEST),

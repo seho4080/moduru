@@ -2,6 +2,12 @@ package com.B108.tripwish.domain.room.service;
 
 import java.time.LocalDateTime;
 
+import com.B108.tripwish.domain.kakaomap.service.KakaomapService;
+import com.B108.tripwish.domain.room.dto.request.CustomPlaceCreateRequestDto;
+import com.B108.tripwish.domain.room.entity.*;
+import com.B108.tripwish.domain.room.repository.CustomPlaceRepository;
+import com.B108.tripwish.global.common.entity.Region;
+import com.B108.tripwish.global.common.repository.RegionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,10 +15,6 @@ import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomCreateResponseDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomResponseDto;
-import com.B108.tripwish.domain.room.entity.TravelMember;
-import com.B108.tripwish.domain.room.entity.TravelMemberId;
-import com.B108.tripwish.domain.room.entity.TravelMemberRole;
-import com.B108.tripwish.domain.room.entity.TravelRoom;
 import com.B108.tripwish.domain.room.mapper.TravelRoomMapper;
 import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
@@ -29,7 +31,10 @@ public class RoomServiceImpl implements RoomService {
 
   private final TravelRoomRepository travelRoomRepository;
   private final TravelMemberRepository travelMemberRepository;
+  private final RegionRepository regionRepository;
   private final TravelRoomMapper travelRoomMapper;
+  private final CustomPlaceRepository customPlaceRepository;
+  private final KakaomapService kakaomapService;
 
   @Transactional
   @Override
@@ -76,6 +81,11 @@ public class RoomServiceImpl implements RoomService {
             .findById(roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     travelRoomMapper.updateFromDto(request, room);
+
+    Region region = regionRepository.findByName(request.getRegion())
+            .orElseThrow(() -> new CustomException(ErrorCode.REGION_NOT_FOUND));
+
+    room.setRegion(region);
     return travelRoomMapper.toDto(room);
   }
 
@@ -95,11 +105,32 @@ public class RoomServiceImpl implements RoomService {
   }
 
   @Override
-  public String getRegionByRoomId(Long roomId) {
+  public Region getRegionByRoomId(Long roomId) {
     TravelRoom room =
         travelRoomRepository
             .findById(roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     return room.getRegion();
   }
+
+  @Transactional
+  public Long createCustomPlace(CustomPlaceCreateRequestDto dto) {
+    TravelRoom room = travelRoomRepository.findById(dto.getRoomId())
+            .orElseThrow(() -> new IllegalArgumentException("해당 room이 존재하지 않습니다."));
+
+    // 카카오 API로 주소 받아오기
+    String address = kakaomapService.getAddressFromCoords(dto.getLat(), dto.getLng()).getAddress();
+
+    CustomPlace customPlace = CustomPlace.builder()
+            .room(room)
+            .name(dto.getName())
+            .lat(dto.getLat())
+            .lng(dto.getLng())
+            .address(address)
+            .build();
+
+    return customPlaceRepository.save(customPlace).getId();
+  }
+
+
 }
