@@ -45,7 +45,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
 
     // 지역 기반 필터링
     Set<Long> regionPlaceIds =
-        placeRepository.findAllByAddressNameContaining(region).stream()
+        placeRepository.findTop5ByAddressNameContaining(region).stream()
             .map(Place::getId)
             .collect(Collectors.toSet());
 

@@ -8,11 +8,20 @@ const db = require('../db');
 // 🔔 [POST] /webhook/livekit
 // LiveKit 서버에서 발생한 이벤트를 수신하여 처리
 router.post('/', async (req, res) => {
-  const event = req.body?.event;                // 📌 이벤트 종류
-  const room = req.body?.room?.name;            // 🏠 방 이름
-  const user = req.body?.participant?.identity; // 🧍 사용자 ID (참여자)
+  const { event, room, participant } = req.body || {}; // req.body가 없으면 빈 객체로 초기화
+  const roomName = room?.name;
+  const userId = participant?.identity;
+  if (!event) {
+    console.error("❌ 이벤트가 제공되지 않았습니다.");
+    return res.status(400).send('Event is required');
+  }
 
-  console.log(`📩 Webhook 수신: ${event} | user: ${user} | room: ${room}`);
+  if (!userId || !roomName) {
+    console.error('❌ userId 또는 roomName이 누락되었습니다.');
+    return res.status(400).send('userId and roomName are required');
+  }
+
+  console.log(`📩 Webhook 수신: ${event} | user: ${userId} | room: ${room}`);
 
   try {
     switch (event) {
@@ -24,9 +33,9 @@ router.post('/', async (req, res) => {
           UPDATE user_connections
           SET disconnected_at = NOW()
           WHERE user_id = $1 AND room_id = $2 AND disconnected_at IS NULL
-        `, [user, room]);
+        `, [userId, room]);
 
-        console.log(`⛔ 연결 종료 처리됨: ${user} in ${room}`);
+        console.log(`⛔ 연결 종료 처리됨: ${userId} in ${room}`);
         break;
 
       case 'room_finished':

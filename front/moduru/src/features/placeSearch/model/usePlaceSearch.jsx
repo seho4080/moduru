@@ -22,7 +22,11 @@ export const usePlaceSearch = (roomId, selectedCategory) => {
         const accessToken = localStorage.getItem('accessToken');
         const categoryCode = categoryMap[selectedCategory];
         const url = `${base}/places/${roomId}?category=${categoryCode}`;
-
+        // 여기서 뭘로 요청하나 보고 
+        // 백엔드에서 뭘로 요청 나오나 보고 비교하면서 고치면 될듯?
+        console.log("category",categoryCode)
+        console.log("get url",url)
+        
         const res = await fetch(url, {
           method: 'GET',
           headers: {
