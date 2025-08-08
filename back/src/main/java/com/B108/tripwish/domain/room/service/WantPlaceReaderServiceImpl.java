@@ -1,7 +1,9 @@
 package com.B108.tripwish.domain.room.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +70,16 @@ public class WantPlaceReaderServiceImpl implements WantPlaceReaderService {
     List<WantPlace> wants = wantPlaceRepository.findAllByTravelRoom_Id(roomId);
     Long userId = user.getUser().getId();
 
+    List<Long> placeIds = new ArrayList<>();
+    for (WantPlace want : wants) {
+      if (want.getType() == PlaceType.PLACE) {
+        placeIds.add(want.getRefId());
+      }
+    }
+
+    // ✅ 한 번에 liked placeId 조회
+    Set<Long> likedPlaceIds = myPlaceReaderService.getMyPlaceIds(userId, placeIds);
+
     List<PlaceWantDto> result = new ArrayList<>();
 
     for (WantPlace want : wants) {
@@ -78,58 +90,61 @@ public class WantPlaceReaderServiceImpl implements WantPlaceReaderService {
       if (type == PlaceType.PLACE) {
         Place place = placeReaderService.findPlaceById(refId);
         meta =
-            PlaceWantMetaDto.builder()
-                .placeName(place.getPlaceName())
-                .placeImg(
-                    !place.getImages().isEmpty() ? place.getImages().get(0).getImgUrl() : null)
-                .address(place.getRoadAddressName())
-                .category(place.getCategory().getCategoryName())
-                .lat(place.getLat())
-                .lng(place.getLng())
-                .isLiked(myPlaceReaderService.isLiked(userId, place.getId()))
-                .build();
+                PlaceWantMetaDto.builder()
+                        .placeName(place.getPlaceName())
+                        .placeImg(!place.getImages().isEmpty() ? place.getImages().get(0).getImgUrl() : null)
+                        .address(place.getRoadAddressName())
+                        .category(place.getCategory().getCategoryName())
+                        .lat(place.getLat())
+                        .lng(place.getLng())
+                        .isLiked(likedPlaceIds.contains(place.getId()))
+                        .build();
       } else if (type == PlaceType.CUSTOM) {
         CustomPlace custom =
-            customPlaceRepository
-                .findById(refId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CUSTOM_PLACE_NOT_FOUND));
+                customPlaceRepository
+                        .findById(refId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.CUSTOM_PLACE_NOT_FOUND));
         meta =
-            PlaceWantMetaDto.builder()
-                .placeName(custom.getName())
-                .placeImg(null)
-                .address(custom.getAddress())
-                .category(null)
-                .lat(custom.getLat())
-                .lng(custom.getLng())
-                .isLiked(null)
-                .build();
+                PlaceWantMetaDto.builder()
+                        .placeName(custom.getName())
+                        .placeImg(null)
+                        .address(custom.getAddress())
+                        .category(null)
+                        .lat(custom.getLat())
+                        .lng(custom.getLng())
+                        .isLiked(null)
+                        .build();
       } else {
         throw new CustomException(ErrorCode.UNSUPPORTED_PLACE_TYPE);
       }
-      // 추가 정보 계산
-      boolean isVoted = votePlaceRepository.existsById(new VotePlaceId(want.getId(), userId));
+
+      boolean isVoted = votePlaceRepository.existsByIdAndVoteIsTrue(new VotePlaceId(want.getId(), userId));
       Long voteCnt = votePlaceRepository.countByWantPlaceAndVoteIsTrue(want);
 
-      // PlaceWantDto로 통합
       PlaceWantDto dto =
-          PlaceWantDto.builder()
-              .wantId(want.getId())
-              .type(type)
-              .refId(refId)
-              .placeName(meta.getPlaceName())
-              .placeImg(meta.getPlaceImg())
-              .category(meta.getCategory())
-              .address(meta.getAddress())
-              .lat(meta.getLat())
-              .lng(meta.getLng())
-              .isLiked(meta.getIsLiked())
-              .isVoted(isVoted)
-              .voteCnt(voteCnt)
-              .build();
+              PlaceWantDto.builder()
+                      .wantId(want.getId())
+                      .type(type)
+                      .refId(refId)
+                      .placeName(meta.getPlaceName())
+                      .placeImg(meta.getPlaceImg())
+                      .category(meta.getCategory())
+                      .address(meta.getAddress())
+                      .lat(meta.getLat())
+                      .lng(meta.getLng())
+                      .isLiked(meta.getIsLiked())
+                      .isVoted(isVoted)
+                      .voteCnt(voteCnt)
+                      .build();
 
       result.add(dto);
     }
 
     return PlaceWantListResponseDto.builder().placesWant(result).build();
+  }
+
+  @Override
+  public Set<Long> getWantPlaceIds(Long roomId, Collection<Long> placeIds, PlaceType type) {
+    return wantPlaceRepository.findWantedPlaceIds(roomId, placeIds, type);
   }
 }

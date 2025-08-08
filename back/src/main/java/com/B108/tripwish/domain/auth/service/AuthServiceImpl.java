@@ -36,6 +36,7 @@ public class AuthServiceImpl implements AuthService {
   private final JwtTokenProvider jwtTokenProvider;
   private final UserTokenRepository userTokenRepository;
   private final PasswordEncoder passwordEncoder;
+
   @Override
   @Transactional
   public JwtToken login(String email, String password, HttpServletResponse response) {
@@ -58,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
     System.out.println(">>> [DEBUG] DB 해시 “user.getPassword()”: '" + user.getPassword() + "'");
     boolean match = passwordEncoder.matches(password, user.getPassword());
     System.out.println(">>> [DEBUG] passwordEncoder.matches? " + match);
-    
+
     // 2-1. 실제 검증. authenticate() 메서드를 통해 요청된 User에 대한 검증 진행
     // authenticate 메서드가 실행될 때 CustomUserDetailsService에서 만든 loadUserByUsername 메서드
     // 실행
@@ -76,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
     ResponseCookie accessTokenCookie =
         ResponseCookie.from("access_token", jwtToken.getAccessToken())
             .httpOnly(true)
-            .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
+            .secure(true) // 로컬 개발 중이면 false, 배포 시 true
             .sameSite("None") // Cross-Origin 허용
             .path("/")
             .maxAge(Duration.ofHours(1))
@@ -86,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
     ResponseCookie refreshTokenCookie =
         ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
             .httpOnly(true)
-            .secure(true) // ⚠️ 로컬 개발 중이면 false, 배포 시 true
+            .secure(true) // 로컬 개발 중이면 false, 배포 시 true
             .sameSite("None")
             .path("/")
             .maxAge(Duration.ofDays(7))
@@ -151,7 +152,7 @@ public class AuthServiceImpl implements AuthService {
       userTokenRepository.save(token);
     }
 
-    // 👉 새 토큰을 쿠키로 응답에 담기
+    // 새 토큰을 쿠키로 응답에 담기
     ResponseCookie accessTokenCookie =
         ResponseCookie.from("access_token", newToken.getAccessToken())
             .httpOnly(true)

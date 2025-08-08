@@ -1,5 +1,6 @@
 package com.B108.tripwish.websocket.config;
 
+import com.B108.tripwish.websocket.subscriber.VotePlaceSubscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.listener.PatternTopic;
@@ -22,6 +23,7 @@ public class RedisSubscriberConfig {
   private final ScheduleRedisSubscriber scheduleRedisSubscriber;
   private final PlaceWantAddSubscriber placeWantAddSubscriber;
   private final PlaceWantRemoveSubscriber placeWantRemoveSubscriber;
+  private final VotePlaceSubscriber votePlaceSubscriber;
 
   @PostConstruct
   public void init() {
@@ -31,5 +33,6 @@ public class RedisSubscriberConfig {
         placeWantAddSubscriber, new PatternTopic("place-want:add"));
     listenerContainer.addMessageListener(
         placeWantRemoveSubscriber, new PatternTopic("place-want:remove"));
+    listenerContainer.addMessageListener(votePlaceSubscriber, new PatternTopic("place:vote"));
   }
 }

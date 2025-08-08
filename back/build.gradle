@@ -1,90 +1,99 @@
-plugins {
-	id 'java'
-	id 'com.diffplug.spotless' version '6.25.0'
-	id 'org.springframework.boot' version '3.1.6'
-	id 'io.spring.dependency-management' version '1.1.7'
-}
-
-group = 'com.B108'
-version = '0.0.1-SNAPSHOT'
-
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-		sourceCompatibility = JavaVersion.VERSION_17
-		targetCompatibility = JavaVersion.VERSION_17
+	plugins {
+		id 'java'
+		id 'com.diffplug.spotless' version '6.25.0'
+		id 'org.springframework.boot' version '3.1.6'
+		id 'io.spring.dependency-management' version '1.1.7'
 	}
-}
 
-spotless {
+	group = 'com.B108'
+	version = '0.0.1-SNAPSHOT'
+
 	java {
-		googleJavaFormat("1.17.0")
-		importOrder("java", "javax", "org", "com", "")
-		removeUnusedImports()
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(17)
+			sourceCompatibility = JavaVersion.VERSION_17
+			targetCompatibility = JavaVersion.VERSION_17
+		}
 	}
-}
 
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
+	spotless {
+		java {
+			googleJavaFormat("1.17.0")
+			importOrder("java", "javax", "org", "com", "")
+			removeUnusedImports()
+		}
 	}
-}
 
-repositories {
-	mavenCentral()
-}
 
-dependencies {
-	// Web
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	configurations {
+		compileOnly {
+			extendsFrom annotationProcessor
+		}
+	}
 
-	// Lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	repositories {
+		mavenCentral()
+	}
 
-	// Devtools (자동 리로딩)
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	dependencies {
+		// Web
+		implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	// Test
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+		// Lombok
+		compileOnly 'org.projectlombok:lombok'
+		annotationProcessor 'org.projectlombok:lombok'
 
-	// JPA (데이터베이스 연동)
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+		// Devtools (자동 리로딩)
+		developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// H2 Database (개발용 인메모리 DB, 선택)
-	runtimeOnly 'com.h2database:h2'
+		// Test
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	// postgreSql
-	implementation 'org.postgresql:postgresql:42.7.3'
+		// JPA (데이터베이스 연동)
+		implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-	// Swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+		// H2 Database (개발용 인메모리 DB, 선택)
+		runtimeOnly 'com.h2database:h2'
 
-	// Spring Security
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+		// postgreSql
+		implementation 'org.postgresql:postgresql:42.7.3'
 
-	// JWT (io.jsonwebtoken)
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON 처리를 위한 Jackson 연동
+		// Swagger
+		implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 
-	// MapStruct
-	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+		// commons-lang3 보안 취약점 패치용 버전 명시
+		implementation 'org.apache.commons:commons-lang3:3.14.0'
 
-	// WebSocket
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+		// Spring Security
+		implementation 'org.springframework.boot:spring-boot-starter-security'
 
-	// Redis
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-	// Elasticsearch
-	implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+		// JWT (io.jsonwebtoken)
+		implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+		runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+		runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // JSON 처리를 위한 Jackson 연동
 
-}
+		// MapStruct
+		implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+		annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
-tasks.named('test') {
-	useJUnitPlatform()
-}
+		// WebSocket
+		implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+		// Redis
+		implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+		// Elasticsearch
+		implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
+		// JSON 파싱 (org.json)
+		implementation 'org.json:json:20231013'
+
+		//이메일 전송을 위한 Spring Boot Starter Mail 의존성 추가
+		implementation'org.springframework.boot:spring-boot-starter-mail'
+	}
+
+	tasks.named('test') {
+		useJUnitPlatform()
+	}

@@ -9,7 +9,5 @@ import com.B108.tripwish.domain.place.entity.Place;
 public interface PlaceService {
   PlaceListResponseDto getPlaces(CustomUserDetails user, Long roomId, String category);
 
-  PlaceResponseDto buildPlaceDto(Place place, Long userId, Long roomId);
-
   PlaceDetailResponseDto getPlaceDetail(CustomUserDetails user, Long roomId, Long placeId);
 }

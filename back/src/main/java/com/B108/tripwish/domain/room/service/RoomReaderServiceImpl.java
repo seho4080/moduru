@@ -47,7 +47,7 @@ public class RoomReaderServiceImpl implements RoomReaderService {
 
                       @Override
                       public String getRegion() {
-                        return room.getRegion();
+                        return room.getRegion().getName();
                       }
 
                       @Override
