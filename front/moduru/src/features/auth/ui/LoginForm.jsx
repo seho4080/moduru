@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { login } from '../lib/authApi';
 import { useAuth } from '../../../shared/model/useAuth';
+import SignupForm from './SignupForm';
 import './loginForm.css';
 
 export default function LoginForm({ onClose, onSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSignup, setShowSignup] = useState(false); // 회원가입 모달 열기
   const { setIsLoggedIn } = useAuth();
 
-  // NOTE: 로그인 요청 결과에 따라 인증 상태를 업데이트하고, UI 전환을 처리함
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -17,17 +18,30 @@ export default function LoginForm({ onClose, onSuccess }) {
     const result = await login({ email, password });
 
     if (result.success) {
+      localStorage.setItem('accessToken', result.accessToken);
+      localStorage.setItem('refreshToken', result.refreshToken);
       setIsLoggedIn(true);
       setLoading(false);
       onClose();
       onSuccess?.();
-      return;
+    } else {
+      console.warn('[Login Failed]', result.message);
+      // NOTE: 에러 메시지 화면에 표시하지 않음
+      setLoading(false);
     }
-
-    // NOTE: 로그인 실패 시 사용자에게 메시지를 보여주기 위한 처리
-    console.error('로그인 실패:', result.message);
-    setLoading(false);
   };
+
+  const handleOpenSignup = () => {
+    setShowSignup(true);
+  };
+
+  const handleCloseSignup = () => {
+    setShowSignup(false);
+  };
+
+  if (showSignup) {
+    return <SignupForm onClose={handleCloseSignup} />;
+  }
 
   return (
     <div className="login-overlay">
@@ -52,10 +66,26 @@ export default function LoginForm({ onClose, onSuccess }) {
             className="login-input"
             required
           />
+
+          {/* NOTE: 에러 메시지 제거했음 */}
+
           <button type="submit" className="login-button" disabled={loading}>
             {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
+
+        <div className="login-links">
+          <button className="login-link-button" onClick={handleOpenSignup}>
+            회원가입
+          </button>
+          <button className="login-link-button">아이디/비밀번호 찾기</button>
+        </div>
+
+        <div className="social-divider">
+          <hr className="divider-line" />
+          <span className="divider-text">SNS LOGIN</span>
+          <hr className="divider-line" />
+        </div>
       </div>
     </div>
   );

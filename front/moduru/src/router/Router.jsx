@@ -16,7 +16,7 @@ const RouterComponent = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainPageLayout />} />
-        <Route path="/trip-room" element={<TripRoomPage />} />
+        {/* <Route path="/trip-room" element={<TripRoomPage />} /> */}
         <Route path="/my-page" element={<MyPageLayout />} />
         <Route
           path="/my-page/my-travel-space"

@@ -6,15 +6,14 @@ import { useAuth } from '../../shared/model/useAuth';
 import UserMenu from './UserMenu';
 
 export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) {
-  const { userId } = useAuth();  // userId를 가져옴
   const { isLoggedIn } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
-  const [voiceConnected, setVoiceConnected] = useState(false);  // 음성 연결 상태
+
   const tabList = [
     { key: 'place', label: '검색' },
-    { key: 'pick', label: 'My 장소' },
+    { key: 'shared', label: '공유 장소' },
     { key: 'schedule', label: '일정 편집' },
   ];
 
@@ -26,13 +25,8 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
     onTabChange('openTripModal');
   };
 
-  const handleClickVoice = async (roomId) => {
-  // userId를 사용
-  console.log("roomid",roomId)
-    if (!userId) {
-      console.log('사용자 ID가 없습니다.');
-      return;
-    }
+  const handleClickVoice = async () => {
+    alert('음성 기능 실행');
     // 토글: 연결되어 있으면 끊기
     if (voiceConnected) {
       try {
@@ -151,8 +145,8 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
         <div className="round-icon" onClick={handleClickCalendar}>
           <FaCalendarAlt />
         </div>
-        {/* 연결 상태에 따라 active 클래스 토글 */}
-        <div className={`round-icon ${voiceConnected ? 'active' : ''}`} onClick={handleClickVoice()}>
+
+        <div className="round-icon" onClick={handleClickVoice}>
           <FaMicrophone />
         </div>
       </div>

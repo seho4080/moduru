@@ -1,9 +1,9 @@
 // src/features/invite/lib/inviteApi.js
-const base = import.meta.env.VITE_API_BASE;
+
 // 초대 링크 생성
 export async function createInviteLink(roomId) {
   try {
-    const response = await fetch(`${base}/invites/link?roomId=${roomId}`, {
+    const response = await fetch(`http://localhost:8080/invites/link?roomId=${roomId}`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -33,7 +33,7 @@ export async function createInviteLink(roomId) {
 // 초대 토큰을 통한 여행방 참여
 export async function joinRoomByToken(token) {
   try {
-    const response = await fetch(`${base}/invites/join?token=${token}`, {
+    const response = await fetch(`http://localhost:8080/invites/join?token=${token}`, {
       method: 'POST',
       credentials: 'include',
     });

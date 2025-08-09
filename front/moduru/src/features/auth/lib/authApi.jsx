@@ -1,15 +1,14 @@
 // src/features/auth/lib/authApi.js
-const base = import.meta.env.VITE_API_BASE;
+
 // 로그인
 export const login = async ({ email, password }) => {
-  console.log("API_BASE:", base);
   try {
-    const res = await fetch(`${base}/auth/login`, {
+    const res = await fetch('http://localhost:8080/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // ✅ 쿠키 포함
+      credentials: 'include', // 쿠키 포함
       body: JSON.stringify({ email, password }),
     });
 
@@ -31,7 +30,7 @@ export const login = async ({ email, password }) => {
 // 토큰 재발급
 export const reissueToken = async () => {
   try {
-    const res = await fetch(`${base}/auth/reissue`, {
+    const res = await fetch('http://localhost:8080/auth/reissue', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +61,7 @@ export const reissueToken = async () => {
 // 로그아웃
 export const logout = async () => {
   try {
-    const res = await fetch(`${base}/auth/logout`, {
+    const res = await fetch('http://localhost:8080/auth/logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

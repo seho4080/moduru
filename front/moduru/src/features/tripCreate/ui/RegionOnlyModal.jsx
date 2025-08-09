@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react'; // ✅ useState 포함 여부 확인
+import { useState, useRef, useEffect } from 'react'; 
 import { REGIONS } from '../lib/regionName';
 import { updateTripRoomRegion } from '../lib/tripRoomApi';
 import './tripCreateForm.css';
+import './regionSelectDropdown.css';
 
 function formatDate(date) {
   return date.toISOString().slice(0, 10);

@@ -62,7 +62,7 @@
 }
 
 .login-button {
-  background-color: #2d4d9f;
+  background-color: #3399CC;
   color: white;
   font-weight: bold;
   padding: 10px;
@@ -72,7 +72,7 @@
 }
 
 .login-button:hover {
-  background-color: #1e3a8a;
+  background-color: #3399CC;
 }
 
 .login-links {
