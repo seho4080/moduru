@@ -28,51 +28,51 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
   const handleClickVoice = async () => {
     alert('음성 기능 실행');
     // 토글: 연결되어 있으면 끊기
-    if (voiceConnected) {
-      try {
-        roomRef.current?.disconnect();
-      } finally {
-        roomRef.current = null;
-        setVoiceConnected(false);
-      }
-      return;
-    }
+    // if (voiceConnected) {
+    //   try {
+    //     roomRef.current?.disconnect();
+    //   } finally {
+    //     roomRef.current = null;
+    //     setVoiceConnected(false);
+    //   }
+    //   return;
+    // }
 
-    try {
-      // 토큰 받기 (백엔드에서 쿠키로 JWT 토큰이 포함됨)
-      const res = await fetch(`/api/livekit/token?roomId=${roomId}&userId=${userId}`, {
-        method: 'POST',
-        credentials: 'include',  // 쿠키를 자동으로 포함
-      });
+    // try {
+    //   // 토큰 받기 (백엔드에서 쿠키로 JWT 토큰이 포함됨)
+    //   const res = await fetch(`/api/livekit/token?roomId=${roomId}&userId=${userId}`, {
+    //     method: 'POST',
+    //     credentials: 'include',  // 쿠키를 자동으로 포함
+    //   });
 
-      if (!res.ok) throw new Error('token api failed');
-      const data = await res.json();  // 서버에서 받은 JSON 응답
-      const token = data.token;  // 서버에서 받은 JWT 토큰
-      const WS_URL = "wss://moduru.co.kr/livekit";
-      // const token = await res.text();  // 토큰은 쿠키로 보내지므로 이 부분이 필요 없을 수 있음.
+    //   if (!res.ok) throw new Error('token api failed');
+    //   const data = await res.json();  // 서버에서 받은 JSON 응답
+    //   const token = data.token;  // 서버에서 받은 JWT 토큰
+    //   const WS_URL = "wss://moduru.co.kr/livekit";
+    //   // const token = await res.text();  // 토큰은 쿠키로 보내지므로 이 부분이 필요 없을 수 있음.
 
-      // Room 생성 및 연결
-      const room = new Room({ adaptiveStream: true, autoSubscribe: true });
-      roomRef.current = room;
+    //   // Room 생성 및 연결
+    //   const room = new Room({ adaptiveStream: true, autoSubscribe: true });
+    //   roomRef.current = room;
 
-      await room.connect(WS_URL, token);  // 서버에서 보내는 토큰이 쿠키에 포함되므로, 기본적으로 쿠키가 사용될 것
+    //   await room.connect(WS_URL, token);  // 서버에서 보내는 토큰이 쿠키에 포함되므로, 기본적으로 쿠키가 사용될 것
 
-      // 로컬 마이크 publish
-      const mic = await createLocalAudioTrack({
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-      });
-      await room.localParticipant.publishTrack(mic);
+    //   // 로컬 마이크 publish
+    //   const mic = await createLocalAudioTrack({
+    //     echoCancellation: true,
+    //     noiseSuppression: true,
+    //     autoGainControl: true,
+    //   });
+    //   await room.localParticipant.publishTrack(mic);
 
-      setVoiceConnected(true);
-    } catch (e) {
-      console.error('[voice] connect error:', e);
-      // 실패 시 잔여 리소스 정리
-      try { roomRef.current?.disconnect(); } catch {}
-      roomRef.current = null;
-      setVoiceConnected(false);
-      }
+    //   setVoiceConnected(true);
+    // } catch (e) {
+    //   console.error('[voice] connect error:', e);
+    //   // 실패 시 잔여 리소스 정리
+    //   try { roomRef.current?.disconnect(); } catch {}
+    //   roomRef.current = null;
+    //   setVoiceConnected(false);
+    //   }
   };
 
 

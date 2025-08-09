@@ -1,8 +1,6 @@
 package com.B108.tripwish.global.exception;
 
-
 import org.springframework.http.HttpStatus;
-
 
 public enum ErrorCode {
   // 인증 관련

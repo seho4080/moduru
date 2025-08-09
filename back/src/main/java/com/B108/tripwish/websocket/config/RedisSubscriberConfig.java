@@ -1,6 +1,5 @@
 package com.B108.tripwish.websocket.config;
 
-import com.B108.tripwish.websocket.subscriber.VotePlaceSubscriber;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.listener.PatternTopic;
@@ -9,6 +8,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import com.B108.tripwish.websocket.subscriber.PlaceWantAddSubscriber;
 import com.B108.tripwish.websocket.subscriber.PlaceWantRemoveSubscriber;
 import com.B108.tripwish.websocket.subscriber.ScheduleRedisSubscriber;
+import com.B108.tripwish.websocket.subscriber.VotePlaceSubscriber;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
