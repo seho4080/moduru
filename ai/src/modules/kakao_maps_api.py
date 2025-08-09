@@ -12,12 +12,7 @@ def search_data(query, x=None, y=None):
     headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
 
     if x and y:
-        params = {
-            "query": query,
-            "x": x,
-            "y": y,
-            "size": "1",
-        }
+        params = {"query": query, "x": x, "y": y, "size": "1"}
     else:
         params = {
             "query": query,
@@ -50,3 +45,36 @@ def search_xy(address):
     else:
         print("Kakao API 요청 실패:", response.status_code)
         return None
+
+
+def find_route(start_x, start_y, end_x, end_y):
+    url = "https://apis-navi.kakaomobility.com/v1/directions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"KakaoAK {KAKAO_API_KEY}",
+    }
+    params = {
+        "origin": {
+            "x": start_x,
+            "y": start_y,
+        },
+        "destination": {
+            "x": end_x,
+            "y": end_y,
+        },
+        "priority": "RECOMMEND",
+    }
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        return data["documents"][0] if data["documents"] else None
+    else:
+        print("Kakao API 요청 실패:", response.status_code)
+        return None
+
+
+if __name__ == "__main__":
+    ing = find_route(126.978388, 37.566610, 126.985, 37.565)
+    if ing:
+        print("Route found:", ing)

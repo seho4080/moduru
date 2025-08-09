@@ -36,6 +36,7 @@ sudo -u postgres psql
 
 CREATE SCHEMA {your_schema};
 CREATE EXTENSION vector SCHEMA {your_schema};
+ALTER ROLE postgres SET search_path TO {your_schema};
 ```
 
 ## INSERT 데이터
@@ -45,7 +46,7 @@ CREATE EXTENSION vector SCHEMA {your_schema};
 
 2. 다운한 파일을 ai/data/ 경로에 저장.
 
-3. src/db/init_about_place_table.sql의 모든 SQL문 실행
+3. ai/src/db/init_about_place_table.sql의 모든 SQL문 실행
 
-4. src/db/insert_*.py 전부 실행
+4. ai/src/db/insert_*.py 전부 실행
 ```
