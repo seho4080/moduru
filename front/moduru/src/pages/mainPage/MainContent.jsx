@@ -24,7 +24,9 @@ const MainContent = ({ onLoginModal }) => {
     try {
       const travelRoomId = await createTripRoom();
       const travelRoomInfo = await getTripRoomInfo(travelRoomId);
-      navigate("/trip-room", { state: travelRoomInfo });
+
+      // NOTE: travelRoomId를 포함한 경로로 이동해야 정상 작동함
+      navigate(`/trip-room/${travelRoomId}`, { state: travelRoomInfo });
     } catch (err) {
       console.error("여행 시작 중 오류:", err.message);
       alert("여행을 시작할 수 없습니다. 다시 시도해주세요.");

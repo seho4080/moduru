@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-const base = import.meta.env.VITE_API_BASE;
+import { useState, useEffect } from "react";
+
 // NOTE: 서버에서 허용하는 카테고리 매핑
 const categoryMap = {
-  전체: 'all',
-  음식점: 'restaurant',
-  명소: 'spot',
-  축제: 'festival',
+  전체: "all",
+  음식점: "restaurant",
+  명소: "spot",
+  축제: "festival",
 };
 
 export const usePlaceSearch = (roomId, selectedCategory) => {
@@ -19,29 +19,23 @@ export const usePlaceSearch = (roomId, selectedCategory) => {
       setLoading(true);
 
       try {
-        const accessToken = localStorage.getItem('accessToken');
         const categoryCode = categoryMap[selectedCategory];
-        const url = `${base}/places/${roomId}?category=${categoryCode}`;
-        // 여기서 뭘로 요청하나 보고 
-        // 백엔드에서 뭘로 요청 나오나 보고 비교하면서 고치면 될듯?
-        console.log("category",categoryCode)
-        console.log("get url",url)
-        
+        const url = `http://localhost:8080/places/${roomId}?category=${categoryCode}`;
+
         const res = await fetch(url, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          credentials: 'include', // ✅ 쿠키 인증을 위해 필수
+          credentials: "include", // 쿠키 전송을 위해 필수
         });
 
         const raw = await res.text();
-        console.log('[응답 상태]', res.status);
-        console.log('[응답 원문]', raw);
+        console.log("[응답 상태]", res.status);
+        console.log("[응답 원문]", raw);
 
         if (res.status === 404) {
-          console.warn('해당 카테고리에 매핑된 장소가 없습니다.');
+          console.warn("해당 카테고리에 매핑된 장소가 없습니다.");
           setPlaces([]);
           return;
         }
@@ -54,7 +48,7 @@ export const usePlaceSearch = (roomId, selectedCategory) => {
         const rawPlaces = Array.isArray(data.places) ? data.places : [];
 
         const filteredPlaces =
-          categoryCode === 'all'
+          categoryCode === "all"
             ? rawPlaces
             : rawPlaces.filter(
                 (place) => place.category?.trim() === selectedCategory
@@ -62,7 +56,7 @@ export const usePlaceSearch = (roomId, selectedCategory) => {
 
         setPlaces(filteredPlaces);
       } catch (err) {
-        console.error('장소 API 호출 실패:', err.message);
+        console.error("장소 API 호출 실패:", err.message);
         setPlaces([]);
       } finally {
         setLoading(false);

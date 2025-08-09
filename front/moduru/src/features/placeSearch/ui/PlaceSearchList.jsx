@@ -1,5 +1,5 @@
-import PlaceSearchCard from './PlaceSearchCard';
-import './placeSearchList.css';
+import PlaceSearchCard from "./PlaceSearchCard";
+import "./placeSearchList.css";
 
 export default function PlaceSearchList({ places, roomId }) {
   return (
@@ -7,6 +7,7 @@ export default function PlaceSearchList({ places, roomId }) {
       {places.map((place) => (
         <PlaceSearchCard
           key={place.placeId}
+          placeId={place.placeId}
           place={place}
           roomId={roomId}
         />

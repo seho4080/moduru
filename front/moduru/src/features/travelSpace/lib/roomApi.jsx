@@ -1,10 +1,10 @@
 import { fetchWithAuth } from "../../tripCreate/lib/tripRoomApi";
-const base = import.meta.env.VITE_API_BASE;
+
 /**
  * 로그인한 유저의 여행방 목록을 조회
  */
 export const getUserTravelRooms = async () => {
-  const url = `${base}/users/travel-rooms`;
+  const url = "http://localhost:8080/users/travel-rooms";
 
   const res = await fetchWithAuth(url, {
     method: "GET",
