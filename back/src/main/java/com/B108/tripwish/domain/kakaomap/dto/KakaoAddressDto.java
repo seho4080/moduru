@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class KakaoAddressDto {
-    private String address;
+  private String address;
 }

@@ -19,5 +19,4 @@ public interface RoomService {
   Region getRegionByRoomId(Long roomId);
 
   Long createCustomPlace(CustomPlaceCreateRequestDto dto);
-
 }

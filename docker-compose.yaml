@@ -72,7 +72,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data     # 데이터 저장 할 장소
-      - ./insert-data:/docker-entrypoint-initdb.d   # init 스크립트 자동 실행
+      # - ./insert-data:/docker-entrypoint-initdb.d   # init 스크립트 자동 실행
     networks:
       - app-network   # 이렇게 바꾸기!
   
@@ -103,7 +103,9 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
       - SPRING_DATASOURCE_USERNAME=${postgresql_user}
       - SPRING_DATASOURCE_PASSWORD=${postgresql_password}
-
+      - EMAIL_ID=lhjlizzie@gmail.com
+      - EMAIL_PASSWORD="hsml ohoh wpix homy"
+      - KAKAO_API_KEY=${KAKAO_API_KEY}
     depends_on:
       redis:
         condition: service_healthy

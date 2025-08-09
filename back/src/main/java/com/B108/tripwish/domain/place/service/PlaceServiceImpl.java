@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.B108.tripwish.global.common.entity.Region;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +16,7 @@ import com.B108.tripwish.domain.review.service.ReviewService;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
+import com.B108.tripwish.global.common.entity.Region;
 import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
@@ -45,26 +45,31 @@ public class PlaceServiceImpl implements PlaceService {
   public PlaceListResponseDto getPlaces(CustomUserDetails user, Long roomId, String category) {
     Region region = roomService.getRegionByRoomId(roomId);
 
-    List<Place> places = category.equals("all")
+    List<Place> places =
+        category.equals("all")
             ? placeRepository.findAllByRegionIdWithImagesAndCategory(region.getId())
             : placeRepository.findAllByRegionIdAndCategoryWithImagesAndCategory(
-            region.getId(),
-            categoryRepository.findByCategoryName(category)
-                    .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND))
-    );
+                region.getId(),
+                categoryRepository
+                    .findByCategoryName(category)
+                    .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND)));
     Long userId = user.getUser().getId();
     List<Long> placeIds = places.stream().map(Place::getId).toList();
 
     // bulk 조회
     Set<Long> likedPlaceIds = myPlaceReaderService.getMyPlaceIds(userId, placeIds);
-    Set<Long> wantedPlaceIds = wantPlaceReaderService.getWantPlaceIds(roomId, placeIds, PlaceType.PLACE);
+    Set<Long> wantedPlaceIds =
+        wantPlaceReaderService.getWantPlaceIds(roomId, placeIds, PlaceType.PLACE);
 
     // DTO 변환
-    List<PlaceResponseDto> response = places.stream()
-            .map(place -> PlaceResponseDto.fromEntity(
-                    place,
-                    likedPlaceIds.contains(place.getId()),
-                    wantedPlaceIds.contains(place.getId())))
+    List<PlaceResponseDto> response =
+        places.stream()
+            .map(
+                place ->
+                    PlaceResponseDto.fromEntity(
+                        place,
+                        likedPlaceIds.contains(place.getId()),
+                        wantedPlaceIds.contains(place.getId())))
             .toList();
 
     return new PlaceListResponseDto(response);
@@ -72,7 +77,9 @@ public class PlaceServiceImpl implements PlaceService {
 
   @Override
   public PlaceDetailResponseDto getPlaceDetail(CustomUserDetails user, Long roomId, Long placeId) {
-    Place place = placeRepository.findWithImagesAndCategoryById(placeId)
+    Place place =
+        placeRepository
+            .findWithImagesAndCategoryById(placeId)
             .orElseThrow(() -> new CustomException(ErrorCode.PLACE_NOT_FOUND));
 
     boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
@@ -106,7 +113,8 @@ public class PlaceServiceImpl implements PlaceService {
   private CategoryDetailResponseDto getCategoryDetail(Place place) {
     return switch (place.getCategory().getId().intValue()) {
       case 1 -> {
-        Restaurant restaurant = restaurantRepository
+        Restaurant restaurant =
+            restaurantRepository
                 .findByPlaceId(place.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_DETAIL_NOT_FOUND));
         yield RestaurantDetailResponseDto.builder()
@@ -124,7 +132,8 @@ public class PlaceServiceImpl implements PlaceService {
             .build();
       }
       case 2 -> {
-        Spot spot = spotRepository
+        Spot spot =
+            spotRepository
                 .findByPlaceId(place.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.SPOT_DETAIL_NOT_FOUND));
         yield SpotDetailResponseDto.builder()
@@ -139,7 +148,8 @@ public class PlaceServiceImpl implements PlaceService {
             .build();
       }
       case 3 -> {
-        Festival festival = festivalRepository
+        Festival festival =
+            festivalRepository
                 .findByPlaceId(place.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.FESTIVAL_DETAIL_NOT_FOUND));
         yield FestivalDetailResponseDto.builder()
