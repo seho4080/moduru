@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import './sidebarTabs.css';
 import logo from '../../assets/moduru-logo.png';
 import { FaUser, FaCalendarAlt, FaMicrophone } from 'react-icons/fa';
@@ -12,45 +12,53 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
-  
-  // RTC서버 관련
-  const roomRef = useRef(null);       
+
+  // RTC 관련
+  const roomRef = useRef(null);
   const [connecting, setConnecting] = useState(false);
   const [voiceConnected, setVoiceConnected] = useState(false);
-  const WS_URL = import.meta.env?.VITE_LIVEKIT_WS || 'wss://moduru.co.kr/ws'; // Nginx와 동일 location
-  const roomId = useSelector((state) => state.tripRoom.roomId); // room_id redux에서 가져옴
-  console.log('[RTC] roomId=', roomId, 'userId=', userId);
+  const WS_URL = import.meta.env?.VITE_LIVEKIT_WS || 'wss://moduru.co.kr/ws';
+  const roomId = useSelector((state) => state.tripRoom.roomId);
+
+  // ✅ 서버 알림 제거: 로컬 정리만 수행
+  const disconnectVoice = useCallback(async () => {
+    const r = roomRef.current;
+    roomRef.current = null;
+
+    try {
+      if (r) {
+        try { r?.localParticipant?.tracks?.forEach?.((pub) => pub?.track?.stop?.()); } catch {}
+        try { await r.disconnect(); } catch {}
+        if (typeof r?.release === 'function') {
+          try { await r.release(true); } catch {}
+        }
+      }
+    } finally {
+      // no-op: 서버 통지 없음 (웹훅이 소스 오브 트루스)
+    }
+  }, []);
+
   const tabList = [
     { key: 'place', label: '검색' },
     { key: 'shared', label: '공유 장소' },
     { key: 'schedule', label: '일정 편집' },
   ];
-  
 
-  const handleClickTab = (tabKey) => {
-    onTabChange(tabKey);
-  };
-
-  const handleClickCalendar = () => {
-    onTabChange('openTripModal');
-  };
+  const handleClickTab = (tabKey) => onTabChange(tabKey);
+  const handleClickCalendar = () => onTabChange('openTripModal');
 
   const handleClickVoice = async () => {
-    alert('음성 기능 실행');
-    console.log('[RTC] roomId=', roomId, 'userId=', userId);
-    if (connecting) return; // 더블클릭 방지
-    // 토글: 연결되어 있으면 끊기
+    if (connecting) return;
+    if (!roomId) {
+      console.warn('[voice] missing roomId');
+      return;
+    }
+
+    // 연결됨 → 끊기
     if (voiceConnected) {
       setConnecting(true);
       try {
-        const r = roomRef.current;
-        roomRef.current = null;
-        if (r) {
-          r.localParticipant.tracks.forEach((pub) => pub.track?.stop());
-          await r.disconnect();
-          // @ts-ignore (버전에 따라 있음)
-          if (typeof r.release === 'function') await r.release(true);
-        }
+        await disconnectVoice(); // ✅ 서버 알림 없음
       } catch (e) {
         console.warn('[voice] disconnect err', e);
       } finally {
@@ -59,17 +67,10 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
       }
       return;
     }
-    
-    if (!roomId) {                                     // ✅ 가드
-      console.warn('[voice] missing roomId');
-      return;
-    }
 
-
+    // 미연결 → 연결
     setConnecting(true);
     try {
-      // ✅ 네가 만든 노드 시그널링 서버로부터 토큰 받기
-      //    만약 기존 엔드포인트가 /api/livekit/token 이면 그걸로 교체
       const res = await fetch('/api/signal/token', {
         method: 'POST',
         credentials: 'include',
@@ -79,12 +80,10 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
       if (!res.ok) throw new Error(`token failed: ${res.status}`);
       const { token, wsUrl } = await res.json();
 
-      // Room 생성 및 연결
       const room = new Room({ adaptiveStream: true, dynacast: true });
       roomRef.current = room;
       await room.connect(wsUrl ?? WS_URL, token);
-      
-      // 로컬 마이크 publish
+
       const mic = await createLocalAudioTrack({
         echoCancellation: true,
         noiseSuppression: true,
@@ -96,43 +95,28 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
       setVoiceConnected(true);
     } catch (e) {
       console.error('[voice] connect error:', e);
-      // 실패 시 정리
-      try {
-        const r = roomRef.current;
-        roomRef.current = null;
-        if (r) {
-          r.localParticipant.tracks.forEach((pub) => pub.track?.stop());
-          await r.disconnect();
-          // @ts-ignore
-          if (typeof r.release === 'function') await r.release(true);
-        }
-      } catch {}
+      try { await disconnectVoice(); } catch {}
       setVoiceConnected(false);
     } finally {
       setConnecting(false);
     }
   };
-  // 언마운트 시 정리 ✅
+
+  // ✅ 언마운트/탭 종료 시 로컬 정리만
   useEffect(() => {
-    return () => {
-      const r = roomRef.current;
-      roomRef.current = null;
-      if (r) {
-        try {
-          r.localParticipant.tracks.forEach((pub) => pub.track?.stop());
-          r.disconnect();
-          // optional: if (typeof r.release === 'function') r.release(true);
-        } catch {}
-      }
+    const onBeforeUnload = () => {
+      try { /* 베스트에форт: sync 정리 */ } catch {}
     };
-  }, []);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      disconnectVoice();
+    };
+  }, [disconnectVoice]);
 
   const handleClickProfile = () => {
-    if (!isLoggedIn) {
-      onProfileClick();
-    } else {
-      setShowDropdown((prev) => !prev);
-    }
+    if (!isLoggedIn) onProfileClick();
+    else setShowDropdown((prev) => !prev);
   };
 
   const handleLogout = () => {
@@ -146,14 +130,10 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target) &&
         !profileRef.current.contains(e.target)
-      ) {
-        setShowDropdown(false);
-      }
+      ) setShowDropdown(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -179,7 +159,6 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
           <div className="round-icon" onClick={handleClickProfile}>
             <FaUser />
           </div>
-
           {showDropdown && isLoggedIn && (
             <div className="user-menu-wrapper" ref={dropdownRef}>
               <UserMenu
@@ -197,7 +176,11 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
           <FaCalendarAlt />
         </div>
 
-        <div className="round-icon" onClick={handleClickVoice} title={voiceConnected ? '끊기' : '음성 연결'}>
+        <div
+          className="round-icon"
+          onClick={handleClickVoice}
+          title={voiceConnected ? '끊기' : '음성 연결'}
+        >
           <FaMicrophone />
         </div>
       </div>
