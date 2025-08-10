@@ -21,16 +21,13 @@ import InviteButtonWithPopover from "../../features/invite/ui/InviteButtonWithPo
 // import TestAddPin from "../../features/map/dev/TestAddPin";
 import PlaceDetailModal from "../../features/placeDetail/ui/PlaceDetailModal";
 import RouteModal from "../../features/tripPlanOptimize/ui/RouteModal";
+import ExampleScheduleBox from "../../features/travelSchedule/dev/ExampleScheduleBox";
 
 // api
 import {
   updateTripRoomRegion,
   getTripRoomInfo,
 } from "../../features/tripCreate/lib/tripRoomApi";
-
-// hooks - pins & wish
-//import useInitPins from "../../features/map/hooks/useInitPins";
-//import useWishPlaceList from "../../features/wishPlace/model/useWishPlaceList";
 
 // hooks - shared (리스트 + 소켓)
 import useSharedPlaceList from "../../features/sharedPlace/model/useSharedPlaceList";
@@ -81,10 +78,7 @@ export default function TripRoomPage() {
     location.state?.from === "invite" || searchParams.get("from") === "invite";
   const inviteRegion = searchParams.get("region");
 
-  // --- 중복 실행 요청: 핀/희망장소 + 공유장소(리스트/소켓) 모두 호출 ---
-  // 각 훅 내부에서 roomId falsy 체크 & 중복연결 방지(예: window.stompClient?.connected)되어 있어야 안전.
-  //useInitPins(travelRoomId);
-  //useWishPlaceList(travelRoomId);
+  // --- 중복 실행 요청 ---
   useSharedPlaceList(travelRoomId);
   useSharedPlaceSocket(travelRoomId);
 
@@ -211,106 +205,113 @@ export default function TripRoomPage() {
         region={region}
       />
 
-      <div style={{ flex: 1, position: "relative" }}>
-        <div style={{ position: "absolute", top: 12, right: 12, zIndex: 1000 }}>
-          <InviteButtonWithPopover
-            roomMembers={roomMembers}
-            friendList={friendList}
+      <div style={{ flex: 1, position: "relative", display: "flex" }}>
+        {/* 지도 + UI */}
+        <div style={{ flex: 1, position: "relative" }}>
+          <div
+            style={{ position: "absolute", top: 12, right: 12, zIndex: 1000 }}
+          >
+            <InviteButtonWithPopover
+              roomMembers={roomMembers}
+              friendList={friendList}
+            />
+          </div>
+
+          <Controls
+            mode={mode}
+            setMode={setMode}
+            zoomable={zoomable}
+            setZoomable={setZoomable}
+            zoomIn={() => mapRef.current?.zoomIn?.()}
+            zoomOut={() => mapRef.current?.zoomOut?.()}
+            region={region}
+            setRegion={setRegion}
+            removeMode={removeMode}
+            setRemoveMode={setRemoveMode}
+            onDeleteConfirm={handleDeleteConfirm}
           />
+
+          <KakaoMap
+            ref={mapRef}
+            mode={mode}
+            zoomable={zoomable}
+            region={tripRegion}
+            removeMode={removeMode}
+            onSelectMarker={handleMarkerSelect}
+            pinCoords={
+              selectedPlace
+                ? {
+                    lat: selectedPlace.latitude,
+                    lng: selectedPlace.longitude,
+                  }
+                : null
+            }
+          />
+
+          {selectedPlace && <PlaceDetailModal place={selectedPlace} />}
+
+          {showRegionModal && (
+            <RegionOnlyModal
+              roomId={travelRoomId}
+              title={title}
+              onRegionSet={(newRegion) => {
+                const coords = getLatLngFromRegion(newRegion);
+                if (coords && mapRef.current?.setCenter) {
+                  mapRef.current.setCenter(coords);
+                }
+                setTripRegion(newRegion);
+                setRegion(newRegion);
+                setShowRegionModal(false);
+              }}
+            />
+          )}
+
+          {showTripModal && (
+            <TripCreateForm
+              roomId={travelRoomId}
+              tripName={tripName}
+              setTripName={setTripName}
+              region={tripRegion}
+              setRegion={setTripRegion}
+              dates={tripDates}
+              setDates={setTripDates}
+              onClose={() => setShowTripModal(false)}
+              onSubmit={handleTripSave}
+            />
+          )}
+
+          <button
+            onClick={() => setActiveTab("exit")}
+            style={{
+              position: "fixed",
+              bottom: 20,
+              right: 20,
+              zIndex: 1000,
+              backgroundColor: "#ffffff",
+              color: "#007aff",
+              fontWeight: "bold",
+              border: "none",
+              borderRadius: "8px",
+              padding: "10px 16px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              cursor: "pointer",
+              transition: "background 0.2s ease",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = "#f0f7ff";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "#ffffff";
+            }}
+          >
+            나가기
+          </button>
         </div>
 
-        <Controls
-          mode={mode}
-          setMode={setMode}
-          zoomable={zoomable}
-          setZoomable={setZoomable}
-          zoomIn={() => mapRef.current?.zoomIn?.()}
-          zoomOut={() => mapRef.current?.zoomOut?.()}
-          region={region}
-          setRegion={setRegion}
-          removeMode={removeMode}
-          setRemoveMode={setRemoveMode}
-          onDeleteConfirm={handleDeleteConfirm}
-        />
-
-        {/* <TestAddPin roomId={travelRoomId} /> */}
-
-        <KakaoMap
-          ref={mapRef}
-          mode={mode}
-          zoomable={zoomable}
-          region={tripRegion}
-          removeMode={removeMode}
-          onSelectMarker={handleMarkerSelect}
-          pinCoords={
-            selectedPlace
-              ? { lat: selectedPlace.latitude, lng: selectedPlace.longitude }
-              : null
-          }
-        />
-
-        {selectedPlace && (
-          <PlaceDetailModal
-            place={selectedPlace}
-            roomId={travelRoomId} 
-          />
-        )}
-
-        {showRegionModal && (
-          <RegionOnlyModal
-            roomId={travelRoomId}
-            title={title}
-            onRegionSet={(newRegion) => {
-              const coords = getLatLngFromRegion(newRegion);
-              if (coords && mapRef.current?.setCenter) {
-                mapRef.current.setCenter(coords);
-              }
-              setTripRegion(newRegion);
-              setRegion(newRegion);
-              setShowRegionModal(false);
-            }}
-          />
-        )}
-
-        {showTripModal && (
-          <TripCreateForm
-            tripName={tripName}
-            setTripName={setTripName}
-            region={tripRegion}
-            setRegion={setTripRegion}
-            dates={tripDates}
-            setDates={setTripDates}
-            onClose={() => setShowTripModal(false)}
-            onSubmit={handleTripSave}
-          />
-        )}
-
-        <button
-          onClick={() => setActiveTab("exit")}
-          style={{
-            position: "fixed",
-            bottom: 20,
-            right: 20,
-            zIndex: 1000,
-            backgroundColor: "#ffffff",
-            color: "#007aff",
-            fontWeight: "bold",
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 16px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            cursor: "pointer",
-            transition: "background 0.2s ease",
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.background = "#f0f7ff";
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.background = "#ffffff";
-          }}
-        >
-          나가기
-        </button>
+        {/* 우측: 일정 웹소켓 테스트 박스 */}
+        {/* <div style={{ width: "300px", borderLeft: "1px solid #ddd" }}>
+          <ExampleScheduleBox roomId={travelRoomId} />
+        </div> */}
       </div>
     </div>
   );

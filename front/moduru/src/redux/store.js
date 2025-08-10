@@ -7,7 +7,9 @@ import friendReducer from "./slices/friendSlice";
 import tripRoomReducer from "./slices/tripRoomSlice";
 import mapReducer from "./slices/mapSlice";
 import uiReducer from "./slices/uiSlice";
-import sharedPlacereducer from "./slices/sharedPlaceSlice";
+import sharedPlaceReducer from "./slices/sharedPlaceSlice";
+import userReducer from "./slices/userSlice";
+import itineraryReducer from './slices/itinerarySlice';
 
 /**
  * Redux 전역 상태 저장소 설정
@@ -21,7 +23,9 @@ const store = configureStore({
     tripRoom: tripRoomReducer,
     map: mapReducer,
     ui: uiReducer,
-    sharedPlace: sharedPlacereducer,
+    sharedPlace: sharedPlaceReducer,
+    user: userReducer,
+    itinerary: itineraryReducer,
   },
 });
 
