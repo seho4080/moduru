@@ -35,4 +35,9 @@ public class TravelMember {
     this.role = role;
     this.id = new TravelMemberId(travelRoom.getId(), user.getId());
   }
+
+  // 클래스 내부에 아래 setter 추가
+  public void setRole(TravelMemberRole role) {
+    this.role = role;
+  }
 }

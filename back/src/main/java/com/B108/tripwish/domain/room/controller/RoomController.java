@@ -1,7 +1,5 @@
 package com.B108.tripwish.domain.room.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -93,10 +91,11 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @DeleteMapping("/{roomId}/leave")
-  public ResponseEntity<CommonResponse> leaveTravelRoom(@PathVariable Long roomId) {
-    // 서비스 단에서 방장이 탈퇴시 임의로 다른 사람을 owner 변경하고 해당 사용자(방장) 탈퇴.
-    CommonResponse response = new CommonResponse("ROOM_LEAVE_SUCCESS", "여행방에서 성공적으로 탈퇴했습니다.");
-    return ResponseEntity.ok(response);
+  public ResponseEntity<CommonResponse> leaveTravelRoom(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
+
+    roomService.leaveRoom(user, roomId);
+    return ResponseEntity.ok(new CommonResponse("ROOM_LEAVE_SUCCESS", "여행방에서 성공적으로 탈퇴했습니다."));
   }
 
   @Operation(
@@ -153,32 +152,41 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
   @GetMapping("/{roomId}/members")
-  public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(@PathVariable Long roomId) {
+  public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
 
-    // 더미 데이터 예시
-    TravelMemberDto member1 =
-        TravelMemberDto.builder()
-            .userId(1L)
-            .nickname("여행덕후123")
-            .profileImg("\"profile_basic.png\"")
-            .isFriend(false)
-            .isOwner(true)
-            .build();
-
-    TravelMemberDto member2 =
-        TravelMemberDto.builder()
-            .userId(2L)
-            .nickname("빵순이")
-            .profileImg("\"profile_basic.png\"")
-            .isFriend(true)
-            .isOwner(false)
-            .build();
-
-    TravelMemberListResponseDto response =
-        TravelMemberListResponseDto.builder().members(List.of(member1, member2)).build();
-
+    TravelMemberListResponseDto response = roomService.getTravelMembers(roomId);
     return ResponseEntity.ok(response);
   }
+
+  //    @GetMapping("/{roomId}/members")
+  //    public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(@PathVariable Long
+  // roomId) {
+  //
+  //      // 더미 데이터 예시
+  //      TravelMemberDto member1 =
+  //          TravelMemberDto.builder()
+  //              .userId(1L)
+  //              .nickname("여행덕후123")
+  //              .profileImg("\"profile_basic.png\"")
+  //              .isFriend(false)
+  //              .isOwner(true)
+  //              .build();
+  //
+  //      TravelMemberDto member2 =
+  //          TravelMemberDto.builder()
+  //              .userId(2L)
+  //              .nickname("빵순이")
+  //              .profileImg("\"profile_basic.png\"")
+  //              .isFriend(true)
+  //              .isOwner(false)
+  //              .build();
+  //
+  //      TravelMemberListResponseDto response =
+  //          TravelMemberListResponseDto.builder().members(List.of(member1, member2)).build();
+  //
+  //      return ResponseEntity.ok(response);
+  //    }
 
   @Operation(
       summary = "동행자 강퇴",
@@ -195,11 +203,12 @@ public class RoomController {
       })
   @DeleteMapping("/{roomId}/kick/{targetUserId}")
   public ResponseEntity<CommonResponse> kickTravelMember(
-      @PathVariable Long roomId, @PathVariable Long targetUserId) {
-    // 서비스단에서: user.getId()가 해당 roomId의 방장인지 확인 + 본인이 아닌 다른 유저인지 확인
+      @AuthenticationPrincipal CustomUserDetails user,
+      @PathVariable Long roomId,
+      @PathVariable Long targetUserId) {
 
-    CommonResponse response = new CommonResponse("KICK_SUCCESS", "사용자가 여행방에서 강퇴되었습니다.");
-    return ResponseEntity.ok(response);
+    roomService.kickMember(user, roomId, targetUserId);
+    return ResponseEntity.ok(new CommonResponse("KICK_SUCCESS", "사용자가 여행방에서 강퇴되었습니다."));
   }
 
   @Operation(
