@@ -4,7 +4,7 @@
   position: relative;
   height: 100vh;
   width: 140px;
-  background-color: #3399CC;
+  background-color: #6d87db;
   padding: 20px 0;
   box-sizing: border-box;
   align-items: center;
@@ -104,29 +104,28 @@
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 0;                
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;                  
+  gap: 0;
   min-width: 100px;
-  overflow: hidden;            
+  overflow: hidden;
   z-index: 1000;
 }
 
 .user-menu button {
   all: unset;
-  width: 100%;            
+  width: 100%;
   padding: 12px 0;
   font-size: 14px;
   font-weight: 550;
-  color: #3399CC;
+  color: #3399cc;
   text-align: center;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .user-menu button:hover {
-  background-color: #FFE135;
+  background-color: #ffe135;
   font-weight: 600;
 }
-

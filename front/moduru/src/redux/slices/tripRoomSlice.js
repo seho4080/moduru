@@ -1,4 +1,3 @@
-// src/redux/slices/tripRoomSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const tripRoomSlice = createSlice({
@@ -9,20 +8,14 @@ const tripRoomSlice = createSlice({
     region: '',
     startDate: '',
     endDate: '',
-    // 필요한 다른 정보들도 추가 가능
   },
   reducers: {
+    // 부분 병합 업데이트
     setTripRoom(state, action) {
       return { ...state, ...action.payload };
     },
-    clearTripRoom(state) {
-      return {
-        roomId: null,
-        title: '',
-        region: '',
-        startDate: '',
-        endDate: '',
-      };
+    clearTripRoom() {
+      return { roomId: null, title: '', region: '', startDate: '', endDate: '' };
     },
   },
 });
