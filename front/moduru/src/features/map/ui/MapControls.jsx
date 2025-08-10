@@ -79,7 +79,7 @@ export default function Controls({
         disabled={removeMode}
       >
         <FaMapMarkerAlt className="map-icon" />
-        <span>핀</span>
+        <span>장소</span>
       </button>
 
       {!removeMode ? (

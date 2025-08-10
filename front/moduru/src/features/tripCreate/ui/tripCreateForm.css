@@ -1,21 +1,17 @@
-.trip-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 900;
-}
 
+/* 모달 가장자리 회색 띠(그림자) 없애려면 */
 .trip-modal {
+  /* background는 흰색 유지해야 내용이 선명함 */
+  background: #fff;            /* ← transparent 말고 흰색 */
+  box-shadow: none;            /* ← 얇은 회색 띠 제거 */
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 500px;
-  background: #fff;
   border-radius: 6px;
   padding: 16px 24px;
   z-index: 1000;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .region-title {

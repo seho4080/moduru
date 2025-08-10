@@ -1,6 +1,13 @@
 // features/auth/ui/SignupForm.jsx
 import React, { useState } from 'react';
 import './signupForm.css';
+import { signup, sendEmailCode, verifyEmailCode } from '../lib/authApi';
+
+function validatePassword(pw) {
+  const minLength = pw.length >= 8;
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(pw);
+  return { minLength, hasSpecial, valid: minLength && hasSpecial };
+}
 
 export default function SignupForm({ onClose, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -14,15 +21,103 @@ export default function SignupForm({ onClose, onSwitchToLogin }) {
     birthDay: '',
   });
 
+  // 이메일 인증
+  const [code, setCode] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+
+  // 로딩 & 에러
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(''); // ⚡오류만 표시
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('[회원가입 정보]', formData);
+  // 1) 인증 메일 전송 (성공 시 메시지 표시 안 함)
+  const handleSendCode = async () => {
+    if (!formData.email) {
+      setErrorMsg('이메일을 입력해 주세요.');
+      return;
+    }
+    setSending(true);
+    setErrorMsg('');
+    const res = await sendEmailCode(formData.email);
+    setSending(false);
+
+    if (res.success) {
+      setEmailSent(true);      // 성공 문구는 렌더링하지 않음
+    } else {
+      setErrorMsg(res.message || '인증 코드 전송에 실패했습니다.');
+    }
   };
+
+  // 2) 인증 코드 검증 (성공 시 메시지 표시 안 함)
+  const handleVerifyCode = async () => {
+    if (!code) {
+      setErrorMsg('인증 코드를 입력해 주세요.');
+      return;
+    }
+    setVerifying(true);
+    setErrorMsg('');
+    const res = await verifyEmailCode(formData.email, code);
+    setVerifying(false);
+
+    if (res.success) {
+      setEmailVerified(true);  // 성공 문구는 렌더링하지 않음
+    } else {
+      setErrorMsg(res.message || '인증 코드를 확인할 수 없습니다.');
+    }
+  };
+
+  // 3) 가입하기
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMsg('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    // 이메일 인증을 필수로 만들려면 주석 해제
+    if (!emailVerified) {
+      setErrorMsg('이메일 인증을 완료해 주세요.');
+      return;
+    }
+
+    const genderMap = { male: 'M', female: 'F', other: 'N', '': 'N' };
+    const birth =
+      formData.birthYear && formData.birthMonth && formData.birthDay
+        ? `${formData.birthYear}-${String(formData.birthMonth).padStart(2, '0')}-${String(formData.birthDay).padStart(2, '0')}`
+        : undefined;
+
+    const payload = {
+      email: formData.email,
+      password: formData.password,
+      provider: 'LOCAL',
+      nickname: formData.nickname || undefined,
+      gender: genderMap[formData.gender] ?? 'N',
+      birth,
+      phone: undefined,
+    };
+
+    setSubmitting(true);
+    const result = await signup(payload);
+    setSubmitting(false);
+
+    if (result.success) {
+      // 성공 문구 없이 바로 전환
+      onClose?.();
+      onSwitchToLogin?.();
+    } else {
+      setErrorMsg(result.message || '회원가입에 실패했습니다.');
+    }
+  };
+
+  const pwCheck = validatePassword(formData.password);
 
   return (
     <div className="signup-overlay">
@@ -41,9 +136,40 @@ export default function SignupForm({ onClose, onSwitchToLogin }) {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={emailVerified}
             />
-            <button type="button" className="verify-btn">인증</button>
+            <button
+              type="button"
+              className="verify-btn"
+              onClick={handleSendCode}
+              disabled={sending || !formData.email || emailVerified}
+              aria-busy={sending}
+            >
+              {emailVerified ? '인증완료' : (sending ? '전송중' : '인증')}
+            </button>
           </div>
+
+          {/* 코드 입력은 전송 후에만 노출, 성공 문구는 없음 */}
+          {emailSent && !emailVerified && (
+            <div className="form-row email-row">
+              <input
+                type="text"
+                name="code"
+                placeholder="이메일로 받은 인증 코드"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
+              <button
+                type="button"
+                className="verify-btn"
+                onClick={handleVerifyCode}
+                disabled={verifying || !code}
+                aria-busy={verifying}
+              >
+                {verifying ? '확인중' : '코드확인'}
+              </button>
+            </div>
+          )}
 
           <input
             type="password"
@@ -53,6 +179,18 @@ export default function SignupForm({ onClose, onSwitchToLogin }) {
             onChange={handleChange}
             required
           />
+
+          {/* 비밀번호 규칙 체크박스 */}
+          <div className="pw-checklist">
+            <label className="pw-check">
+              <input type="checkbox" checked={pwCheck.hasSpecial} readOnly />
+              <span>특수문자 포함</span>
+            </label>
+            <label className="pw-check">
+              <input type="checkbox" checked={pwCheck.minLength} readOnly />
+              <span>8자 이상</span>
+            </label>
+          </div>
 
           <input
             type="password"
@@ -84,7 +222,6 @@ export default function SignupForm({ onClose, onSwitchToLogin }) {
             <option value="">선택</option>
             <option value="male">남성</option>
             <option value="female">여성</option>
-            <option value="other">기타</option>
           </select>
 
           <label className="input-label">생년월일(선택)</label>
@@ -110,7 +247,17 @@ export default function SignupForm({ onClose, onSwitchToLogin }) {
             </select>
           </div>
 
-          <button type="submit" className="submit-btn">가입하기</button>
+          <button
+            type="submit"
+            className="submit-btn"
+            disabled={submitting}
+            aria-busy={submitting}
+          >
+            {submitting ? '처리중...' : '가입하기'}
+          </button>
+
+          {/* ✅ 성공 문구는 숨기고, 오류만 표시 */}
+          {errorMsg && <div className="form-error">{errorMsg}</div>}
 
           <div className="switch-to-login">
             이미 계정이 있으신가요?{' '}
@@ -118,8 +265,8 @@ export default function SignupForm({ onClose, onSwitchToLogin }) {
               type="button"
               className="link-btn"
               onClick={() => {
-                onClose();          
-                onSwitchToLogin(); 
+                onClose?.();
+                onSwitchToLogin?.();
               }}
             >
               로그인

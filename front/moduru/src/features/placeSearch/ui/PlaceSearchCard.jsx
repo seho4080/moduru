@@ -6,16 +6,11 @@ import LikedPlaceButton from "../../likedPlace/ui/LikedPlaceButton";
 import SharedToggleButton from "../../sharedPlace/ui/SharedToggleButton";
 import { useMemo, useState } from "react";
 
-/*
-NOTE: 썸네일이 없거나 로딩 실패 시 플레이스홀더를 중앙 정렬로 노출해 레이아웃 안정성을 유지한다.
-*/
 export default function PlaceSearchCard({ place, roomId }) {
   const dispatch = useDispatch();
   const { placeImg, placeName, category, latitude, longitude } = place;
-
   const [imgError, setImgError] = useState(false);
 
-  // NOTE: 다양한 형태의 이미지 소스 대응
   const imgUrl = useMemo(() => {
     const cand =
       placeImg ??
@@ -32,9 +27,12 @@ export default function PlaceSearchCard({ place, roomId }) {
   };
 
   return (
-    <div className="place-card" onClick={handleClick}>
-      <div className="place-card-img-wrapper">
-        {(!imgUrl || imgError) ? (
+    <div
+      className="place-card relative" // relative 추가
+      onClick={handleClick}
+    >
+      <div className="place-card-img-wrapper relative">
+        {!imgUrl || imgError ? (
           <div className="place-detail-modal-img-empty">이미지 없음</div>
         ) : (
           <img
@@ -45,10 +43,12 @@ export default function PlaceSearchCard({ place, roomId }) {
           />
         )}
 
+        {/* 공유 + 별 버튼 묶어서 항상 오른쪽 상단 */}
         <div
-          className="wish-button-wrapper"
+          className="absolute top-2 right-2 flex items-center gap-2"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* 공유 토글 버튼 */}
           <SharedToggleButton
             roomId={roomId}
             placeId={
@@ -58,6 +58,9 @@ export default function PlaceSearchCard({ place, roomId }) {
             }
             placeName={place.placeName || place.name}
           />
+
+          {/* 별 버튼 */}
+          <LikedPlaceButton place={place} />
         </div>
       </div>
 
@@ -65,13 +68,6 @@ export default function PlaceSearchCard({ place, roomId }) {
         <div className="place-name-line">
           <span className="place-name">{placeName}</span>
           <span className="place-category-inline">{category}</span>
-        </div>
-
-        <div
-          className="liked-button-wrapper"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <LikedPlaceButton place={place} />
         </div>
       </div>
     </div>
