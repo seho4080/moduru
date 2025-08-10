@@ -52,7 +52,7 @@ def search_xy(address):
         return None
 
 
-def find_routes(data):
+def get_routes_time(data):
     result = []
     url = "https://apis-navi.kakaomobility.com/v1/destinations/directions"
     headers = {
@@ -82,7 +82,6 @@ def find_routes(data):
                 }
             )
         params["destinations"] = destinations
-
         response = requests.post(url, headers=headers, json=params)
 
         if response.status_code == 200:
@@ -90,16 +89,28 @@ def find_routes(data):
             result.append(
                 {
                     "origin_id": data[i]["id"],
-                    "destinations": [
+                    "destinations": [],
+                }
+            )
+
+            for route in routes["routes"]:
+                # NOTE: result_code 304는 길 찾기 반경 범위를 벗어남을 의미
+                if route["result_code"] == 304:
+                    result[-1]["destinations"].append(
+                        {
+                            "destination_id": route["key"],
+                            "distance": 10000,
+                            "duration": 10000,
+                        }
+                    )
+                elif route["result_code"] == 0:
+                    result[-1]["destinations"].append(
                         {
                             "destination_id": route["key"],
                             "distance": route["summary"]["distance"],
                             "duration": route["summary"]["duration"],
                         }
-                        for route in routes["routes"]
-                    ],
-                }
-            )
+                    )
         else:
             print("Kakao API 요청 실패:", response.status_code)
             return None
