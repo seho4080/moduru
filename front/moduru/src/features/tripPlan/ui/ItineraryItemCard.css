@@ -1,0 +1,117 @@
+/* 카드 래퍼 */
+.itin-item{
+  display:flex; align-items:center; justify-content:space-between;
+  background:#fff; border-radius:14px; padding:10px 12px;
+  box-shadow:0 2px 8px rgba(15,23,42,.06);
+}
+
+/* 왼쪽: 뱃지 + 본문 */
+.itin-item__left{ display:flex; gap:10px; align-items:flex-start; }
+
+/* 번호 뱃지 (작고 선명하게) */
+.itin-item__badge{
+  min-width:20px; height:20px; line-height:20px;
+  display:inline-block; text-align:center;
+  font-weight:800; font-size:12px; color:#fff;
+  background:#ef4444; border-radius:50%;
+  margin-top:2px;            /* 제목과 높이 맞추기 */
+}
+
+/* 내용 컨테이너 */
+.itin-item__content{ display:flex; flex-direction:column; gap:2px; }
+
+/* 제목: 한 줄, 굵게, 말줄임 */
+.itin-item__title{
+  font-weight:800; color:#0f172a; font-size:15px;
+  line-height:1.2;
+  max-width: 230px;          /* 필요 시 조정 */
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* 메타 한 줄 배치 */
+.itin-item__meta{
+  display:flex; align-items:baseline; gap:6px;
+}
+.itin-item__category{
+  color:#3882f6;             /* 파란색 강조 (명소) */
+  font-weight:800; font-size:13px;
+}
+.itin-item__dot{ color:#cbd5e1; }
+.itin-item__time{
+  color:#94a3b8; font-size:13px; font-weight:700;
+}
+
+/* 오른쪽 메뉴 */
+.itin-item__right{ position:relative; display:flex; align-items:center; }
+.itin-item__menuBtn{
+  border:none; background:transparent; cursor:pointer;
+  font-size:18px; color:#475569; padding:4px 6px; border-radius:8px;
+}
+.itin-item__menuBtn:hover{ background:#f1f5f9; }
+
+/* 메뉴 레이어 */
+.itin-item__menu {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 14px;
+  min-width: 90px;         /* 최소 너비만 지정, width 삭제 */
+  box-shadow: 0 4px 16px rgba(65,105,225,0.13);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.itin-item__menuTitle{ font-weight:900; color:#3882f6; margin-bottom:6px; }
+.itin-item__submenu{ margin-bottom:8px; }
+.itin-item__submenuLabel{ font-weight:700; color:#0f172a; margin-bottom:6px; }
+.itin-item__options{ display:flex; flex-wrap:wrap; gap:6px; }
+.itin-item__options button{
+  border:1px solid #e2e8f0; background:#fff; border-radius:8px;
+  padding:6px 10px; cursor:pointer; font-weight:700; color:#334155;
+}
+.itin-item__options button:hover{ background:#f8fafc; }
+
+.itin-item__danger{
+  width:100%; text-align:left; border:none; background:#fff; color:#ef4444;
+  font-weight:800; padding:8px 4px; cursor:pointer; border-radius:8px;
+}
+.itin-item__danger:hover{ background:#fff1f2; }
+
+.itin-menu-list {
+  display: flex;
+  flex-direction: column;   /* 세로로 정렬 */
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.itin-menu-item {
+  background: #f7f9fc;
+  border: none;
+  border-radius: 7px;
+  padding: 7px 12px;
+  font-size: 15px;
+  color: #334155;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.itin-menu-item:hover {
+  background: #eaf0ff;
+}
+
+.itin-menu-item.danger {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.itin-menu-item.danger:hover {
+  background: #fff1f2;
+}

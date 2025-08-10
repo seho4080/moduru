@@ -1,134 +1,158 @@
-import { useState, useEffect } from "react";
-import api from '../../../lib/axios';
+// src/features/placeSearch/model/usePlaceSearch.js
+import { useState, useEffect, useRef } from "react";
+import api from "../../../lib/axios";
+import { dummyPlaces } from "./dummyPlaces";
 
-
-// NOTE: 서버에서 허용하는 카테고리 매핑
-const categoryMap = {
+const KOR_TO_CODE = {
   전체: "all",
   음식점: "restaurant",
   명소: "spot",
   축제: "festival",
 };
 
-// export const usePlaceSearch = (roomId, selectedCategory) => {
-//   const [places, setPlaces] = useState([]);
-//   const [loading, setLoading] = useState(true);
+const envUseDummy =
+  String(import.meta.env?.VITE_USE_PLACE_DUMMY || "").toLowerCase() === "true";
 
-//   useEffect(() => {
-//     const fetchPlaces = async () => {
-//       if (!roomId || !selectedCategory) return;
-
-//       setLoading(true);
-
-//       try {
-//         const categoryCode = categoryMap[selectedCategory];
-//         const url = `http://localhost:8080/places/${roomId}?category=${categoryCode}`;
-
-//         const res = await fetch(url, {
-//           method: "GET",
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-//           credentials: "include", // 쿠키 전송을 위해 필수
-//         });
-
-//         const raw = await res.text();
-//         console.log("[응답 상태]", res.status);
-//         console.log("[응답 원문]", raw);
-
-//         if (res.status === 404) {
-//           console.warn("해당 카테고리에 매핑된 장소가 없습니다.");
-//           setPlaces([]);
-//           return;
-//         }
-
-//         if (!res.ok) {
-//           throw new Error(`API 요청 실패 (status ${res.status})`);
-//         }
-
-//         const data = JSON.parse(raw);
-//         const rawPlaces = Array.isArray(data.places) ? data.places : [];
-
-//         const filteredPlaces =
-//           categoryCode === "all"
-//             ? rawPlaces
-//             : rawPlaces.filter(
-//                 (place) => place.category?.trim() === selectedCategory
-//               );
-
-//         setPlaces(filteredPlaces);
-//       } catch (err) {
-//         console.error("장소 API 호출 실패:", err.message);
-//         setPlaces([]);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchPlaces();
-//   }, [roomId, selectedCategory]);
-
-//   return { places, loading };
-// };
-
-
-export const usePlaceSearch = (roomId, selectedCategory) => {
+export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
+  const forceDummy = options.useDummy ?? envUseDummy; // 우선순위: 훅 옵션 > ENV
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
+  const reqSeq = useRef(0);
 
   useEffect(() => {
-    const controller = new AbortController(); // 최신 요청만 반영
-    const fetchPlaces = async () => {
-      if (!roomId || !selectedCategory) {
-        setPlaces([]);
-        setLoading(false);   // ✅ early return 시 로딩 해제
-        return;
-      }
+    if (!roomId || !selectedCategory) {
+      setPlaces([]);
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
+    const mySeq = ++reqSeq.current;
+    setLoading(true);
 
+    (async () => {
       try {
-        const categoryCode = categoryMap[selectedCategory];
-        if (!categoryCode) {
-          // 매핑 안 되면 빈 리스트로
-          setPlaces([]);
+        // ✅ My 장소: 좋아요 목록(id 리스트) 가져온 뒤, 소스(더미 or all)에서 필터
+        if (selectedCategory === "My 장소") {
+          // 1) 좋아요 ID 목록
+          const likedRes = await api.get(`/my-places`, {
+            withCredentials: true,
+          });
+          const likedList = Array.isArray(likedRes.data) ? likedRes.data : [];
+          const likedIds = new Set(
+            likedList
+              .map((v) => Number(v?.placeId ?? v?.id))
+              .filter((n) => Number.isFinite(n))
+          );
+
+          if (reqSeq.current !== mySeq) return;
+
+          if (likedIds.size === 0) {
+            setPlaces([]);
+            return;
+          }
+
+          // 2) 소스 리스트 준비
+          let source = [];
+          if (forceDummy) {
+            source = dummyPlaces;
+          } else {
+            // 전체에서 골라내기 위해 all 호출
+            const { data, status } = await api.get(`/places/${roomId}`, {
+              params: { category: "all" },
+            });
+            if (reqSeq.current !== mySeq) return;
+            source =
+              status === 200 && Array.isArray(data?.places) ? data.places : [];
+          }
+
+          // 3) 교집합 필터
+          const filtered = source.filter((p) =>
+            likedIds.has(Number(p?.placeId ?? p?.id))
+          );
+
+          const patched = filtered.map((p) => ({
+            ...p,
+            placeId:
+              typeof p.placeId === "number"
+                ? p.placeId
+                : Number(p.placeId ?? p.id),
+            latitude:
+              typeof p.latitude === "number" ? p.latitude : Number(p.latitude),
+            longitude:
+              typeof p.longitude === "number"
+                ? p.longitude
+                : Number(p.longitude),
+          }));
+
+          setPlaces(patched);
           return;
         }
 
-        const res = await api.get(`/places/${roomId}`, {
-          params: { category: categoryCode },
-          withCredentials: true,
-          // useToken: true, // 필요하면 켜기
-          signal: controller.signal, // ✅ 취소 신호
+        // ✅ 일반 카테고리 (전체/음식점/명소/축제)
+        // 강제 더미 모드
+        if (forceDummy) {
+          const cat = KOR_TO_CODE[selectedCategory] ?? "all";
+          const source =
+            cat === "all"
+              ? dummyPlaces
+              : dummyPlaces.filter((d) => d.category === cat);
+          if (reqSeq.current === mySeq) setPlaces(source);
+          return;
+        }
+
+        // API 모드
+        const category = KOR_TO_CODE[selectedCategory] ?? "all";
+        const { data, status } = await api.get(`/places/${roomId}`, {
+          params: { category },
         });
 
-        const rawPlaces = Array.isArray(res.data?.places) ? res.data.places : [];
+        if (reqSeq.current !== mySeq) return;
 
-        // 서버가 이미 category=...로 필터해서 주는 경우가 대부분이므로
-        // 'all'이면 그대로, 아니면 혹시 몰라서 categoryCode로 한 번 더 필터
-        const filtered =
-          categoryCode === "all"
-            ? rawPlaces
-            : rawPlaces.filter((p) => p.category?.trim() === categoryCode); // ✅ 여기!
+        let list =
+          status === 200 && Array.isArray(data?.places) ? data.places : [];
 
-        setPlaces(filtered);
-      } catch (err) {
-        if (controller.signal.aborted) return; // 최신 요청만 반영
-        if (err.response?.status === 404) {
-          console.warn("해당 카테고리에 매핑된 장소가 없습니다.");
+        // API가 비면 자동 폴백(더미)
+        if (!list.length) {
+          const source =
+            category === "all"
+              ? dummyPlaces
+              : dummyPlaces.filter((d) => d.category === category);
+          list = source;
+        }
+
+        const patched = list.map((p) => ({
+          ...p,
+          placeId:
+            typeof p.placeId === "number"
+              ? p.placeId
+              : Number(p.placeId ?? p.id),
+          latitude:
+            typeof p.latitude === "number" ? p.latitude : Number(p.latitude),
+          longitude:
+            typeof p.longitude === "number" ? p.longitude : Number(p.longitude),
+        }));
+
+        setPlaces(patched);
+      } catch (e) {
+        if (reqSeq.current !== mySeq) return;
+
+        // My 장소 에러 시엔 그냥 빈 배열
+        if (selectedCategory === "My 장소") {
           setPlaces([]);
         } else {
-          console.error("장소 API 호출 실패:", err.response?.data?.message || err.message);
-          setPlaces([]);
+          // 일반 카테고리 에러 → 더미 폴백
+          const category = KOR_TO_CODE[selectedCategory] ?? "all";
+          const source =
+            category === "all"
+              ? dummyPlaces
+              : dummyPlaces.filter((d) => d.category === category);
+          setPlaces(source);
         }
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (reqSeq.current === mySeq) setLoading(false);
       }
-    };
-
-    fetchPlaces();
-    return () => controller.abort(); // 언마운트/변경 시 이전 요청 취소
-  }, [roomId, selectedCategory]);
+    })();
+  }, [roomId, selectedCategory, forceDummy]);
 
   return { places, loading };
 };

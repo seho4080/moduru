@@ -147,3 +147,24 @@
   font-size: 13px;
   padding-left: 4px;
 }
+
+.pw-checklist {
+  display: flex;
+  gap: 18px;
+  margin: 6px 0 10px 0;
+}
+.pw-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #334155;
+}
+.pw-check input[type="checkbox"] {
+  accent-color: #4169e1;
+  width: 16px;
+  height: 16px;
+}
+.pw-check input[type="checkbox"]:not(:checked) + span {
+  color: #b0b8c1;
+}

@@ -1,0 +1,20 @@
+/* TripCreateFormHost.css */
+.overlay-tripform {
+  position: fixed;
+  inset: 0; /* top:0, right:0, bottom:0, left:0 */
+  background: rgba(0, 0, 0, 0.3); /* 배경 흐림 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999; /* ItineraryModal보다 높게 */
+}
+
+.overlay-tripform .overlay-panel {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 640px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
