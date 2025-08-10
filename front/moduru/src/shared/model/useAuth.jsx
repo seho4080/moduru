@@ -2,9 +2,19 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 
 const AuthContext = createContext();
-
+function decodeJwtPayload(token) {
+  if (!token) return null;
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '==='.slice((base64.length + 3) % 4);
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
@@ -23,15 +33,16 @@ export const AuthProvider = ({ children }) => {
 
     const accessValid = isTokenValid(accessToken);
     const refreshValid = isTokenValid(refreshToken);
-
+    
     const valid = accessValid && refreshValid;
     console.log('[🟢 토큰 만료 검사 결과]', { accessValid, refreshValid });
-
+    const p = decodeJwtPayload(accessToken);
+    setUserId(p?.sub || p?.userId || p?.id || null); // 발급 claim에 맞춰 선택
     setIsLoggedIn(valid);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
+    <AuthContext.Provider value={{ isLoggedIn, userId, setIsLoggedIn }}>
       {children}
     </AuthContext.Provider>
   );

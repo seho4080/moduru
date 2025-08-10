@@ -13,14 +13,19 @@ const webhookRouter = require('./routes/webhook');   // /webhook/livekit 경로 
 const app = express();
 
 // 🔧 미들웨어 설정
-app.use(cors());               // CORS 미들웨어 (모든 도메인 허용)
+app.use(cors({
+  origin: 'https://moduru.co.kr', // 프론트 도메인
+  credentials: true
+}));           // CORS 미들웨어 (모든 도메인 허용)
 app.use(express.json());       // JSON 요청 바디 파싱 미들웨어
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 // 📍 라우터 등록
 app.use('/get-token', tokenRouter);            // 토큰 발급 요청 (GET)
 app.use('/livekit/webhook', webhookRouter);    // LiveKit Webhook 처리 요청 (POST)
 
-// 🚀 서버 실행 (포트: 3001)
+// 🚀 서버 실행 (포트: 4000)
 app.listen(4000, () => {
   console.log('✅ 서버 실행 중: http://node-backend:4000');
 });
