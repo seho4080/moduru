@@ -12,6 +12,7 @@ import com.B108.tripwish.domain.room.entity.TravelRoom;
 import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.domain.user.entity.User;
+import com.B108.tripwish.global.common.entity.Region;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
@@ -47,7 +48,8 @@ public class RoomReaderServiceImpl implements RoomReaderService {
 
                       @Override
                       public String getRegion() {
-                        return room.getRegion().getName();
+                        Region region = room.getRegion();
+                        return region != null ? region.getName() : "지역 없음";
                       }
 
                       @Override

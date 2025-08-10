@@ -1,4 +1,4 @@
-package com.B108.tripwish.websocket.dto.response;
+package com.B108.tripwish.domain.schedule.dto.response;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -12,10 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ScheduleMessageResponseDto {
-  private Long roomId;
+public class ScheduleListResponseDto {
   private int day;
   private LocalDate date;
-  private List<ScheduleEventMessageResponseDto> events;
-  private String senderId;
+  private List<ScheduleEventResponseDto> events;
 }
