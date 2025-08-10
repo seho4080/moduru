@@ -61,3 +61,4 @@ pids
 *.pid.lock
 pg-data/
 init.sql
+*:Zone.Identifier
