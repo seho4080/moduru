@@ -7,7 +7,6 @@ WORKDIR /app
 # 종속성 복사 및 설치
 COPY package*.json ./
 RUN npm install
-RUN npm install cookie-parser
 # 앱 코드 복사
 COPY . .
 
