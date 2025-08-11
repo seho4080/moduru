@@ -75,11 +75,17 @@ services:
       - ELASTICSEARCH_PORT=9200
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
-      - SPRING_DATASOURCE_USERNAME=${postgresql_user}
-      - SPRING_DATASOURCE_PASSWORD=${postgresql_password}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EMAIL_ID=lhjlizzie@gmail.com
       - EMAIL_PASSWORD="hsml ohoh wpix homy"
       - KAKAO_API_KEY=${KAKAO_API_KEY}
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=${EMAIL_ID}
+      - SPRING_MAIL_PASSWORD="${EMAIL_PASSWORD}"# 앱 비밀번호. 반드시 따옴표
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     depends_on:
       redis:
         condition: service_healthy
