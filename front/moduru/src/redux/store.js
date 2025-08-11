@@ -9,8 +9,8 @@ import mapReducer from "./slices/mapSlice";
 import uiReducer from "./slices/uiSlice";
 import sharedPlaceReducer from "./slices/sharedPlaceSlice";
 import userReducer from "./slices/userSlice";
-import itineraryReducer from './slices/itinerarySlice';
-
+import itineraryReducer from "./slices/itinerarySlice";
+import { schedulePublishMiddleware } from "../features/travelSchedule/lib/schedulePublishMiddleware";
 /**
  * Redux 전역 상태 저장소 설정
  */
@@ -27,6 +27,7 @@ const store = configureStore({
     user: userReducer,
     itinerary: itineraryReducer,
   },
+  middleware: (getDefault) => getDefault().concat(schedulePublishMiddleware),
 });
 
 export default store;

@@ -1,7 +1,9 @@
 // src/features/placeSearch/model/usePlaceSearch.js
 import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import api from "../../../lib/axios";
-import { dummyPlaces } from "./dummyPlaces";
+// import { dummyPlaces } from "./dummyPlaces"; // 더미 데이터 사용 주석 처리
+import { selectRegionVersion } from "../../../redux/slices/tripRoomSlice";
 
 const KOR_TO_CODE = {
   전체: "all",
@@ -14,7 +16,8 @@ const envUseDummy =
   String(import.meta.env?.VITE_USE_PLACE_DUMMY || "").toLowerCase() === "true";
 
 export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
-  const forceDummy = options.useDummy ?? envUseDummy; // 우선순위: 훅 옵션 > ENV
+  const regionVersion = useSelector(selectRegionVersion);
+  const forceDummy = options.useDummy ?? envUseDummy;
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const reqSeq = useRef(0);
@@ -31,12 +34,13 @@ export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
 
     (async () => {
       try {
-        // ✅ My 장소: 좋아요 목록(id 리스트) 가져온 뒤, 소스(더미 or all)에서 필터
+        // My 장소: 좋아요 목록(id 리스트) 기반 필터
         if (selectedCategory === "My 장소") {
-          // 1) 좋아요 ID 목록
           const likedRes = await api.get(`/my-places`, {
             withCredentials: true,
           });
+          if (reqSeq.current !== mySeq) return;
+
           const likedList = Array.isArray(likedRes.data) ? likedRes.data : [];
           const likedIds = new Set(
             likedList
@@ -44,28 +48,23 @@ export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
               .filter((n) => Number.isFinite(n))
           );
 
-          if (reqSeq.current !== mySeq) return;
-
           if (likedIds.size === 0) {
             setPlaces([]);
             return;
           }
 
-          // 2) 소스 리스트 준비
-          let source = [];
-          if (forceDummy) {
-            source = dummyPlaces;
-          } else {
-            // 전체에서 골라내기 위해 all 호출
-            const { data, status } = await api.get(`/places/${roomId}`, {
-              params: { category: "all" },
-            });
-            if (reqSeq.current !== mySeq) return;
-            source =
-              status === 200 && Array.isArray(data?.places) ? data.places : [];
-          }
+          // let source = [];
+          // if (forceDummy) {
+          //   source = dummyPlaces;
+          // } else {
+          const { data, status } = await api.get(`/places/${roomId}`, {
+            params: { category: "all" },
+          });
+          if (reqSeq.current !== mySeq) return;
+          const source =
+            status === 200 && Array.isArray(data?.places) ? data.places : [];
+          // }
 
-          // 3) 교집합 필터
           const filtered = source.filter((p) =>
             likedIds.has(Number(p?.placeId ?? p?.id))
           );
@@ -88,37 +87,34 @@ export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
           return;
         }
 
-        // ✅ 일반 카테고리 (전체/음식점/명소/축제)
-        // 강제 더미 모드
-        if (forceDummy) {
-          const cat = KOR_TO_CODE[selectedCategory] ?? "all";
-          const source =
-            cat === "all"
-              ? dummyPlaces
-              : dummyPlaces.filter((d) => d.category === cat);
-          if (reqSeq.current === mySeq) setPlaces(source);
-          return;
-        }
+        // 일반 카테고리
+        // if (forceDummy) {
+        //   const cat = KOR_TO_CODE[selectedCategory] ?? "all";
+        //   const source =
+        //     cat === "all"
+        //       ? dummyPlaces
+        //       : dummyPlaces.filter((d) => d.category === cat);
+        //   if (reqSeq.current === mySeq) setPlaces(source);
+        //   return;
+        // }
 
-        // API 모드
         const category = KOR_TO_CODE[selectedCategory] ?? "all";
         const { data, status } = await api.get(`/places/${roomId}`, {
           params: { category },
         });
-
         if (reqSeq.current !== mySeq) return;
 
         let list =
           status === 200 && Array.isArray(data?.places) ? data.places : [];
 
-        // API가 비면 자동 폴백(더미)
-        if (!list.length) {
-          const source =
-            category === "all"
-              ? dummyPlaces
-              : dummyPlaces.filter((d) => d.category === category);
-          list = source;
-        }
+        // API 비었을 때 더미 폴백
+        // if (!list.length) {
+        //   const source =
+        //     category === "all"
+        //       ? dummyPlaces
+        //       : dummyPlaces.filter((d) => d.category === category);
+        //   list = source;
+        // }
 
         const patched = list.map((p) => ({
           ...p,
@@ -136,23 +132,22 @@ export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
       } catch (e) {
         if (reqSeq.current !== mySeq) return;
 
-        // My 장소 에러 시엔 그냥 빈 배열
         if (selectedCategory === "My 장소") {
           setPlaces([]);
         } else {
-          // 일반 카테고리 에러 → 더미 폴백
-          const category = KOR_TO_CODE[selectedCategory] ?? "all";
-          const source =
-            category === "all"
-              ? dummyPlaces
-              : dummyPlaces.filter((d) => d.category === category);
-          setPlaces(source);
+          // const category = KOR_TO_CODE[selectedCategory] ?? "all";
+          // const source =
+          //   category === "all"
+          //     ? dummyPlaces
+          //     : dummyPlaces.filter((d) => d.category === category);
+          // setPlaces(source);
+          setPlaces([]);
         }
       } finally {
         if (reqSeq.current === mySeq) setLoading(false);
       }
     })();
-  }, [roomId, selectedCategory, forceDummy]);
+  }, [roomId, selectedCategory, forceDummy, regionVersion]);
 
   return { places, loading };
 };

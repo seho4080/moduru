@@ -1,271 +1,165 @@
-// src/pages/TripRoomPage.jsx
+/**
+ * TripRoomPage
+ * - TripRoomProvider로 감싸 상태/사이드 이펙트를 숨긴다.
+ * - 이 파일은 UI 배치만 담당하며, 가독성을 높인다.
+ */
 
-// builtin
-import React, { useState, useRef, useCallback, useEffect } from "react";
-import { useLocation, useSearchParams, useParams } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import React from "react";
+import TripRoomProvider, { useTripRoom } from "./TripRoomProvider";
 
-// redux actions
-import { setSelectedPlace } from "../../redux/slices/mapSlice";
-import { setTripRoom } from "../../redux/slices/tripRoomSlice";
-import { closeRouteModal } from "../../redux/slices/uiSlice";
+// 레이아웃 구성 요소
+import { MapHeaderBar, MapSection } from "./index";
 
-// ui components
+// 기능 컴포넌트
 import SidebarContainer from "../../widgets/sidebar/SidebarContainer";
 import Controls from "../../features/map/ui/MapControls";
 import KakaoMap from "../../features/map/ui/KakaoMap";
-import { getLatLngFromRegion } from "../../features/map/lib/regionUtils";
 import TripCreateForm from "../../features/tripCreate/ui/TripCreateForm";
 import RegionOnlyModal from "../../features/tripCreate/ui/RegionOnlyModal";
-import InviteButtonWithPopover from "../../features/invite/ui/InviteButtonWithPopover";
-// import TestAddPin from "../../features/map/dev/TestAddPin";
 import PlaceDetailModal from "../../features/placeDetail/ui/PlaceDetailModal";
 import RouteModal from "../../features/tripPlanOptimize/ui/RouteModal";
-import ExampleScheduleBox from "../../features/travelSchedule/dev/ExampleScheduleBox";
-
-// api
-import {
-  updateTripRoomRegion,
-  getTripRoomInfo,
-} from "../../features/tripCreate/lib/tripRoomApi";
-
-// hooks - shared (리스트 + 소켓)
-import useSharedPlaceList from "../../features/sharedPlace/model/useSharedPlaceList";
-import useSharedPlaceSocket from "../../features/sharedPlace/model/useSharedPlaceSocket";
-
-// ── 공용 상수 ────────────────────────────────────────────────────────────────
-const EMPTY_ARRAY = [];
+import ConfirmPlaceModal from "../../features/map/ui/ConfirmPlaceModal";
 
 /**
- * TripRoomPage
- * - location.state 또는 /trip-room/:id 로 진입 모두 지원
- * - state 미존재 시 roomId로 API 조회
- * - 핀 초기화 + 희망장소 목록 + 공유장소 목록 + 공유장소 소켓 모두 실행 (중복 허용)
- * - 지역 모달은 최초 1회만 노출
+ * 실제 화면을 그리는 내부 컴포넌트
+ * - useTripRoom()으로 필요한 값만 받아와 배치한다.
  */
-export default function TripRoomPage() {
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const { id: roomIdFromParam } = useParams();
-  const dispatch = useDispatch();
-
-  // 초기 진입 데이터
-  const initialState = location.state || null;
-  const [tripRoomData, setTripRoomData] = useState(initialState);
-  const [region, setRegion] = useState(initialState?.region || "");
-  const [hasShownRegionModal, setHasShownRegionModal] = useState(false);
-
-  // state 없고 URL 파라미터만 있을 때 API 조회
-  useEffect(() => {
-    if (!tripRoomData && roomIdFromParam) {
-      getTripRoomInfo(roomIdFromParam).then((data) => {
-        setTripRoomData(data);
-        setRegion(data.region || "");
-      });
-    }
-  }, [roomIdFromParam, tripRoomData]);
-
+function TripRoomView() {
+  // Provider에서 공급되는 모든 상태/함수
   const {
-    travelRoomId = roomIdFromParam,
-    title = "",
-    region: initialRegion = "",
-    startDate = "",
-    endDate = "",
-  } = tripRoomData || {};
+    mapRef, // KakaoMap 제어용 ref
 
-  // 초대 링크 여부 / 지역
-  const fromInvite =
-    location.state?.from === "invite" || searchParams.get("from") === "invite";
-  const inviteRegion = searchParams.get("region");
+    // 여행방 메타/모달/탭 상태 모음
+    meta: {
+      travelRoomId, // 방 ID
+      title, // 제목
+      region, // 지역(원본)
+      setRegion, // 지역 설정 함수(Controls에 전달)
+      tripRegion, // 지역(수정본)
+      setTripRegion,
+      tripName,
+      setTripName,
+      tripDates,
+      setTripDates,
+      showRegionModal,
+      setShowRegionModal,
+      showTripModal,
+      setShowTripModal,
+      activeTab,
+      setActiveTab,
+      onTabChange, // 탭 변경 시의 추가 처리
+      onTripSave, // 여행 정보 저장 처리
+      selectedPlace,
+      isRouteModalOpen,
+      roomMembers,
+      friendList,
+    },
 
-  // --- 중복 실행 요청 ---
-  useSharedPlaceList(travelRoomId);
-  useSharedPlaceSocket(travelRoomId);
+    // 지도 상호작용 상태/콜백 모음
+    marker: {
+      mode, // 지도 모드("", "measure", "pin" 등)
+      setMode,
+      zoomable, // 확대/축소 가능 여부
+      setZoomable,
+      removeMode, // 삭제 모드
+      setRemoveMode,
+      handleDeleteConfirm,
+      handleMarkerSelect,
+      handlePinPlaced,
+      confirmData, // 핀 등록 모달 데이터
+      setConfirmData,
+      pendingPin, // 등록 대기 핀
+      setPendingPin,
+    },
 
-  // 로컬 상태
-  const [mode, setMode] = useState("marker");
-  const [zoomable, setZoomable] = useState(true);
-  const [removeMode, setRemoveMode] = useState(false);
-  const [toRemove, setToRemove] = useState(new Set());
-  const [activeTab, setActiveTab] = useState(null);
-  const [showTripModal, setShowTripModal] = useState(false);
-  const [showRegionModal, setShowRegionModal] = useState(false);
-
-  const [tripName, setTripName] = useState(title);
-  const [tripRegion, setTripRegion] = useState(
-    inviteRegion || initialRegion || ""
-  );
-  const [tripDates, setTripDates] = useState(
-    startDate && endDate
-      ? [new Date(startDate), new Date(endDate)]
-      : [null, null]
-  );
-
-  // Redux selectors
-  const isRouteModalOpen = useSelector((state) => state.ui.isRouteModalOpen);
-  const selectedPlace = useSelector((state) => state.map.selectedPlace);
-  const roomMembers = useSelector(
-    (state) => state.tripMember.membersByRoomId[travelRoomId] ?? EMPTY_ARRAY
-  );
-  const friendList = useSelector((state) => state.friend.list ?? EMPTY_ARRAY);
-
-  const mapRef = useRef();
-
-  // Redux 메타 저장
-  useEffect(() => {
-    if (!travelRoomId) return;
-    dispatch(
-      setTripRoom({
-        roomId: travelRoomId,
-        title: tripName || "",
-        region: tripRegion || "",
-        startDate: startDate || "",
-        endDate: endDate || "",
-      })
-    );
-  }, [dispatch, travelRoomId, tripName, tripRegion, startDate, endDate]);
-
-  // region 변경 시 지도 이동
-  useEffect(() => {
-    const coords = getLatLngFromRegion(region);
-    if (coords && mapRef.current?.setCenter) {
-      mapRef.current.setCenter(coords);
-    }
-  }, [region]);
-
-  // 지역 모달 최초 1회
-  useEffect(() => {
-    if (
-      !hasShownRegionModal &&
-      !initialRegion &&
-      !inviteRegion &&
-      !fromInvite
-    ) {
-      setShowRegionModal(true);
-      setHasShownRegionModal(true);
-    }
-  }, [hasShownRegionModal, initialRegion, inviteRegion, fromInvite]);
-
-  // 핀 삭제
-  const handleDeleteConfirm = () => {
-    if (toRemove.size === 0) {
-      alert("삭제할 핀을 먼저 선택하세요.");
-      return;
-    }
-    if (!window.confirm("삭제하시겠습니까?")) return;
-
-    toRemove.forEach((marker) => marker.setMap(null));
-    setToRemove(new Set());
-    setRemoveMode(false);
-    setMode("marker");
-  };
-
-  // 마커 선택 모드 콜백
-  const handleMarkerSelect = useCallback((markerSet) => {
-    setToRemove(new Set(markerSet));
-  }, []);
-
-  // 사이드바 탭 변경
-  const handleTabChange = (tab) => {
-    dispatch(setSelectedPlace(null));
-    if (tab === "openTripModal") return setShowTripModal(true);
-    if (tab === "exit") {
-      console.log("나가기");
-      return;
-    }
-    setActiveTab(tab);
-  };
-
-  // 여행방 저장
-  const handleTripSave = async () => {
-    try {
-      await updateTripRoomRegion(travelRoomId, {
-        title: tripName,
-        region: tripRegion,
-        startDate: tripDates[0]?.toISOString().split("T")[0],
-        endDate: tripDates[1]?.toISOString().split("T")[0],
-      });
-      setRegion(tripRegion);
-      setShowTripModal(false);
-    } catch (err) {
-      alert(`저장 실패: ${err.message}`);
-    }
-  };
+    // 헬퍼 액션
+    setSelectedPlace, // 선택 장소 초기화/설정
+    closeRouteModal, // 경로 모달 닫기
+  } = useTripRoom();
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
-      {isRouteModalOpen && (
-        <RouteModal onClose={() => dispatch(closeRouteModal())} />
-      )}
+      {/* 경로 최적화 모달 */}
+      {isRouteModalOpen && <RouteModal onClose={closeRouteModal} />}
 
+      {/* 좌측 사이드바: 탭 전환 시 선택 장소를 초기화한다. */}
       <SidebarContainer
         activeTab={activeTab}
-        onTabChange={handleTabChange}
+        onTabChange={(tab) => {
+          setSelectedPlace(null);
+          onTabChange(tab);
+        }}
         roomId={travelRoomId}
         region={region}
       />
 
+      {/* 우측 지도/컨트롤 영역 */}
       <div style={{ flex: 1, position: "relative", display: "flex" }}>
-        {/* 지도 + UI */}
         <div style={{ flex: 1, position: "relative" }}>
-          <div
-            style={{ position: "absolute", top: 12, right: 12, zIndex: 1000 }}
-          >
-            <InviteButtonWithPopover
-              roomMembers={roomMembers}
-              friendList={friendList}
+          {/* 상단 유틸 바: 초대/나가기 등 */}
+          <MapHeaderBar
+            roomMembers={roomMembers}
+            friendList={friendList}
+            onExit={() => setActiveTab("exit")}
+          />
+
+          <MapSection>
+            {/* 지도 컨트롤러: 모드 전환, 줌 컨트롤, 지역 설정 */}
+            <Controls
+              mode={mode}
+              setMode={setMode}
+              zoomable={zoomable}
+              setZoomable={setZoomable}
+              zoomIn={() => mapRef.current?.zoomIn?.()}
+              zoomOut={() => mapRef.current?.zoomOut?.()}
+              region={region}
+              setRegion={setRegion}
+              removeMode={removeMode}
+              setRemoveMode={setRemoveMode}
+              onDeleteConfirm={handleDeleteConfirm}
             />
-          </div>
 
-          <Controls
-            mode={mode}
-            setMode={setMode}
-            zoomable={zoomable}
-            setZoomable={setZoomable}
-            zoomIn={() => mapRef.current?.zoomIn?.()}
-            zoomOut={() => mapRef.current?.zoomOut?.()}
-            region={region}
-            setRegion={setRegion}
-            removeMode={removeMode}
-            setRemoveMode={setRemoveMode}
-            onDeleteConfirm={handleDeleteConfirm}
-          />
+            {/* 카카오 지도: 선택/핀 배치 콜백을 전달한다. */}
+            <KakaoMap
+              ref={mapRef}
+              mode={mode}
+              zoomable={zoomable}
+              region={tripRegion}
+              removeMode={removeMode}
+              onSelectMarker={handleMarkerSelect}
+              pinCoords={
+                selectedPlace
+                  ? {
+                      lat: selectedPlace.latitude,
+                      lng: selectedPlace.longitude,
+                    }
+                  : null
+              }
+              onPinPlaced={handlePinPlaced}
+            />
 
-          <KakaoMap
-            ref={mapRef}
-            mode={mode}
-            zoomable={zoomable}
-            region={tripRegion}
-            removeMode={removeMode}
-            onSelectMarker={handleMarkerSelect}
-            pinCoords={
-              selectedPlace
-                ? {
-                    lat: selectedPlace.latitude,
-                    lng: selectedPlace.longitude,
-                  }
-                : null
-            }
-          />
+            {/* 선택된 장소 상세 모달 */}
+            {selectedPlace && <PlaceDetailModal place={selectedPlace} />}
+          </MapSection>
 
-          {selectedPlace && <PlaceDetailModal place={selectedPlace} />}
-
+          {/* 지역 설정 모달: 저장 성공 시 지역 상태를 갱신한다. */}
           {showRegionModal && (
             <RegionOnlyModal
               roomId={travelRoomId}
               title={title}
-              onRegionSet={(newRegion) => {
-                const coords = getLatLngFromRegion(newRegion);
-                if (coords && mapRef.current?.setCenter) {
-                  mapRef.current.setCenter(coords);
+              onClose={() => setShowRegionModal(false)}
+              onSuccess={(data) => {
+                const newRegion = data?.region ?? null;
+                if (newRegion) {
+                  setTripRegion(newRegion);
+                  setRegion(newRegion);
+                  // 지도 중심 이동은 Provider의 useEffect가 담당
                 }
-                setTripRegion(newRegion);
-                setRegion(newRegion);
-                setShowRegionModal(false);
               }}
             />
           )}
 
+          {/* 여행 생성/수정 모달 */}
           {showTripModal && (
             <TripCreateForm
               roomId={travelRoomId}
@@ -276,10 +170,31 @@ export default function TripRoomPage() {
               dates={tripDates}
               setDates={setTripDates}
               onClose={() => setShowTripModal(false)}
-              onSubmit={handleTripSave}
+              onSubmit={onTripSave}
             />
           )}
 
+          {/* 핀 등록 확인 모달: 반려 시 임시 마커 제거 */}
+          <ConfirmPlaceModal
+            open={confirmData.open}
+            roomId={travelRoomId}
+            name={confirmData.name}
+            lat={confirmData.lat}
+            lng={confirmData.lng}
+            address={confirmData.address}
+            onClose={() => setConfirmData((p) => ({ ...p, open: false }))}
+            onReject={() => {
+              pendingPin?.marker?.setMap(null);
+              setPendingPin(null);
+              setMode("");
+            }}
+            onSuccess={() => {
+              // 성공 시 임시 상태 초기화
+              setPendingPin(null);
+            }}
+          />
+
+          {/* 고정 배치 나가기 버튼: 탭을 exit로 전환 */}
           <button
             onClick={() => setActiveTab("exit")}
             style={{
@@ -297,22 +212,25 @@ export default function TripRoomPage() {
               cursor: "pointer",
               transition: "background 0.2s ease",
             }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.background = "#f0f7ff";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.background = "#ffffff";
-            }}
+            onMouseOver={(e) => (e.currentTarget.style.background = "#f0f7ff")}
+            onMouseOut={(e) => (e.currentTarget.style.background = "#ffffff")}
           >
             나가기
           </button>
         </div>
-
-        {/* 우측: 일정 웹소켓 테스트 박스 */}
-        {/* <div style={{ width: "300px", borderLeft: "1px solid #ddd" }}>
-          <ExampleScheduleBox roomId={travelRoomId} />
-        </div> */}
       </div>
     </div>
+  );
+}
+
+/**
+ * 라우트 엔트리 컴포넌트
+ * - 상태 공급을 위해 Provider로 감싼다.
+ */
+export default function TripRoomPage() {
+  return (
+    <TripRoomProvider>
+      <TripRoomView />
+    </TripRoomProvider>
   );
 }

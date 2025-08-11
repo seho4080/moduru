@@ -1,77 +1,131 @@
 // src/features/itinerary/ui/ItineraryItemCard.jsx
 import { useDispatch } from "react-redux";
-import { useMemo, useState } from "react";
-import { setStayMinutes, removeItem } from "../../../redux/slices/itinerarySlice";
+import { useMemo, useState, useRef, useEffect } from "react";
+import {
+  setTimes as setTimesAction,
+  removeItem as removeItemAction,
+} from "../../../redux/slices/itinerarySlice";
+import TimeEditor from "./TimeEditor";
 import "./ItineraryItemCard.css";
-import { nanoid } from "@reduxjs/toolkit";
 
 /**
- * props:
- * - item: {
- *     entryId?, id?, placeId?,
- *     placeName?, name?, title?,
- *     category?, startTime?, endTime?, stayMinutes?
- *   }
- * - dateKey: 'YYYY-MM-DD'
- * - index: 0-based
+ * ItineraryItemCard
+ * - 시간 편집(시작/종료), 삭제 UI를 제공하는 카드
+ * - onSetTimes/onRemove 콜백을 전달하면 제어형으로 동작
+ * - 콜백이 없으면 내부에서 리덕스 디스패치를 사용(fallback)
  */
-export default function ItineraryItemCard({ item, dateKey, index }) {
+export default function ItineraryItemCard({
+  item,
+  dateKey,
+  index,
+  onSetTimes, // (startTime, endTime) => void
+  onRemove, // () => void
+  disabled = false,
+}) {
   const dispatch = useDispatch();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [stayOpen, setStayOpen] = useState(false); // 사용 중이면 유지
+  const [timeOpen, setTimeOpen] = useState(false);
+  const popRef = useRef(null);
 
-  // 시간 지정용 식별자(네 코드 그대로)
-  const targetId = item.entryId ?? item.id ?? item.placeId;
-
-  // 표시용 이름: placeName 우선
-  const displayName = item.placeName || item.name || item.title || "이름 없음";
-
-  const badge = index + 1;
+  const displayName =
+    item?.placeName || item?.name || item?.title || "이름 없음";
+  const badge = typeof index === "number" ? index + 1 : undefined;
 
   const timeLabel = useMemo(() => {
-    if (item.startTime && item.endTime) return `${fmt(item.startTime)}-${fmt(item.endTime)}`;
-    if (typeof item.stayMinutes === "number") return `머무는 시간: ${item.stayMinutes}분`;
+    const s = item?.startTime;
+    const e = item?.endTime;
+    if (s && e) return `${s} - ${e}`;
+    if (s) return `${s} - ?`;
+    if (e) return `? - ${e}`;
     return "시간 미정";
-  }, [item.startTime, item.endTime, item.stayMinutes]);
+  }, [item?.startTime, item?.endTime]);
 
-  const onPickStay = (minutes) => {
-    dispatch(setStayMinutes({ dateKey, itemId: targetId, minutes })); // number | null
-    setStayOpen(false);
-    setMenuOpen(false);
-  };
+  // 팝오버 바깥 클릭 시 닫기
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!timeOpen) return;
+      if (popRef.current && !popRef.current.contains(e.target))
+        setTimeOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [timeOpen]);
 
-  // ✅ 삭제는 placeId 우선
-  const handleRemove = () => {
-    dispatch(removeItem({ dateKey, entryId: item.entryId }));
-    setMenuOpen(false);
-  };
+  // Esc로 팝오버 닫기
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setTimeOpen(false);
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
-  const onDrop = (e) => {
-    e.preventDefault();
-    setIsOver(false);
-    const data = e.dataTransfer.getData("application/json");
-    if (data) {
-      const place = JSON.parse(data);
-      // 항상 고유한 entryId 생성
-      place.entryId = nanoid();
-      dispatch(addPlaceToDay({ date, place }));
+  const applyTimes = ({ startTime, endTime }) => {
+    if (disabled) return;
+    if (typeof onSetTimes === "function") {
+      onSetTimes(startTime, endTime);
+    } else {
+      // fallback: 내부 디스패치
+      dispatch(
+        setTimesAction({ dateKey, entryId: item.entryId, startTime, endTime })
+      );
     }
+    setTimeOpen(false);
+    setMenuOpen(false);
+  };
+
+  const removeThis = () => {
+    if (disabled) return;
+    if (typeof onRemove === "function") {
+      onRemove();
+    } else {
+      // fallback: 내부 디스패치
+      dispatch(removeItemAction({ dateKey, entryId: item.entryId }));
+    }
+    setMenuOpen(false);
   };
 
   return (
-    <div className="itin-item">
+    <div
+      className={`itin-item relative ${
+        disabled ? "opacity-60 pointer-events-none" : ""
+      }`}
+      role="group"
+      aria-label={displayName}
+    >
       <div className="itin-item__left">
-        <span className="itin-item__badge">{badge}</span>
+        {badge != null && <span className="itin-item__badge">{badge}</span>}
 
-        {/* 내용 컨테이너 */}
         <div className="itin-item__content">
-          <div className="itin-item__title" title={displayName}>{displayName}</div>
+          <div className="itin-item__title" title={displayName}>
+            {displayName}
+          </div>
 
-          {/* 메타: 카테고리(파랑) + 시간(회색) 한 줄 */}
           <div className="itin-item__meta">
-            {item.category && <span className="itin-item__category">{item.category}</span>}
-            {item.category && <span className="itin-item__dot" aria-hidden>·</span>}
-            <span className="itin-item__time">{timeLabel}</span>
+            {item?.category && (
+              <span className="itin-item__category">{item.category}</span>
+            )}
+            {item?.category && (
+              <span className="itin-item__dot" aria-hidden>
+                ·
+              </span>
+            )}
+            <button
+              type="button"
+              className="itin-item__timebtn"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (disabled) return;
+                setTimeOpen((v) => !v);
+                setMenuOpen(false);
+              }}
+              title="시간 편집"
+            >
+              {timeLabel}
+            </button>
           </div>
         </div>
       </div>
@@ -79,26 +133,51 @@ export default function ItineraryItemCard({ item, dateKey, index }) {
       <div className="itin-item__right">
         <button
           className="itin-item__menuBtn"
-          onClick={() => { setMenuOpen(v => !v); setStayOpen(false); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (disabled) return;
+            setMenuOpen((v) => !v);
+            setTimeOpen(false);
+          }}
           aria-label="메뉴"
-        >⋮</button>
+        >
+          ⋮
+        </button>
 
-        {menuOpen && (
-          <div className="itin-item__menu">
+        {menuOpen && !disabled && (
+          <div className="itin-item__menu" onClick={(e) => e.stopPropagation()}>
             <div className="itin-menu-list">
-              <button className="itin-menu-item" onClick={() => setStayOpen(v => !v)}>시간</button>
-              <button className="itin-menu-item danger" onClick={handleRemove}>삭제</button>
+              <button
+                className="itin-menu-item"
+                onClick={() => {
+                  setTimeOpen(true);
+                  setMenuOpen(false);
+                }}
+              >
+                시간 편집
+              </button>
+              <button className="itin-menu-item danger" onClick={removeThis}>
+                삭제
+              </button>
             </div>
           </div>
         )}
       </div>
+
+      {timeOpen && !disabled && (
+        <div
+          ref={popRef}
+          className="absolute right-0 top-8 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <TimeEditor
+            initialStart={item?.startTime ?? ""}
+            initialEnd={item?.endTime ?? ""}
+            onConfirm={applyTimes}
+            onCancel={() => setTimeOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
-}
-
-function fmt(t) {
-  if (typeof t === "string") return t;
-  const h = String(t.getHours()).padStart(2, "0");
-  const m = String(t.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
 }

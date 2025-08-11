@@ -9,57 +9,43 @@ let stompClient = null;
  * @param {string} roomId - 참여 중인 여행방 ID
  * @param {Array<{ handler: string, action: "add" | "remove", callback: function }>} subscriptions
  */
-
-export const connectWebSocket = (roomId, subscriptions = [], opts = {}) => {
-  const { withCookies = true, useToken = false } = opts;
-
-  // 쿠키 기반이면 withCredentials 켜기
-  // const socket = new SockJS(WS_BASE, null, {
-  //   withCredentials: !!withCookies,
-  // });
-  const socket = new SockJS('/api/ws-stomp', null, { withCredentials: true });
-
-  // 토큰이 필요하면 STOMP connectHeaders에 넣어 보냄
-  const connectHeaders = {};
-  if (useToken) {
-    const token = localStorage.getItem('accessToken');
-    if (token) connectHeaders.Authorization = `Bearer ${token}`;
-  }
+export const connectWebSocket = (roomId, subscriptions = []) => {
+  const socket = new SockJS("/api/ws-stomp", null, {
+    withCredentials: true,
+  });
 
   stompClient = new Client({
     webSocketFactory: () => socket,
-    reconnectDelay: 5000, // 자동 재연결
-
-    connectHeaders,       // ← 여기서 토큰 헤더 전달
+    reconnectDelay: 5000,
 
     onConnect: () => {
-      console.log('✅ STOMP 연결 성공');
+      console.log("✅ STOMP 연결 성공");
 
-      // 재연결 시에도 다시 구독되도록
       subscriptions.forEach(({ handler, action, callback }) => {
         const destination = `/topic/room/${roomId}/${handler}/${action}`;
+
         stompClient.subscribe(destination, (message) => {
           try {
             const body = JSON.parse(message.body);
-            console.log(`📥 [WS] ${destination}`, body);
+            console.log(`📥 [WebSocket 수신] ${destination}`, body);
             callback?.(body);
           } catch (err) {
-            console.error('❌ 메시지 파싱 오류:', err);
+            console.error("❌ 메시지 파싱 오류:", err);
           }
         });
       });
     },
 
     onStompError: (frame) => {
-      console.error('❌ STOMP 오류:', frame);
+      console.error("❌ STOMP 오류:", frame);
     },
 
     onWebSocketError: (err) => {
-      console.error('❌ WebSocket 오류:', err);
+      console.error("❌ WebSocket 오류:", err);
     },
 
     onDisconnect: (frame) => {
-      console.warn('⚠️ STOMP 연결 종료:', frame);
+      console.warn("⚠️ STOMP 연결 종료:", frame);
     },
   });
 

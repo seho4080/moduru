@@ -12,22 +12,31 @@ export default function useRemoveMode({
   useEffect(() => {
     const m = mapInstance.current;
     if (!m) return;
+    if (!removeModeRef.current) return; // removeMode가 아닐 때 이벤트 등록 X
+
+    // 타입 방어 코드
+    if (!Array.isArray(markers.current)) return;
+    if (!(selected.current instanceof Set)) selected.current = new Set();
 
     const handlerList = [];
 
     markers.current.forEach((mk) => {
+      if (!mk || typeof mk.setOpacity !== "function") return; // 마커 객체 체크
+
       const handler = () => {
         if (!removeModeRef.current) return;
 
         if (selected.current.has(mk)) {
           selected.current.delete(mk);
-          mk.setOpacity(1); // 원래대로 복원
+          mk.setOpacity(1);
         } else {
           selected.current.add(mk);
-          mk.setOpacity(0.5); // 선택된 핀은 흐리게
+          mk.setOpacity(0.5);
         }
 
-        onSelectMarker(new Set(selected.current)); // 선택 목록 전달
+        if (typeof onSelectMarker === "function") {
+          onSelectMarker(new Set(selected.current));
+        }
       };
 
       kakao.maps.event.addListener(mk, 'click', handler);
@@ -35,10 +44,9 @@ export default function useRemoveMode({
     });
 
     return () => {
-      // ✅ cleanup 시 핸들러 제거
       handlerList.forEach(({ mk, handler }) => {
         kakao.maps.event.removeListener(mk, 'click', handler);
       });
     };
-  }, [mapInstance, markers, removeModeRef, selected, onSelectMarker]);
+  }, [mapInstance, markers, removeModeRef.current, selected, onSelectMarker]);
 }

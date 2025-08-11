@@ -16,9 +16,7 @@ export default function SharedPlacePanel({ roomId }) {
   const { removeSharedPlace } = useRemoveSharedPlace();
   const [activeTab, setActiveTab] = useState("전체");
 
-  const isItineraryOpen = useSelector(
-    (s) => s.ui.isItineraryModalOpen
-  );
+  const isItineraryOpen = useSelector((s) => s.ui.isItineraryModalOpen);
 
   const filterCategory = useMemo(
     () => (activeTab === "전체" ? "" : activeTab),
@@ -42,8 +40,9 @@ export default function SharedPlacePanel({ roomId }) {
                 type="button"
                 onClick={() => setActiveTab(tab)}
                 className={`rounded-full px-3 py-1.5 text-sm transition ${
-                  isActive ? "bg-[#FFE135] text-black font-medium"
-                           : "text-slate-600 hover:bg-slate-100"
+                  isActive
+                    ? "bg-[#FFE135] text-black font-medium"
+                    : "text-slate-600 hover:bg-slate-100"
                 }`}
                 aria-current={isActive ? "page" : undefined}
               >

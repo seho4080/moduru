@@ -59,7 +59,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // ⬇️ 경로 통일: Node는 /livekit/* 로 노출 (Nginx가 /api/livekit/* → 여기로 프록시)
-app.use('/livekit/token', tokenRouter);
+app.use('/get-token', tokenRouter);
 app.use('/livekit/webhook', webhookRouter);
 
 // ⬇️ 헬스체크
