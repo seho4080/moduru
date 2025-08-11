@@ -6,6 +6,7 @@ import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.TravelMemberListResponseDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomCreateResponseDto;
 import com.B108.tripwish.domain.room.dto.response.TravelRoomResponseDto;
+import com.B108.tripwish.global.common.dto.RegionResponseDto;
 import com.B108.tripwish.global.common.entity.Region;
 
 public interface RoomService {
@@ -29,5 +30,9 @@ public interface RoomService {
 
   // 동행자 강퇴
   void kickMember(CustomUserDetails user, Long roomId, Long targetUserId);
+
+
+  // 지역 목록 조회(시·도 or 시·군)
+  java.util.List<RegionResponseDto> getRegions(Long parentId);
 
 }

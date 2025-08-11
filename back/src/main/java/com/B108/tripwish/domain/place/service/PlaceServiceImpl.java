@@ -205,16 +205,4 @@ public class PlaceServiceImpl implements PlaceService {
 
 
 
-    // NOTE: 하나의 메서드로 상위/하위 통합 조회 의도
-    @Transactional(readOnly = true)
-    public List<RegionResponseDto> getRegions(Long parentId) {
-      List<Region> regions = (parentId == null)
-              ? regionRepository.findAllByParentIsNullOrderByName()
-              : regionRepository.findAllByParentIdOrderByName(parentId);
-      return regions.stream().map(RegionResponseDto::from).toList();
-    }
-
-
-
-
 }
