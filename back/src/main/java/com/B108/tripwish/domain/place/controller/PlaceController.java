@@ -2,8 +2,9 @@ package com.B108.tripwish.domain.place.controller;
 
 import java.util.List;
 
+import com.B108.tripwish.domain.place.dto.request.PlaceSearchRequest;
 import com.B108.tripwish.domain.place.dto.response.PlaceBucketsResponseDto;
-import com.B108.tripwish.global.common.dto.RegionResponseDto;
+import com.B108.tripwish.domain.place.service.PlaceSearchService;
 import com.B108.tripwish.global.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class PlaceController {
 
   private final PlaceService placeService;
+  private final PlaceSearchService placeSearchService;
 
   // 장소 목록 조회
   @Operation(
@@ -61,41 +63,25 @@ public class PlaceController {
 
 
   @Operation(
-      summary = "AI 기반 장소 목록 조회",
-      description =
-          "사용자가 입력한 자연어 검색어를 기반으로 AI가 장소를 분석하여 반환합니다. " + "해당 검색은 방 ID에 연결된 여행 지역 내에서만 수행됩니다.",
-      responses = {
-        @ApiResponse(responseCode = "200", description = "장소 검색 결과 조회 성공"),
-        @ApiResponse(
-            responseCode = "400",
-            description = "검색어(keyword)가 누락되었거나 잘못된 요청입니다.",
-            content = @Content),
-        @ApiResponse(
-            responseCode = "404",
-            description = "해당 roomId 또는 검색 조건에 해당하는 장소가 없습니다.",
-            content = @Content),
-        @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
-      })
-  @GetMapping("/ai-search")
-  public ResponseEntity<PlaceListResponseDto> getAISearchPlaces(
-      @PathVariable Long roomId, @RequestParam String keyword) {
-    PlaceResponseDto sample =
-        PlaceResponseDto.builder()
-            .placeId(1L)
-            .placeName("스타벅스 강남점")
-            .placeImg("https://example.com/images/place1.jpg")
-            .category("카페")
-            .address("서울특별시 강남구 강남대로 584 (논현동)")
-            .latitude(37.517235)
-            .longitude(127.047325)
-            .isLiked(true)
-            .isWanted(false)
-            .build();
-    List<PlaceResponseDto> list = List.of(sample);
-    PlaceListResponseDto response = new PlaceListResponseDto(list);
-
-    return ResponseEntity.ok(response);
+          summary = "AI 기반 장소 목록 조회",
+          description = "자연어 질의를 받아 roomId의 지역 범위 내에서 AI가 추천한 장소 목록을 반환합니다.",
+          responses = {
+                  @ApiResponse(responseCode = "200"),
+                  @ApiResponse(responseCode = "400", content = @Content),
+                  @ApiResponse(responseCode = "404", content = @Content),
+                  @ApiResponse(responseCode = "500", content = @Content)
+          }
+  )
+  @PostMapping("/ai-search")
+  public ResponseEntity<PlaceListResponseDto> postAiSearch(
+          @AuthenticationPrincipal CustomUserDetails user,
+          @PathVariable Long roomId,
+          @RequestBody PlaceSearchRequest request
+  ) {
+    return ResponseEntity.ok(placeSearchService.searchPlacesByAI(user, roomId, request));
   }
+
+
 
   @Operation(
       summary = "장소 상세 정보 조회",
@@ -117,8 +103,6 @@ public class PlaceController {
     PlaceDetailResponseDto response = placeService.getPlaceDetail(user, roomId, placeId);
     return ResponseEntity.ok(response); // 200
   }
-
-
 
 
 

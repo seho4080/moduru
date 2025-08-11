@@ -39,6 +39,11 @@ public enum ErrorCode {
   CANNOT_KICK_SELF("자기 자신은 강퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
   ROOM_CANNOT_LEAVE_ONLY_OWNER("방장이 유일한 멤버일 경우 탈퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
+  // AI 호출 관련 실패
+  BAD_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
+  AI_SERVER_ERROR("AI 서버 호출 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
+
   // 존재하지 않는 데이터
   ROOM_NOT_FOUND("해당 여행방 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
   ROOM_MEMBER_NOT_FOUND("해당 여행 멤버가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
