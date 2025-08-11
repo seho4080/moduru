@@ -9,24 +9,28 @@ import PlaceSearchList from "./PlaceSearchList";
 import "./placeSearchPanel.css";
 
 const PAGE_SIZE = 20;
+const CATEGORY_OPTIONS = ["전체", "음식점", "명소", "축제", "My 장소"];
 
-const PlaceSearchPanel = ({ roomId, region }) => {
+const PlaceSearchPanel = ({ roomId }) => {
   const [selectedCategory, setSelectedCategory] = useState("전체");
-  const categoryOptions = ["전체", "음식점", "명소", "축제", "My 장소"];
+
+  const listRef = useRef(null);
+
+  const scrollToTop = () => {
+    if (listRef.current) {
+      listRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const handleCategoryClick = (label) => {
     setSelectedCategory(label);
-    // 탭 전환 시에도 맨 위로
-    if (listRef.current)
-      listRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    else window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollToTop();
   };
 
-  const { places = [], loading } = usePlaceSearch(
-    roomId,
-    selectedCategory,
-    region
-  );
+  // 훅 시그니처: (roomId, selectedCategory)
+  const { places = [], loading } = usePlaceSearch(roomId, selectedCategory);
 
   // placeId 누락/중첩 방어
   const normalized = useMemo(
@@ -44,16 +48,6 @@ const PlaceSearchPanel = ({ roomId, region }) => {
   const pager = useLocalPaging(normalized, PAGE_SIZE);
   const { slice, page, totalPages, total, hasPrev, hasNext, prev, next } =
     pager;
-
-  // ✅ 리스트 컨테이너 ref
-  const listRef = useRef(null);
-
-  // ✅ 스크롤 헬퍼
-  const scrollToTop = () => {
-    if (listRef.current)
-      listRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    else window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   const handlePrev = () => {
     prev();
@@ -75,20 +69,21 @@ const PlaceSearchPanel = ({ roomId, region }) => {
             <FiSearch />
           </span>
         </div>
-        <button className="ai-robot-btn" title="AI 추천">
+        <button className="ai-robot-btn" title="AI 추천" type="button">
           <FaRobot />
         </button>
       </div>
 
       {/* 카테고리 탭 */}
       <div className="category-tabs">
-        {categoryOptions.map((label) => (
+        {CATEGORY_OPTIONS.map((label) => (
           <button
             key={label}
             className={`category-tab ${
               selectedCategory === label ? "active" : ""
             }`}
             onClick={() => handleCategoryClick(label)}
+            type="button"
           >
             {label}
           </button>
@@ -109,13 +104,13 @@ const PlaceSearchPanel = ({ roomId, region }) => {
             <PlaceSearchList places={slice} roomId={roomId} />
 
             <div className="pager">
-              <button onClick={handlePrev} disabled={!hasPrev}>
+              <button onClick={handlePrev} disabled={!hasPrev} type="button">
                 이전
               </button>
               <span className="pager-info">
                 {page} / {totalPages} (총 {total}개)
               </span>
-              <button onClick={handleNext} disabled={!hasNext}>
+              <button onClick={handleNext} disabled={!hasNext} type="button">
                 다음
               </button>
             </div>

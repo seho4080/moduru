@@ -1,10 +1,12 @@
 /* global kakao */
 import { useEffect } from 'react';
 
-export default function useMeasureMode({ mapInstance, modeRef, clickLine, moveLine, overlay, dots, drawing }) {
+export default function useMeasureMode({ mapInstance, mode, onUpdate, onComplete }) {
   useEffect(() => {
     const m = mapInstance?.current;
     if (!m) return;
+
+    if (mode !== 'measure') return; // 모드가 measure일 때만 동작
 
     // 👉 정리 함수들
     const clearLine = () => {
@@ -106,6 +108,8 @@ export default function useMeasureMode({ mapInstance, modeRef, clickLine, moveLi
         clickLine.current.setPath(path);
         displayDot(pos, Math.round(clickLine.current.getLength()));
       }
+
+      onUpdate?.(/* 거리, 경로 등 */);
     };
 
     const handleMouseMove = (e) => {
@@ -136,6 +140,7 @@ export default function useMeasureMode({ mapInstance, modeRef, clickLine, moveLi
       }
 
       drawing.current = false;
+      onComplete?.(/* 최종 거리, 경로 등 */);
     };
 
     // ✅ 최초 이벤트 등록
@@ -153,5 +158,5 @@ export default function useMeasureMode({ mapInstance, modeRef, clickLine, moveLi
       clearLine(); clearDots(); clearOverlay();
       drawing.current = false;
     };
-  }, [mapInstance, modeRef]);
+  }, [mapInstance, mode]);
 }
