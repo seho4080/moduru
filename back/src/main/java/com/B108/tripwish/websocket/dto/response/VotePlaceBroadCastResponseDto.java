@@ -10,7 +10,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class VotePlaceBroadCastResponseDto {
-  private Long wantId;
-  private int voteCnt;
-  private String senderId;
+    private Long wantId;
+    private int voteCnt;
+    private String senderId;
 }

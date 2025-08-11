@@ -1,18 +1,24 @@
 package com.B108.tripwish.domain.schedule.repository;
 
-import java.util.List;
-
+import com.B108.tripwish.domain.schedule.entity.ScheduleEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.B108.tripwish.domain.schedule.entity.ScheduleEvent;
+import java.util.List;
 
 public interface ScheduleEventRepository extends JpaRepository<ScheduleEvent, Long> {
 
-  @Query(
-      "SELECT e FROM ScheduleEvent e "
-          + "JOIN FETCH e.wantPlace wp "
-          + "WHERE e.schedule.id = :scheduleId")
-  List<ScheduleEvent> findAllBySchedulesIdWithWantPlace(@Param("scheduleId") Long scheduleId);
+
+    @Query("SELECT e FROM ScheduleEvent e " +
+            "JOIN FETCH e.wantPlace wp " +
+            "WHERE e.schedule.id = :scheduleId")
+    List<ScheduleEvent> findAllBySchedulesIdWithWantPlace(@Param("scheduleId") Long scheduleId);
+
+    @Modifying
+    @Query("delete from ScheduleEvent se where se.schedule.id = :scheduleId")
+    void deleteByScheduleId(@Param("scheduleId") Long scheduleId);
+
+
 }

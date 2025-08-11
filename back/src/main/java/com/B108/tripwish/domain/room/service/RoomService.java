@@ -29,4 +29,5 @@ public interface RoomService {
 
   // 동행자 강퇴
   void kickMember(CustomUserDetails user, Long roomId, Long targetUserId);
+
 }
