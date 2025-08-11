@@ -15,7 +15,4 @@ public interface PlaceService {
   // 카테고리별 + MyPlaces를 한 번에 반환
   PlaceBucketsResponseDto getPlacesBuckets(CustomUserDetails user, Long roomId);
 
-  // 지역 목록 조회(시·도 or 시·군)
-  java.util.List<RegionResponseDto> getRegions(Long parentId);
-
 }

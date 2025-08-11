@@ -11,6 +11,7 @@ import com.B108.tripwish.domain.room.entity.*;
 import com.B108.tripwish.domain.room.repository.CustomPlaceRepository;
 import com.B108.tripwish.domain.schedule.entity.Schedule;
 import com.B108.tripwish.domain.schedule.repository.ScheduleRepository;
+import com.B108.tripwish.global.common.dto.RegionResponseDto;
 import com.B108.tripwish.global.common.entity.Region;
 import com.B108.tripwish.global.common.repository.RegionRepository;
 import org.springframework.stereotype.Service;
@@ -220,5 +221,14 @@ public class RoomServiceImpl implements RoomService {
     travelMemberRepository.deleteById(targetId);
   }
 
+
+  // NOTE: 하나의 메서드로 상위/하위 통합 조회 의도
+  @Transactional(readOnly = true)
+  public List<RegionResponseDto> getRegions(Long parentId) {
+    List<Region> regions = (parentId == null)
+            ? regionRepository.findAllByParentIsNullOrderByName()
+            : regionRepository.findAllByParentIdOrderByName(parentId);
+    return regions.stream().map(RegionResponseDto::from).toList();
+  }
 
 }
