@@ -4,7 +4,9 @@ public enum RedisChannelType {
   PLACE_WANT_ADD("place-want:add"),
   PLACE_WANT_REMOVE("place-want:remove"),
   SCHEDULE_UPDATE("schedule"),
-  PLACE_VOTE("place:vote");
+  PLACE_VOTE("place:vote"),
+  TRAVEL_TIME_STATUS("travel:status"),  // STARTED / ALREADY_RUNNING / DONE / FAILED
+  TRAVEL_TIME_RESULT("travel:result");  // RouteResultResponseDto 본문
 
   private final String channel;
 
