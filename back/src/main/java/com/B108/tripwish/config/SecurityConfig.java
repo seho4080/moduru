@@ -18,6 +18,8 @@ import com.B108.tripwish.domain.auth.security.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor

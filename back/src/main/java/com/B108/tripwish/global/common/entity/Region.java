@@ -18,10 +18,14 @@ public class Region {
     @Column(name = "name", nullable = false)
     private String name;
 
+    // NOTE: parent_id 컬럼 - 최상위(도 단위)는 null
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Region parent;
+
     @Column(name = "lat", nullable = false)
     private Double lat;
 
     @Column(name = "lng", nullable = false)
     private Double lng;
-
 }
