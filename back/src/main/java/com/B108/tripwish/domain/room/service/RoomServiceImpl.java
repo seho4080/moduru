@@ -4,23 +4,23 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.kakaomap.service.KakaomapService;
 import com.B108.tripwish.domain.room.dto.request.CustomPlaceCreateRequestDto;
-import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.*;
 import com.B108.tripwish.domain.room.entity.*;
-import com.B108.tripwish.domain.room.mapper.TravelRoomMapper;
 import com.B108.tripwish.domain.room.repository.CustomPlaceRepository;
-import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
-import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.domain.schedule.entity.Schedule;
 import com.B108.tripwish.domain.schedule.repository.ScheduleRepository;
 import com.B108.tripwish.global.common.entity.Region;
 import com.B108.tripwish.global.common.repository.RegionRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
+import com.B108.tripwish.domain.room.mapper.TravelRoomMapper;
+import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
+import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
@@ -63,7 +63,9 @@ public class RoomServiceImpl implements RoomService {
             .build();
     travelMemberRepository.save(member);
 
-    Schedule schedule = Schedule.builder().room(room).build();
+    Schedule schedule = Schedule.builder()
+            .room(room)
+            .build();
     scheduleRepository.save(schedule);
 
     TravelRoomCreateResponseDto response = new TravelRoomCreateResponseDto(room.getId());
@@ -89,9 +91,7 @@ public class RoomServiceImpl implements RoomService {
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     travelRoomMapper.updateFromDto(request, room);
 
-    Region region =
-        regionRepository
-            .findByName(request.getRegion())
+    Region region = regionRepository.findByName(request.getRegion())
             .orElseThrow(() -> new CustomException(ErrorCode.REGION_NOT_FOUND));
 
     room.setRegion(region);
@@ -124,16 +124,13 @@ public class RoomServiceImpl implements RoomService {
 
   @Transactional
   public Long createCustomPlace(CustomPlaceCreateRequestDto dto) {
-    TravelRoom room =
-        travelRoomRepository
-            .findById(dto.getRoomId())
+    TravelRoom room = travelRoomRepository.findById(dto.getRoomId())
             .orElseThrow(() -> new IllegalArgumentException("해당 room이 존재하지 않습니다."));
 
     // 카카오 API로 주소 받아오기
     String address = kakaomapService.getAddressFromCoords(dto.getLat(), dto.getLng()).getAddress();
 
-    CustomPlace customPlace =
-        CustomPlace.builder()
+    CustomPlace customPlace = CustomPlace.builder()
             .room(room)
             .name(dto.getName())
             .lat(dto.getLat())
@@ -144,19 +141,18 @@ public class RoomServiceImpl implements RoomService {
     return customPlaceRepository.save(customPlace).getId();
   }
 
+
   @Transactional
   public void leaveRoom(CustomUserDetails user, Long roomId) {
     Long userId = user.getUser().getId();
 
-    TravelMember member =
-        travelMemberRepository
+    TravelMember member = travelMemberRepository
             .findByUser_IdAndTravelRoom_Id(userId, roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_MEMBER_NOT_FOUND));
 
     // 방장일 경우
     if (member.getRole() == TravelMemberRole.OWNER) {
-      List<TravelMember> others =
-          travelMemberRepository.findById_RoomId(roomId).stream()
+      List<TravelMember> others = travelMemberRepository.findById_RoomId(roomId).stream()
               .filter(m -> !m.getUser().getId().equals(userId))
               .toList();
 
@@ -174,33 +170,33 @@ public class RoomServiceImpl implements RoomService {
     travelMemberRepository.deleteById(new TravelMemberId(roomId, userId));
   }
 
+
   @Transactional(readOnly = true)
   public TravelMemberListResponseDto getTravelMembers(Long roomId) {
     List<TravelMember> members = travelMemberRepository.findById_RoomId(roomId);
 
-    List<TravelMemberDto> memberDtos =
-        members.stream()
-            .map(
-                member ->
-                    TravelMemberDto.builder()
-                        .userId(member.getUser().getId())
-                        .nickname(member.getUser().getNickname())
-                        .profileImg(member.getUser().getProfileImg())
-                        .isOwner(member.getRole() == TravelMemberRole.OWNER)
-                        .isFriend(false)
-                        .build())
+    List<TravelMemberDto> memberDtos = members.stream()
+            .map(member -> TravelMemberDto.builder()
+                    .userId(member.getUser().getId())
+                    .nickname(member.getUser().getNickname())
+                    .profileImg(member.getUser().getProfileImg())
+                    .isOwner(member.getRole() == TravelMemberRole.OWNER)
+                    .isFriend(false)
+                    .build())
             .collect(Collectors.toList());
 
-    return TravelMemberListResponseDto.builder().members(memberDtos).build();
+    return TravelMemberListResponseDto.builder()
+            .members(memberDtos)
+            .build();
   }
+
 
   @Transactional
   public void kickMember(CustomUserDetails user, Long roomId, Long targetUserId) {
     Long userId = user.getUser().getId();
 
     // 요청자 정보 확인
-    TravelMember me =
-        travelMemberRepository
+    TravelMember me = travelMemberRepository
             .findByUser_IdAndTravelRoom_Id(userId, roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_MEMBER_NOT_FOUND));
 
@@ -223,4 +219,6 @@ public class RoomServiceImpl implements RoomService {
     // 강퇴 실행
     travelMemberRepository.deleteById(targetId);
   }
+
+
 }

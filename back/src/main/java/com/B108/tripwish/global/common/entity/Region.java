@@ -11,16 +11,17 @@ import lombok.*;
 @Builder
 public class Region {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(name = "name", nullable = false)
-  private String name;
+    @Column(name = "name", nullable = false)
+    private String name;
 
-  @Column(name = "lat", nullable = false)
-  private Double lat;
+    @Column(name = "lat", nullable = false)
+    private Double lat;
 
-  @Column(name = "lng", nullable = false)
-  private Double lng;
+    @Column(name = "lng", nullable = false)
+    private Double lng;
+
 }

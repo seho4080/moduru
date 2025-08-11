@@ -27,7 +27,7 @@ public class ScheduleRedisSubscriber implements MessageListener {
 
       // 2. JSON → DTO 변환
       ScheduleMessageResponseDto schedule =
-          objectMapper.readValue(raw, ScheduleMessageResponseDto.class);
+              objectMapper.readValue(raw, ScheduleMessageResponseDto.class);
 
       // 3. Redis 채널
       String topic = "/topic/room/" + schedule.getRoomId() + "/schedule";

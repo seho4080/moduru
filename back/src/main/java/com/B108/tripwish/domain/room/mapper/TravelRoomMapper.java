@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.room.mapper;
 
+import com.B108.tripwish.global.common.entity.Region;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -19,6 +20,8 @@ public interface TravelRoomMapper {
   TravelRoom toEntity(UpdateTravelRoomRequestDto dto);
 
   @Mapping(target = "id", ignore = true) // ID는 수정 안 함
-  @Mapping(target = "region", ignore = true)
+  @Mapping(target = "region",  ignore = true)
   void updateFromDto(UpdateTravelRoomRequestDto dto, @MappingTarget TravelRoom room);
+
+
 }

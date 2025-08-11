@@ -23,4 +23,17 @@ public class AsyncConfig implements AsyncConfigurer {
     executor.initialize();
     return executor;
   }
+
+  @Bean(name = "travelTaskExecutor")
+  public Executor travelTaskExecutor() {
+    ThreadPoolTaskExecutor t = new ThreadPoolTaskExecutor();
+    t.setCorePoolSize(4);
+    t.setMaxPoolSize(8);
+    t.setQueueCapacity(200);
+    t.setThreadNamePrefix("Async-Travel-");
+    t.setAllowCoreThreadTimeOut(true);
+    t.setWaitForTasksToCompleteOnShutdown(true);
+    t.initialize();
+    return t;
+  }
 }
