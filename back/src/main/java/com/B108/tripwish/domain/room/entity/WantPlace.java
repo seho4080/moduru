@@ -25,7 +25,7 @@ public class WantPlace {
   @JoinColumn(name = "room_id", nullable = false)
   private TravelRoom travelRoom;
 
-  @Enumerated
+  @Enumerated(EnumType.STRING )
   @Column(nullable = false, length = 50)
   private PlaceType type;
 

@@ -19,10 +19,11 @@ public class TravelRoomResponseDto {
   private LocalDateTime createdAt; // 생성일시
 
   public static TravelRoomResponseDto from(TravelRoom room) {
+    String regionName = room.getRegion() != null ? room.getRegion().getName() : null;
     return TravelRoomResponseDto.builder()
         .travelRoomId(room.getId())
         .title(room.getTitle())
-        .region(room.getRegion().getName())
+        .region(regionName)
         .startDate(room.getStartDate())
         .endDate(room.getEndDate())
         .createdAt(room.getCreatedAt())

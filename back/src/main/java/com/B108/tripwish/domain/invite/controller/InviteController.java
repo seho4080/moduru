@@ -74,7 +74,7 @@ public class InviteController {
   }
 
   @Operation(
-      summary = "초대 가능한 친구 목록 조회",
+      summary = "초대 가능한 친구 목록 조회 (동행자 목록 조회)",
       description =
           "여행방 안에서 초대 가능한 친구 목록을 조회합니다. 각 친구의 닉네임, 이메일, 방 참여 여부(alreadyInvited)를 포함하여 반환합니다.",
       responses = {
