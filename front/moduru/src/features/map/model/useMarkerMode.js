@@ -1,4 +1,4 @@
-/* src/features/map/hooks/useMarkerMode.js */
+// src/features/map/hooks/useMarkerMode.js
 /* global kakao */
 import { useEffect } from 'react';
 
@@ -9,13 +9,12 @@ export default function useMarkerMode({
   markers,
   selected,
   onSelectMarker,
+  onPinPlaced,
 }) {
   useEffect(() => {
-    // ✅ 지도 인스턴스가 준비되지 않았다면 실행하지 않음
     const m = mapInstance?.current;
     if (!m) return;
 
-    // ✅ 지도 클릭 시 마커 추가
     const handleClick = (e) => {
       if (removeModeRef.current) return;
       if (modeRef.current !== 'marker') return;
@@ -24,36 +23,42 @@ export default function useMarkerMode({
       marker.setMap(m);
       markers.current.push(marker);
 
-      // ✅ 마커 클릭 시 선택/해제 토글
-      kakao.maps.event.addListener(marker, 'click', () => {
-        if (!removeModeRef.current) return;
+      if (!marker.__selectHandlerBound) {
+        const selectHandler = () => {
+          if (!removeModeRef.current) return;
+          if (selected.current.has(marker)) {
+            selected.current.delete(marker);
+            marker.setOpacity(1);
+          } else {
+            selected.current.add(marker);
+            marker.setOpacity(0.5);
+          }
+          onSelectMarker?.(new Set(selected.current));
+        };
+        kakao.maps.event.addListener(marker, 'click', selectHandler);
+        marker.__selectHandlerBound = true;
+      }
 
-        if (selected.current.has(marker)) {
-          selected.current.delete(marker);
-          marker.setOpacity(1);
-        } else {
-          selected.current.add(marker);
-          marker.setOpacity(0.5);
-        }
+      selected.current.clear();
+      marker.setOpacity(1);
+      onSelectMarker?.(new Set(selected.current));
 
-        // ✅ 외부 상태 업데이트
-        onSelectMarker(new Set(selected.current));
-      });
+      // ✅ 핀 찍은 직후 알림
+      onPinPlaced?.({ latLng: e.latLng, marker });
+
+      // 필요 시 즉시 모드 OFF
+      modeRef.current = '';
     };
 
-    // ✅ 지도에 클릭 이벤트 등록
     kakao.maps.event.addListener(m, 'click', handleClick);
-
-    // ✅ cleanup
-    return () => {
-      kakao.maps.event.removeListener(m, 'click', handleClick);
-    };
+    return () => kakao.maps.event.removeListener(m, 'click', handleClick);
   }, [
-    mapInstance?.current,  // ✅ mapInstance가 준비된 후에만 실행
+    mapInstance?.current,
     modeRef,
     removeModeRef,
     markers,
     selected,
     onSelectMarker,
+    onPinPlaced,
   ]);
 }

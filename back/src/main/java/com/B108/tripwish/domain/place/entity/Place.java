@@ -3,6 +3,8 @@ package com.B108.tripwish.domain.place.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.B108.tripwish.global.common.entity.Region;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +19,10 @@ public class Place {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "region_id", nullable = true)
+  private Region region;
 
   @ManyToOne
   @JoinColumn(name = "category_id")

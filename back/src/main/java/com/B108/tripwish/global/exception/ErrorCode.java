@@ -8,6 +8,8 @@ public enum ErrorCode {
   LOGOUT_FAILED("로그아웃 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
   USER_NOT_FOUND("해당 사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
+  TOO_MANY_REQUESTS("요청이 너무 많습니다.", HttpStatus.TOO_MANY_REQUESTS),
+
   // Access Token 예외
   EXPIRED_ACCESS_TOKEN("만료된 Access Token입니다.", HttpStatus.UNAUTHORIZED),
   INVALID_ACCESS_TOKEN("유효하지 않은 Access Token입니다.", HttpStatus.UNAUTHORIZED),
@@ -25,6 +27,14 @@ public enum ErrorCode {
   EXISTS_EMAIL("이미 가입된 이메일입니다.", HttpStatus.CONFLICT),
   EXISTS_NICKNAME("이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT),
   INVALID_NICKNAME("올바르지 않은 닉네임 형식입니다.", HttpStatus.BAD_REQUEST),
+  EMAIL_NOT_VERIFIED("이메일 인증이 완료되지 않았습니다.", HttpStatus.FORBIDDEN),
+  INVALID_NICKNAME_FORMAT("올바르지 않은 닉네임 형식입니다.", HttpStatus.BAD_REQUEST),
+  INVALID_PASSWORD_FORMAT("올바르지 않은 비밀번호 형식입니다.", HttpStatus.BAD_REQUEST),
+
+  // ROOM 관련 추가 예외
+  ROOM_KICK_FORBIDDEN("방장이 아니므로 강퇴할 수 없습니다.", HttpStatus.FORBIDDEN),
+  CANNOT_KICK_SELF("자기 자신은 강퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
+  ROOM_CANNOT_LEAVE_ONLY_OWNER("방장이 유일한 멤버일 경우 탈퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
   // 존재하지 않는 데이터
   ROOM_NOT_FOUND("해당 여행방 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
@@ -34,6 +44,11 @@ public enum ErrorCode {
   RESTAURANT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   SPOT_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
   FESTIVAL_DETAIL_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  WANT_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  CUSTOM_PLACE_NOT_FOUND("해당 장소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  REVIEW_TAG_NOT_FOUND("리뷰 태그를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  REGION_NOT_FOUND("해당 지역을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+  SCHEDULE_NOT_FOUND("해당 일정을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
   // 초대 토큰 관련
   INVALID_INVITE_TOKEN("유효하지 않은 초대 토큰입니다.", HttpStatus.BAD_REQUEST),
@@ -47,7 +62,11 @@ public enum ErrorCode {
   ROOM_DELETE_FORBIDDEN("방 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
   INVALID_OPTION("유효하지 않은 정렬 방식 또는 필터입니다", HttpStatus.BAD_REQUEST),
-  UNSUPPORTED_CATEGORY_TYPE("지원하지 않는 카테고리 타입입니다.", HttpStatus.BAD_REQUEST);
+  UNSUPPORTED_CATEGORY_TYPE("지원하지 않는 카테고리 타입입니다.", HttpStatus.BAD_REQUEST),
+  UNSUPPORTED_PLACE_TYPE("지원하지 않는 장소 타입입니다.", HttpStatus.BAD_REQUEST),
+
+  // 중복 방지
+  DUPLICATE_WANT_PLACE("이미 희망장소에 추가된 장소입니다.", HttpStatus.CONFLICT);
 
   private final String message;
   private final HttpStatus status;

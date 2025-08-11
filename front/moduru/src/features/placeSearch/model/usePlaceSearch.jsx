@@ -1,70 +1,153 @@
-import { useState, useEffect } from 'react';
+// src/features/placeSearch/model/usePlaceSearch.js
+import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import api from "../../../lib/axios";
+// import { dummyPlaces } from "./dummyPlaces"; // 더미 데이터 사용 주석 처리
+import { selectRegionVersion } from "../../../redux/slices/tripRoomSlice";
 
-const categoryMap = {
-  전체: 'all',
-  음식점: 'restaurant',
-  명소: 'spot',
-  축제: 'festival',
+const KOR_TO_CODE = {
+  전체: "all",
+  음식점: "restaurant",
+  명소: "spot",
+  축제: "festival",
 };
 
-export const usePlaceSearch = (roomId, selectedCategory) => {
+const envUseDummy =
+  String(import.meta.env?.VITE_USE_PLACE_DUMMY || "").toLowerCase() === "true";
+
+export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
+  const regionVersion = useSelector(selectRegionVersion);
+  const forceDummy = options.useDummy ?? envUseDummy;
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
+  const reqSeq = useRef(0);
 
   useEffect(() => {
-    const fetchPlaces = async () => {
-      if (!roomId || !selectedCategory) return;
+    if (!roomId || !selectedCategory) {
+      setPlaces([]);
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
+    const mySeq = ++reqSeq.current;
+    setLoading(true);
 
+    (async () => {
       try {
-        const accessToken = localStorage.getItem('accessToken');
-        const categoryCode = categoryMap[selectedCategory];
-        const url = `http://localhost:8080/places/${roomId}?category=${categoryCode}`;
+        // My 장소: 좋아요 목록(id 리스트) 기반 필터
+        if (selectedCategory === "My 장소") {
+          const likedRes = await api.get(`/my-places`, {
+            withCredentials: true,
+          });
+          if (reqSeq.current !== mySeq) return;
 
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
+          const likedList = Array.isArray(likedRes.data) ? likedRes.data : [];
+          const likedIds = new Set(
+            likedList
+              .map((v) => Number(v?.placeId ?? v?.id))
+              .filter((n) => Number.isFinite(n))
+          );
 
-        const raw = await res.text();
-        console.log('[응답 상태]', res.status);
-        console.log('[응답 원문]', raw);
+          if (likedIds.size === 0) {
+            setPlaces([]);
+            return;
+          }
 
-        if (res.status === 404) {
-          console.warn('해당 카테고리에 매핑된 장소가 없습니다.');
-          setPlaces([]);
+          // let source = [];
+          // if (forceDummy) {
+          //   source = dummyPlaces;
+          // } else {
+          const { data, status } = await api.get(`/places/${roomId}`, {
+            params: { category: "all" },
+          });
+          if (reqSeq.current !== mySeq) return;
+          const source =
+            status === 200 && Array.isArray(data?.places) ? data.places : [];
+          // }
+
+          const filtered = source.filter((p) =>
+            likedIds.has(Number(p?.placeId ?? p?.id))
+          );
+
+          const patched = filtered.map((p) => ({
+            ...p,
+            placeId:
+              typeof p.placeId === "number"
+                ? p.placeId
+                : Number(p.placeId ?? p.id),
+            latitude:
+              typeof p.latitude === "number" ? p.latitude : Number(p.latitude),
+            longitude:
+              typeof p.longitude === "number"
+                ? p.longitude
+                : Number(p.longitude),
+          }));
+
+          setPlaces(patched);
           return;
         }
 
-        if (!res.ok) {
-          throw new Error(`API 요청 실패 (status ${res.status})`);
+        // 일반 카테고리
+        // if (forceDummy) {
+        //   const cat = KOR_TO_CODE[selectedCategory] ?? "all";
+        //   const source =
+        //     cat === "all"
+        //       ? dummyPlaces
+        //       : dummyPlaces.filter((d) => d.category === cat);
+        //   if (reqSeq.current === mySeq) setPlaces(source);
+        //   return;
+        // }
+
+        const category = KOR_TO_CODE[selectedCategory] ?? "all";
+        const { data, status } = await api.get(`/places/${roomId}`, {
+          params: { category },
+        });
+        if (reqSeq.current !== mySeq) return;
+
+        let list =
+          status === 200 && Array.isArray(data?.places) ? data.places : [];
+
+        // API 비었을 때 더미 폴백
+        // if (!list.length) {
+        //   const source =
+        //     category === "all"
+        //       ? dummyPlaces
+        //       : dummyPlaces.filter((d) => d.category === category);
+        //   list = source;
+        // }
+
+        const patched = list.map((p) => ({
+          ...p,
+          placeId:
+            typeof p.placeId === "number"
+              ? p.placeId
+              : Number(p.placeId ?? p.id),
+          latitude:
+            typeof p.latitude === "number" ? p.latitude : Number(p.latitude),
+          longitude:
+            typeof p.longitude === "number" ? p.longitude : Number(p.longitude),
+        }));
+
+        setPlaces(patched);
+      } catch (e) {
+        if (reqSeq.current !== mySeq) return;
+
+        if (selectedCategory === "My 장소") {
+          setPlaces([]);
+        } else {
+          // const category = KOR_TO_CODE[selectedCategory] ?? "all";
+          // const source =
+          //   category === "all"
+          //     ? dummyPlaces
+          //     : dummyPlaces.filter((d) => d.category === category);
+          // setPlaces(source);
+          setPlaces([]);
         }
-
-        const data = JSON.parse(raw);
-        const rawPlaces = Array.isArray(data.places) ? data.places : [];
-
-        // NOTE: 서버에서 전체(all) 데이터를 먼저 받아온 뒤, 클라이언트에서 카테고리별로 필터링하는 방식.
-        const filteredPlaces =
-          categoryCode === 'all'
-            ? rawPlaces
-            : rawPlaces.filter(
-                (place) => place.category?.trim() === selectedCategory
-              );
-
-        setPlaces(filteredPlaces);
-      } catch (err) {
-        console.error('장소 API 호출 실패:', err.message);
-        setPlaces([]);
       } finally {
-        setLoading(false);
+        if (reqSeq.current === mySeq) setLoading(false);
       }
-    };
-
-    fetchPlaces();
-  }, [roomId, selectedCategory]);
+    })();
+  }, [roomId, selectedCategory, forceDummy, regionVersion]);
 
   return { places, loading };
 };

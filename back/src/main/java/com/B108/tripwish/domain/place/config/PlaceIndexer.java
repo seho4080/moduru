@@ -8,8 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.B108.tripwish.domain.place.document.PlaceDocument;
 import com.B108.tripwish.domain.place.entity.Place;
-import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
-import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
+import com.B108.tripwish.domain.place.repository.PlaceRepository;
+import com.B108.tripwish.domain.place.repository.PlaceSearchRepository;
 
 import lombok.RequiredArgsConstructor;
 

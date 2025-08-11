@@ -12,7 +12,10 @@ import com.B108.tripwish.domain.user.dto.request.UpdateUserRequestDto;
 import com.B108.tripwish.domain.user.dto.response.InfoUserResponseDto;
 import com.B108.tripwish.domain.user.dto.response.UserTravelRoomResponseDto;
 import com.B108.tripwish.domain.user.service.UserService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
+import com.B108.tripwish.global.exception.CustomException;
+import com.B108.tripwish.global.exception.ErrorCode;
+import com.B108.tripwish.global.util.RedisUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
   private final UserService userService;
+  private final RedisUtil redisUtil;
 
   @Operation(
       summary = "회원가입",
@@ -41,7 +45,16 @@ public class UserController {
       })
   @PostMapping("/signup")
   public ResponseEntity<CommonResponse> signup(@RequestBody SignUpRequestDto request) {
+    String email = request.getEmail();
+
+    // NOTE: 이메일 인증 여부 확인 (Redis 기반)
+    if (!redisUtil.isVerified(email)) {
+      throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+    }
+
+    // NOTE: 인증 통과 시 회원가입 진행
     userService.addUser(request);
+
     return ResponseEntity.ok(new CommonResponse("SIGNUP_SUCCESS", "회원가입이 완료되었습니다."));
   }
 

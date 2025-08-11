@@ -1,0 +1,19 @@
+/* src/features/tripPlan/ui/ItineraryDayCard.css */
+.itinerary-day-card{
+  width:380px;   /* 기존 460px → 380px로 줄임 */
+  height:600px;  /* 필요시 높이도 조절 */
+  border-radius:14px;
+  background:#ffffff;
+  border:1px solid #e8edf6;
+  box-shadow: 0 16px 40px rgba(159,181,215,0.25);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.day-card-body{
+  flex:1; padding:16px; display:flex; align-items:flex-start; justify-content:center;
+}
+.hint{
+  width:100%; margin-top:8px; padding:14px 0;
+  text-align:center; color:#98a4b3; font-weight:700;
+  background:#f6f7f9; border-radius:14px;
+  box-shadow: none !important;
+}

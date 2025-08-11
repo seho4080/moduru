@@ -1,88 +1,58 @@
-version: "3.8"
-
 services:
   ##########################################
   # 1. LiveKit 서버
   ##########################################
   livekit:
     image: livekit/livekit-server
+    expose:
+      - "7880"
     ports:
-      - "7880:7880"                     # WebSocket signaling
-      - "7881:7881"                     # ICE TCP
-      - "7882:7882/udp"                 # ICE UDP
-      - "30000-30010:30000-30010/udp"   # Media UDP 포트 범위
+      - "7881:7881"
+      - "7882:7882/udp"
+      - "30000-30010:30000-30010/udp"
     environment:
-      - LIVEKIT_API_KEY=devkey
-      - LIVEKIT_API_SECRET=secret
-      - LIVEKIT_UDP_PORT=7882
-      - LIVEKIT_UDP_PORT_RANGE=30000-30010
-      - LIVEKIT_PUBLIC_IP=host.docker.internal  # 로컬 개발용
-      - LIVEKIT_STUN_URIS=stun:stun.l.google.com:19302
-      - LIVEKIT_WEBHOOK_URLS=http://host.docker.internal:3001/webhook/livekit
-    command: ["--dev", "--bind", "0.0.0.0"]
+      LIVEKIT_KEYS: "APIExfXARpQDyLR: aiMU5fnfvAXXRATTtf8i3lLSghwiqPNA7RznUlKIqmtA"
+      LIVEKIT_UDP_PORT: "7882"
+      LIVEKIT_UDP_PORT_RANGE: "30000-30010"
+      LIVEKIT_PUBLIC_IP: "3.34.53.245"
+      LIVEKIT_STUN_URIS: "stun:stun.l.google.com:19302"
+      LIVEKIT_WEBHOOK_URLS: "http://node-backend:4000/livekit/webhook"
+    command: ["--bind", "0.0.0.0"]
     networks:
       - app-network
-  ##########################################
-  # 2. 프론트엔드 (node-test)
-  ##########################################
-  
-  # front-node:
-  #   build:
-  #     context: ./front-node
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./front-node:/app      # 코드 변경 즉시 반영
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - CHOKIDAR_USEPOLLING=true  # 필요시 파일 변경 감지 옵션
-  #   depends_on:
-  #     - backend                  # (optional) 백엔드 서비스 이름
-  #   networks:
-  #     - app-network
-
-
-
   ##########################################
   # 2. 프론트엔드 (React/Vite 등)
   ##########################################
   frontend:
     build:
       context: ./front/moduru
+      dockerfile: Dockerfile
     ports:
       - "5173:5173"
-    volumes:
-      - ./front/moduru:/app
+    # volumes:
+      # - ./front/moduru:/app
       # - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
     networks:
       - app-network
-
+  ##########################################  
+  # 3. DB (postgresql)
   ##########################################
-  # 3. PostgreSQL 데이터베이스
-  ##########################################
-  # db:
-  #   image: postgres:16.9
-  #   container_name: pg-db
-  #   ports:
-  #     - "5432:5432"
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: ssafy
-  #     POSTGRES_DB: mydb
-  #   volumes:
-  #     - ./pg-data:/var/lib/postgresql/data
-  #     - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #   restart: always
-  #   networks:
-  #     - app-network
-
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ssafy
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data     # 데이터 저장 할 장소
+      # - ./insert-data:/docker-entrypoint-initdb.d   # init 스크립트 자동 실행
+    networks:
+      - app-network   # 이렇게 바꾸기!
   ##########################################
   # 4. 백엔드 (Spring Boot)
   ##########################################
@@ -93,20 +63,30 @@ services:
     ports:
       - "8080:8080"
     container_name: backend
-    restart: always
+    # restart: always
     env_file: .env
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
-      - postgresql_user=${postgresql_user}
-      - postgresql_password=${postgresql_password}
-      - REDIS_HOST=redis        # ← 여기
-      - REDIS_PORT=6379
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
       - ELASTICSEARCH_HOST=elasticsearch
       - ELASTICSEARCH_PORT=9200
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EMAIL_ID=lhjlizzie@gmail.com
+      - EMAIL_PASSWORD="hsml ohoh wpix homy"
+      - KAKAO_API_KEY=${KAKAO_API_KEY}
+      - SPRING_MAIL_HOST=smtp.gmail.com
+      - SPRING_MAIL_PORT=587
+      - SPRING_MAIL_USERNAME=${EMAIL_ID}
+      - SPRING_MAIL_PASSWORD="${EMAIL_PASSWORD}"# 앱 비밀번호. 반드시 따옴표
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     depends_on:
-      # - db
       redis:
         condition: service_healthy
       elasticsearch:
@@ -173,6 +153,53 @@ services:
       - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
     networks:
       - app-network
+  ##########################################
+  # 8. 데이터 넣을 파이썬 코드
+  ##########################################
+  data-loader:
+    image: python:3.11-slim
+    container_name: data_loader
+    working_dir: /app
+    volumes:
+      - ./insert-data/insert_data:/app         # 스크립트가 있는 로컬 폴더
+    depends_on:
+      - db
+    networks:
+      - app-network
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: mydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ssafy
+    # command: ["python", "insert_data_docker.py"]  # 스크립트 이름
+    command: >
+        sh -c "set -x && \
+              pip install psycopg2-binary pgvector && \
+              python insert_data_docker.py && \
+              python festival_data_docker.py && \
+              sleep 300"
+# python spot_data_docker.py && \      
 
+  ##########################################
+  # 9. nginx(리버스 프록시)
+  ##########################################
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/tripwish.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./front/moduru/dist:/usr/share/nginx/html:ro
+      - /etc/letsencrypt/live/moduru.co.kr:/etc/letsencrypt/live/moduru.co.kr:ro
+      - /etc/letsencrypt/archive/moduru.co.kr:/etc/letsencrypt/archive/moduru.co.kr:ro
+    depends_on:
+      - backend
+    networks:
+      - app-network
 networks:
   app-network:
+volumes:
+  pgdata:
