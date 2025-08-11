@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.B108.tripwish.domain.room.entity.TravelMember;
 import com.B108.tripwish.domain.room.entity.TravelRoom;
+import com.B108.tripwish.domain.user.entity.User;
 
 public interface RoomReaderService {
 
@@ -32,4 +33,6 @@ public interface RoomReaderService {
   void travelMemeberSave(TravelMember tm);
 
   TravelRoom findById(Long roomId);
+
+  List<User> findUsersByRoomId(Long roomId);
 }

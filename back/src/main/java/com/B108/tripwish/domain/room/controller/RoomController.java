@@ -1,20 +1,21 @@
 package com.B108.tripwish.domain.room.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.domain.room.dto.request.AddPlaceWantRequestDto;
+import com.B108.tripwish.domain.room.dto.request.CustomPlaceCreateRequestDto;
 import com.B108.tripwish.domain.room.dto.request.UpdateTravelRoomRequestDto;
 import com.B108.tripwish.domain.room.dto.response.*;
 import com.B108.tripwish.domain.room.service.RoomService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
+import com.B108.tripwish.domain.room.service.WantPlaceService;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 public class RoomController {
 
   private final RoomService roomService;
+  private final WantPlaceService wantPlaceService;
+  private final WantPlaceReaderService wantPlaceReaderService;
 
   @Operation(
       summary = "여행 방 생성",
@@ -88,10 +91,11 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @DeleteMapping("/{roomId}/leave")
-  public ResponseEntity<CommonResponse> leaveTravelRoom(@PathVariable Long roomId) {
-    // 서비스 단에서 방장이 탈퇴시 임의로 다른 사람을 owner 변경하고 해당 사용자(방장) 탈퇴.
-    CommonResponse response = new CommonResponse("ROOM_LEAVE_SUCCESS", "여행방에서 성공적으로 탈퇴했습니다.");
-    return ResponseEntity.ok(response);
+  public ResponseEntity<CommonResponse> leaveTravelRoom(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
+
+    roomService.leaveRoom(user, roomId);
+    return ResponseEntity.ok(new CommonResponse("ROOM_LEAVE_SUCCESS", "여행방에서 성공적으로 탈퇴했습니다."));
   }
 
   @Operation(
@@ -118,26 +122,6 @@ public class RoomController {
   }
 
   @Operation(
-      summary = "희망 장소 추가",
-      description = "해당 장소를 희망 장소 목록에 추가합니다. 중복 추가는 방지됩니다.",
-      responses = {
-        @ApiResponse(responseCode = "200", description = "희망 장소 추가 성공"),
-        @ApiResponse(
-            responseCode = "404",
-            description = "해당 roomId 또는 장소 정보를 찾을 수 없습니다.",
-            content = @Content),
-        @ApiResponse(responseCode = "409", description = "이미 희망 장소에 추가된 경우", content = @Content),
-        @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-      })
-  @PostMapping("/{roomId}/wants")
-  public ResponseEntity<CommonResponse> addPlaceWant(
-      @PathVariable Long roomId, @RequestBody AddPlaceWantRequestDto request) {
-    // 서비스 단 미작성
-    CommonResponse response = new CommonResponse("PLACE_WANT_ADD_SUCCESS", "희망 장소가 성공적으로 추가되었습니다.");
-    return ResponseEntity.ok(response);
-  }
-
-  @Operation(
       summary = "희망 장소 목록 조회",
       description = "희망 장소 목록을 조회합니다.",
       responses = {
@@ -149,60 +133,10 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @GetMapping("/{roomId}/wants")
-  public ResponseEntity<PlaceWantListResponseDto> getPlaceWants(@PathVariable Long roomId) {
-    // 서비스단 미작성
-    PlaceWantDto sample1 =
-        PlaceWantDto.builder()
-            .wantId(1L)
-            .placeId(1L)
-            .placeName("성심당")
-            .placeImg("https://example.com/image.jpg")
-            .category("카페")
-            .address("대전 중구 중앙로 56")
-            .latitude(36.3272)
-            .longitude(127.4296)
-            .isLiked(true)
-            .isWanted(true)
-            .isVoted(false)
-            .build();
+  public ResponseEntity<PlaceWantListResponseDto> getPlaceWants(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
 
-    PlaceWantDto sample2 =
-        PlaceWantDto.builder()
-            .wantId(2L)
-            .placeId(2L)
-            .placeName("대전엑스포과학공원")
-            .placeImg("https://example.com/expo.jpg")
-            .category("관광지")
-            .address("대전 유성구 엑스포로 107")
-            .latitude(36.3740)
-            .longitude(127.3865)
-            .isLiked(false)
-            .isWanted(true)
-            .isVoted(true)
-            .build();
-
-    PlaceWantListResponseDto response =
-        PlaceWantListResponseDto.builder().placesWant(List.of(sample1, sample2)).build();
-
-    return ResponseEntity.ok(response);
-  }
-
-  @Operation(
-      summary = "희망 장소 삭제",
-      description = "해당 희망 장소를 목록에서 삭제합니다.",
-      responses = {
-        @ApiResponse(responseCode = "200", description = "희망 장소 삭제 성공"),
-        @ApiResponse(
-            responseCode = "404",
-            description = "해당 roomId 또는 장소 정보를 찾을 수 없습니다.",
-            content = @Content),
-        @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
-      })
-  @DeleteMapping("/{roomId}/wants/{wantId}")
-  public ResponseEntity<CommonResponse> getPlaceWants(
-      @PathVariable Long roomId, @PathVariable Long wantId) {
-    // 서비스단 미작성
-    CommonResponse response = new CommonResponse("WANT_DELETE_SUCCESS", "희망 장소에서 성공적으로 삭제되었습니다.");
+    PlaceWantListResponseDto response = wantPlaceReaderService.getWantList(user, roomId);
     return ResponseEntity.ok(response);
   }
 
@@ -218,32 +152,41 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
   @GetMapping("/{roomId}/members")
-  public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(@PathVariable Long roomId) {
+  public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
 
-    // 더미 데이터 예시
-    TravelMemberDto member1 =
-        TravelMemberDto.builder()
-            .userId(1L)
-            .nickname("여행덕후123")
-            .profileImg("\"profile_basic.png\"")
-            .isFriend(false)
-            .isOwner(true)
-            .build();
-
-    TravelMemberDto member2 =
-        TravelMemberDto.builder()
-            .userId(2L)
-            .nickname("빵순이")
-            .profileImg("\"profile_basic.png\"")
-            .isFriend(true)
-            .isOwner(false)
-            .build();
-
-    TravelMemberListResponseDto response =
-        TravelMemberListResponseDto.builder().members(List.of(member1, member2)).build();
-
+    TravelMemberListResponseDto response = roomService.getTravelMembers(roomId);
     return ResponseEntity.ok(response);
   }
+
+  //    @GetMapping("/{roomId}/members")
+  //    public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(@PathVariable Long
+  // roomId) {
+  //
+  //      // 더미 데이터 예시
+  //      TravelMemberDto member1 =
+  //          TravelMemberDto.builder()
+  //              .userId(1L)
+  //              .nickname("여행덕후123")
+  //              .profileImg("\"profile_basic.png\"")
+  //              .isFriend(false)
+  //              .isOwner(true)
+  //              .build();
+  //
+  //      TravelMemberDto member2 =
+  //          TravelMemberDto.builder()
+  //              .userId(2L)
+  //              .nickname("빵순이")
+  //              .profileImg("\"profile_basic.png\"")
+  //              .isFriend(true)
+  //              .isOwner(false)
+  //              .build();
+  //
+  //      TravelMemberListResponseDto response =
+  //          TravelMemberListResponseDto.builder().members(List.of(member1, member2)).build();
+  //
+  //      return ResponseEntity.ok(response);
+  //    }
 
   @Operation(
       summary = "동행자 강퇴",
@@ -260,11 +203,12 @@ public class RoomController {
       })
   @DeleteMapping("/{roomId}/kick/{targetUserId}")
   public ResponseEntity<CommonResponse> kickTravelMember(
-      @PathVariable Long roomId, @PathVariable Long targetUserId) {
-    // 서비스단에서: user.getId()가 해당 roomId의 방장인지 확인 + 본인이 아닌 다른 유저인지 확인
+      @AuthenticationPrincipal CustomUserDetails user,
+      @PathVariable Long roomId,
+      @PathVariable Long targetUserId) {
 
-    CommonResponse response = new CommonResponse("KICK_SUCCESS", "사용자가 여행방에서 강퇴되었습니다.");
-    return ResponseEntity.ok(response);
+    roomService.kickMember(user, roomId, targetUserId);
+    return ResponseEntity.ok(new CommonResponse("KICK_SUCCESS", "사용자가 여행방에서 강퇴되었습니다."));
   }
 
   @Operation(
@@ -280,32 +224,47 @@ public class RoomController {
             content = @Content),
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
-  @PostMapping("/{wantId}/votes")
-  public ResponseEntity<CommonResponse> votePlace(@PathVariable Long wantId) {
-    // 서비스단에서: user.getId()가 해당 roomId의 방장인지 확인 + 본인이 아닌 다른 유저인지 확인
-
+  @PostMapping("/{roomId}/votes/{wantId}")
+  public ResponseEntity<CommonResponse> votePlace(
+      @AuthenticationPrincipal CustomUserDetails user,
+      @PathVariable Long roomId,
+      @PathVariable Long wantId) {
+    wantPlaceService.toggleVotePlace(user, roomId, wantId);
     CommonResponse response = new CommonResponse("VOTE_SUCCESS", "장소 투표가 완료되었습니다.");
     return ResponseEntity.ok(response);
   }
 
   @Operation(
-      summary = "장소 투표 취소",
-      description = "내가 해당 희망장소에 했던 투표를 취소합니다.",
+      summary = "커스텀 장소 추가",
+      description = "사용자가 여행 방 내에서 직접 커스텀 장소를 생성합니다. 위도(lat), 경도(lng)를 기반으로 주소를 자동으로 변환하여 저장됩니다.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "커스텀 장소 생성 요청 데이터",
+              required = true,
+              content =
+                  @Content(
+                      mediaType = "application/json",
+                      schema = @Schema(implementation = CustomPlaceCreateRequestDto.class))),
       responses = {
-        @ApiResponse(responseCode = "200", description = "장소 투표 취소 성공"),
-        @ApiResponse(responseCode = "401", description = "인증 실패 (AccessToken 누락 / 유효하지 않음 / 만료됨)"),
-        @ApiResponse(responseCode = "403", description = "투표한 적이 없는 사용자입니다.", content = @Content),
+        @ApiResponse(
+            responseCode = "200",
+            description = "커스텀 장소 생성 성공",
+            content =
+                @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = Long.class) // 반환값은 생성된 커스텀 장소 ID
+                    )),
+        @ApiResponse(responseCode = "400", description = "요청 데이터 유효성 실패", content = @Content),
         @ApiResponse(
             responseCode = "404",
-            description = "해당 wantId 또는 사용자 정보를 찾을 수 없습니다.",
+            description = "해당 roomId에 해당하는 여행 방 없음",
             content = @Content),
-        @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
-  @DeleteMapping("/{wantId}/votes/me")
-  public ResponseEntity<CommonResponse> cancelVotePlace(@PathVariable Long wantId) {
-    // 서비스단에서: userDetails.getId()가 해당 wantId에 대해 투표한 기록이 있는지 확인 후 삭제
-
-    CommonResponse response = new CommonResponse("VOTE_CANCEL_SUCCESS", "장소 투표가 취소되었습니다.");
-    return ResponseEntity.ok(response);
+  @PostMapping("/custom-place")
+  public ResponseEntity<Long> createCustomPlace(
+      @RequestBody CustomPlaceCreateRequestDto requestDto) {
+    Long customPlaceId = roomService.createCustomPlace(requestDto);
+    return ResponseEntity.ok(customPlaceId);
   }
 }

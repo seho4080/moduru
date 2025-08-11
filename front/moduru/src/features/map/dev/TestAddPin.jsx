@@ -1,89 +1,119 @@
-// builtin
+// // external 파이팅..!
+// import React, { useEffect, useState } from "react";
+// import { useDispatch } from "react-redux";
 
-// external
-import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+// // internal
+// import { addPin, removePin } from "../../../redux/slices/pinSlice";
+// import {
+//   connectWebSocket,
+//   publishMessage,
+// } from "/src/features/webSocket/socket";
 
-// internal
-import { addPin } from "../../../redux/slices/mapSlice";
-import { connectWebSocket, sendMessage } from "/src/features/webSocket/Socket";
+// /**
+//  * WebSocket add/remove 테스트용 버튼
+//  * @param {object} props
+//  * @param {string} props.roomId - 현재 여행방 ID
+//  */
+// const TestAddRemovePin = ({ roomId }) => {
+//   const dispatch = useDispatch();
+//   const [isConnected, setIsConnected] = useState(false);
+//   const [lastWantId, setLastWantId] = useState(null); // 백에서 받은 wantId 저장
 
-// relative
+//   useEffect(() => {
+//     if (!roomId) return;
 
-/**
- * 테스트용 핀 추가 버튼 (WebSocket 테스트)
- * @param {object} props
- * @param {string} props.roomId - 현재 여행방 ID
- */
-const TestAddPin = ({ roomId }) => {
-  const dispatch = useDispatch();
-  const [isConnected, setIsConnected] = useState(false);
+//     connectWebSocket(roomId, [
+//       {
+//         handler: "place-want",
+//         action: "add",
+//         callback: (message) => {
+//           console.log("서버에서 수신한 add 메시지:", message);
+//           dispatch(addPin(message)); // 백에서 받은 message 객체를 그대로 핀으로 저장
+//           setLastWantId(message.wantId); // 나중에 제거할 수 있도록 저장
+//         },
+//       },
+//       {
+//         handler: "place-want",
+//         action: "remove",
+//         callback: (message) => {
+//           console.log("서버에서 수신한 remove 메시지:", message);
+//           dispatch(removePin({ wantId: message.wantId }));
+//         },
+//       },
+//     ]);
 
-  useEffect(() => {
-    if (!roomId) return;
+//     const interval = setInterval(() => {
+//       if (window.stompClient?.connected) {
+//         setIsConnected(true);
+//         clearInterval(interval);
+//       }
+//     }, 500);
 
-    connectWebSocket(roomId, (message) => {
-      console.log("서버에서 수신한 메시지:", message);
-      // TODO: 메시지 유형에 따라 분기 처리 가능
-    });
+//     return () => clearInterval(interval);
+//   }, [roomId]);
 
-    // NOTE: 0.5초마다 연결 상태 확인
-    const interval = setInterval(() => {
-      if (window.stompClient?.connected) {
-        setIsConnected(true);
-        clearInterval(interval);
-        console.log("STOMP 연결 완료 후 버튼 활성화");
-      }
-    }, 500);
+//   const handleAdd = () => {
+//     if (!roomId || !isConnected) {
+//       alert("WebSocket 연결 안 됨");
+//       return;
+//     }
 
-    return () => clearInterval(interval);
-  }, [roomId]);
+//     const pinPayload = {
+//       type: "place",
+//       id: 3, // 원하는 고정 id
+//       roomId,
+//     };
 
-  /**
-   * 핀 추가 버튼 클릭 시 호출됨
-   */
-  const handleAdd = () => {
-    if (!roomId || !isConnected) {
-      alert("STOMP 연결되지 않았습니다.");
-      return;
-    }
+//     publishMessage(roomId, "place-want", "add", pinPayload);
+//   };
 
-    const id = `fake-${Date.now()}`;
-    const lat = 37.5665 + Math.random() * 0.01;
-    const lng = 126.978 + Math.random() * 0.01;
+//   const handleRemove = () => {
+//     if (!roomId || !isConnected || !lastWantId) {
+//       alert("삭제할 wantId가 없습니다.");
+//       return;
+//     }
 
-    const pinData = {
-      type: "pin:add",
-      id,
-      lat,
-      lng,
-      roomId,
-    };
+//     publishMessage(roomId, "place-want", "remove", {
+//       roomId,
+//       wantId: lastWantId,
+//     });
+//     setLastWantId(null);
+//   };
 
-    sendMessage(pinData); // 서버로 전송
-    dispatch(addPin(pinData)); // 로컬 스토어 반영
-  };
+//   return (
+//     <div style={{ position: "absolute", top: 20, left: 20, zIndex: 1000 }}>
+//       <button
+//         onClick={handleAdd}
+//         disabled={!isConnected}
+//         style={{
+//           marginBottom: "8px",
+//           padding: "8px 12px",
+//           backgroundColor: "#4caf50",
+//           color: "white",
+//           border: "none",
+//           borderRadius: "6px",
+//           marginRight: "8px",
+//           cursor: isConnected ? "pointer" : "not-allowed",
+//         }}
+//       >
+//         가짜 핀 추가
+//       </button>
+//       <button
+//         onClick={handleRemove}
+//         disabled={!isConnected || !lastWantId}
+//         style={{
+//           padding: "8px 12px",
+//           backgroundColor: "#f44336",
+//           color: "white",
+//           border: "none",
+//           borderRadius: "6px",
+//           cursor: isConnected && lastWantId ? "pointer" : "not-allowed",
+//         }}
+//       >
+//         가짜 핀 제거
+//       </button>
+//     </div>
+//   );
+// };
 
-  return (
-    <button
-      onClick={handleAdd}
-      disabled={!isConnected}
-      style={{
-        position: "absolute",
-        top: 20,
-        left: 20,
-        zIndex: 1000,
-        padding: "8px 12px",
-        backgroundColor: isConnected ? "#4caf50" : "#ccc",
-        color: "white",
-        border: "none",
-        borderRadius: "6px",
-        cursor: isConnected ? "pointer" : "not-allowed",
-      }}
-    >
-      📍 핀 추가 (가짜)
-    </button>
-  );
-};
-
-export default TestAddPin;
+// export default TestAddRemovePin;

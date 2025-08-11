@@ -7,17 +7,23 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // internal
 import MainPageLayout from "../pages/mainPage/MainPageLayout";
 import TripRoomPage from "../pages/tripRoomPage/TripRoomPage";
-// tailwind 확인
-import TestTailWind from "../pages/exTailwind";
+import MyPageLayout from "../pages/myPage/MyPageLayout";
+import MyTravelSpacePage from "../pages/myPage/MyTravelSpacePage";
+import InvitePage from '../pages/invitePage/InvitePage';
 
 const RouterComponent = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainPageLayout />} />
-        <Route path="/trip-room" element={<TripRoomPage />} />
-        <Route path="/test-tailwind" element={<TestTailWind />} />
-        {/* 테스트 경로(실행되면 삭제) */}
+        {/* <Route path="/trip-room" element={<TripRoomPage />} /> */}
+        <Route path="/my-page" element={<MyPageLayout />} />
+        <Route
+          path="/my-page/my-travel-space"
+          element={<MyTravelSpacePage />}
+        />
+        <Route path="/trip-room/:id" element={<TripRoomPage />} />
+        <Route path="/invite/:inviteToken" element={<InvitePage />} />
       </Routes>
     </BrowserRouter>
   );

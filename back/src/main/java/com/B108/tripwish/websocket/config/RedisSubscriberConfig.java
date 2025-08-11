@@ -1,11 +1,14 @@
 package com.B108.tripwish.websocket.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
-import com.B108.tripwish.websocket.subscriber.PlaceWantRedisSubscriber;
+import com.B108.tripwish.websocket.subscriber.PlaceWantAddSubscriber;
+import com.B108.tripwish.websocket.subscriber.PlaceWantRemoveSubscriber;
 import com.B108.tripwish.websocket.subscriber.ScheduleRedisSubscriber;
+import com.B108.tripwish.websocket.subscriber.VotePlaceSubscriber;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -14,15 +17,22 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RedisSubscriberConfig {
 
+  @Qualifier("redisMessageListenerContainer")
   private final RedisMessageListenerContainer listenerContainer;
+
   private final ScheduleRedisSubscriber scheduleRedisSubscriber;
-  private final PlaceWantRedisSubscriber placeWantRedisSubscriber;
+  private final PlaceWantAddSubscriber placeWantAddSubscriber;
+  private final PlaceWantRemoveSubscriber placeWantRemoveSubscriber;
+  private final VotePlaceSubscriber votePlaceSubscriber;
 
   @PostConstruct
   public void init() {
+    // RedisChannelType 기반으로 구독
+    listenerContainer.addMessageListener(scheduleRedisSubscriber, new PatternTopic("schedule"));
     listenerContainer.addMessageListener(
-        scheduleRedisSubscriber, new PatternTopic("/topic/room/*/schedule"));
+        placeWantAddSubscriber, new PatternTopic("place-want:add"));
     listenerContainer.addMessageListener(
-        placeWantRedisSubscriber, new PatternTopic("/topic/room/*/place-want"));
+        placeWantRemoveSubscriber, new PatternTopic("place-want:remove"));
+    listenerContainer.addMessageListener(votePlaceSubscriber, new PatternTopic("place:vote"));
   }
 }

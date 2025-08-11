@@ -3,19 +3,22 @@ package com.B108.tripwish.domain.auth.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.B108.tripwish.domain.auth.dto.JwtToken;
+import com.B108.tripwish.domain.auth.dto.request.EmailRequestDto;
+import com.B108.tripwish.domain.auth.dto.request.EmailVerifyRequestDto;
 import com.B108.tripwish.domain.auth.dto.request.LoginRequestDto;
 import com.B108.tripwish.domain.auth.dto.response.LoginResponseDto;
 import com.B108.tripwish.domain.auth.dto.response.ReissueResponseDto;
+import com.B108.tripwish.domain.auth.service.AuthMailService;
 import com.B108.tripwish.domain.auth.service.AuthService;
-import com.B108.tripwish.global.dto.CommonResponse;
+import com.B108.tripwish.global.common.dto.CommonResponse;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 import com.B108.tripwish.global.exception.ErrorResponse;
+import com.B108.tripwish.global.util.CookieUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +27,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/auth")
 public class AuthController {
   private final AuthService authService;
+  private final AuthMailService authMailService;
 
   @Operation(
       summary = "로그인",
@@ -53,15 +60,17 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
       })
   @PostMapping("/login")
-  public LoginResponseDto login(@RequestBody LoginRequestDto login) {
+  public LoginResponseDto login(@RequestBody LoginRequestDto login, HttpServletResponse response) {
     String email = login.getEmail();
     String password = login.getPassword();
-    JwtToken jwtToken = authService.login(email, password);
+    JwtToken jwtToken = authService.login(email, password, response);
     log.info(
         "jwtToken accessToken = {}, refreshToken = {}",
         jwtToken.getAccessToken(),
         jwtToken.getRefreshToken());
-    return new LoginResponseDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken());
+    return new LoginResponseDto(
+        jwtToken.getAccessToken(), jwtToken.getRefreshToken()); // 개발 중 응답 확인용
+    //    return ResponseEntity.ok(new CommonResponse("LOGIN_SUCCESS", "로그인이 완료되었습니다.");
   }
 
   @Operation(
@@ -87,12 +96,32 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/logout")
-  public ResponseEntity<CommonResponse> logout(@RequestHeader("Authorization") String authHeader) {
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+  public ResponseEntity<CommonResponse> logout(
+      HttpServletRequest request, HttpServletResponse response) {
+    String accessToken = CookieUtil.getCookieValue(request, "access_token");
+    if (accessToken == null) {
       throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
     }
-    String accessToken = authHeader.substring(7);
+
+    // 서비스 호출
     authService.logout(accessToken);
+
+    // 쿠키 삭제 처리
+    Cookie accessTokenCookie = new Cookie("access_token", null);
+    accessTokenCookie.setMaxAge(0); // 즉시 만료
+    accessTokenCookie.setPath("/");
+    accessTokenCookie.setHttpOnly(true);
+    accessTokenCookie.setSecure(false); // 배포 시 true
+
+    Cookie refreshTokenCookie = new Cookie("refresh_token", null);
+    refreshTokenCookie.setMaxAge(0);
+    refreshTokenCookie.setPath("/");
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setSecure(false); // 배포 시 true
+
+    response.addCookie(accessTokenCookie);
+    response.addCookie(refreshTokenCookie);
+
     return ResponseEntity.ok(new CommonResponse("SUCCESS", "로그아웃이 정상적으로 처리되었습니다."));
   }
 
@@ -121,12 +150,58 @@ public class AuthController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/reissue")
-  public ReissueResponseDto reissue(@RequestHeader("Authorization") String bearerToken) {
-    if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+  public ReissueResponseDto reissue(HttpServletRequest request, HttpServletResponse response) {
+    String refreshToken = CookieUtil.getCookieValue(request, "refresh_token");
+    if (refreshToken == null) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-    String refreshToken = bearerToken.substring(7); // "Bearer " 제거
-    JwtToken token = authService.reissue(refreshToken);
+    JwtToken token = authService.reissue(refreshToken, response);
+
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
+  }
+
+  @Operation(
+      summary = "이메일 인증 코드 전송",
+      description = "회원가입 시 이메일로 인증 코드를 발송합니다.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              required = true,
+              description = "이메일 주소",
+              content = @Content(schema = @Schema(implementation = EmailRequestDto.class))),
+      responses = {
+        @ApiResponse(responseCode = "200", description = "인증 코드 전송 성공"),
+        @ApiResponse(responseCode = "429", description = "요청 제한 초과"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+      })
+  @PostMapping("/email/send")
+  public ResponseEntity<CommonResponse> sendAuthCode(@RequestBody EmailRequestDto requestDto) {
+    Long key = (long) requestDto.getEmail().hashCode(); // NOTE: Redis 저장 키
+    authMailService.sendCodeEmail(requestDto.getEmail(), key); // NOTE: 인증번호 반환값은 무시
+    return ResponseEntity.ok(new CommonResponse("CODE_SENT", "인증번호가 발송되었습니다."));
+  }
+
+  // 이메일 인증 확인
+  @Operation(
+      summary = "이메일 인증 코드 검증",
+      description = "사용자가 입력한 인증 코드가 이메일에 발송된 코드와 일치하는지 확인합니다.",
+      requestBody =
+          @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              required = true,
+              description = "이메일 주소와 인증 코드",
+              content = @Content(schema = @Schema(implementation = EmailVerifyRequestDto.class))),
+      responses = {
+        @ApiResponse(responseCode = "200", description = "이메일 인증 성공"),
+        @ApiResponse(responseCode = "400", description = "인증 코드 불일치 또는 인증 실패"),
+        @ApiResponse(responseCode = "500", description = "서버 오류")
+      })
+  @PostMapping("/email/verify")
+  public ResponseEntity<CommonResponse> verifyAuthCode(
+      @RequestBody EmailVerifyRequestDto requestDto) {
+    boolean result = authMailService.verifyCode(requestDto.getEmail(), requestDto.getCode());
+    if (result) {
+      return ResponseEntity.ok(new CommonResponse("EMAIL_VERIFIED", "이메일 인증이 완료되었습니다."));
+    } else {
+      throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+    }
   }
 }

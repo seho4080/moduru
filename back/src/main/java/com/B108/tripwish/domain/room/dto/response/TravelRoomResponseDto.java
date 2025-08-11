@@ -22,7 +22,7 @@ public class TravelRoomResponseDto {
     return TravelRoomResponseDto.builder()
         .travelRoomId(room.getId())
         .title(room.getTitle())
-        .region(room.getRegion())
+        .region(room.getRegion().getName())
         .startDate(room.getStartDate())
         .endDate(room.getEndDate())
         .createdAt(room.getCreatedAt())

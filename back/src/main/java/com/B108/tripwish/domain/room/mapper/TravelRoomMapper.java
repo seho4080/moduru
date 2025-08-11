@@ -12,10 +12,13 @@ import com.B108.tripwish.domain.room.entity.TravelRoom;
 public interface TravelRoomMapper {
 
   @Mapping(source = "id", target = "travelRoomId")
+  @Mapping(source = "region.name", target = "region")
   TravelRoomResponseDto toDto(TravelRoom room);
 
+  @Mapping(target = "region", ignore = true)
   TravelRoom toEntity(UpdateTravelRoomRequestDto dto);
 
   @Mapping(target = "id", ignore = true) // ID는 수정 안 함
+  @Mapping(target = "region", ignore = true)
   void updateFromDto(UpdateTravelRoomRequestDto dto, @MappingTarget TravelRoom room);
 }

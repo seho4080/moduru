@@ -22,13 +22,22 @@ public class ScheduleRedisSubscriber implements MessageListener {
   @Override
   public void onMessage(Message message, byte[] pattern) {
     try {
-      String raw = new String(message.getBody());
+      // 1. Redis에서 받은 메시지 JSON 문자열로 디코딩
+      String raw = new String(message.getBody(), "UTF-8");
+
+      // 2. JSON → DTO 변환
       ScheduleMessageResponseDto schedule =
           objectMapper.readValue(raw, ScheduleMessageResponseDto.class);
-      String topic = new String(message.getChannel());
+
+      // 3. Redis 채널
+      String topic = "/topic/room/" + schedule.getRoomId() + "/schedule";
+
+      // 4. WebSocket 브로드캐스트
       messagingTemplate.convertAndSend(topic, schedule);
+
+      log.info("📣 Redis 메시지 → WebSocket 전송 완료: topic={}, day={}", topic, schedule.getDay());
     } catch (Exception e) {
-      log.error("[스케줄 메시지 처리 에러]", e);
+      log.error("❌ [스케줄 메시지 처리 에러]", e);
     }
   }
 }

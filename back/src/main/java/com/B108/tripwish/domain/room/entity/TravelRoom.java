@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.B108.tripwish.global.common.entity.Region;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,8 +28,9 @@ public class TravelRoom {
   @Column(name = "title", nullable = false)
   private String title;
 
-  @Column(name = "region", nullable = true)
-  private String region;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "region_id", nullable = true)
+  private Region region;
 
   @Column(name = "start_date", nullable = true)
   private LocalDate startDate;

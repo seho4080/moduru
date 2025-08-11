@@ -1,0 +1,80 @@
+/* src/features/placeDetail/ui/restaurantDetail.css */
+
+.restaurant-detail {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #222;
+}
+
+.rd-desc {
+  margin: 6px 0 10px;
+  color: #475569; 
+  line-height: 1.6;
+}
+
+
+.rd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.rd-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.rd-ico {
+  width: 18px;
+  flex: 0 0 18px;
+  text-align: center;
+}
+
+.rd-val {
+  flex: 1 1 auto;
+}
+
+.rd-tel .rd-val {
+  margin-right: 6px;
+}
+
+.rd-link {
+  color: #2563eb; 
+  text-decoration: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rd-link:hover { text-decoration: underline; }
+
+
+.rd-menus { margin-top: 12px; }
+.rd-subtitle { font-weight: 700; margin-bottom: 6px; }
+
+.rd-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rd-menu {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0; 
+  border-radius: 8px;
+  background: #fff;
+}
+
+.rd-menu-name { font-weight: 500; }
+.rd-menu-price { color: #0f172a; }

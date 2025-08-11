@@ -14,11 +14,13 @@ import com.B108.tripwish.domain.place.dto.request.PlaceSearchRequest;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.place.entity.Place;
-import com.B108.tripwish.domain.place.respoistory.PlaceRepository;
-import com.B108.tripwish.domain.place.respoistory.PlaceSearchRepository;
+import com.B108.tripwish.domain.place.repository.PlaceRepository;
+import com.B108.tripwish.domain.place.repository.PlaceSearchRepository;
 import com.B108.tripwish.domain.room.service.RoomService;
 import com.B108.tripwish.domain.room.service.WantPlaceReaderService;
 import com.B108.tripwish.domain.user.service.MyPlaceReaderService;
+import com.B108.tripwish.global.common.entity.Region;
+import com.B108.tripwish.global.common.enums.PlaceType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,11 +42,11 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
       CustomUserDetails user, Long roomId, PlaceSearchRequest request) {
 
     String keyword = request.getKeyword();
-    String region = roomService.getRegionByRoomId(roomId);
+    Region region = roomService.getRegionByRoomId(roomId);
 
     // 지역 기반 필터링
     Set<Long> regionPlaceIds =
-        placeRepository.findAllByAddressNameContaining(region).stream()
+        placeRepository.findAllByRegion_Id(region.getId()).stream()
             .map(Place::getId)
             .collect(Collectors.toSet());
 
@@ -53,18 +55,25 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
         placeSearchRepository.findByPlaceNameContainingOrAddressContainingOrCategoryNameContaining(
             keyword, keyword, keyword);
 
-    // 1. 지역 포함된 문서(우선순위 높음)
+    // 모든 placeId 추출
+    List<Long> placeIds = documents.stream().map(doc -> Long.parseLong(doc.getId())).toList();
+
+    // liked/wanted placeId 한 번에 가져오기
+    Set<Long> likedPlaceIds = myPlaceReaderService.getMyPlaceIds(user.getUser().getId(), placeIds);
+    Set<Long> wantedPlaceIds =
+        wantPlaceReaderService.getWantPlaceIds(roomId, placeIds, PlaceType.PLACE);
+
+    // DTO 매핑 함수 개선된 버전 사용
     List<PlaceResponseDto> regionMatched =
         documents.stream()
             .filter(doc -> regionPlaceIds.contains(Long.parseLong(doc.getId())))
-            .map(doc -> mapToResponseDto(user, roomId, doc))
+            .map(doc -> mapToResponseDto(doc, likedPlaceIds, wantedPlaceIds))
             .toList();
 
-    // 2. 지역 포함되지 않은 문서 (후순위)
     List<PlaceResponseDto> others =
         documents.stream()
             .filter(doc -> !regionPlaceIds.contains(Long.parseLong(doc.getId())))
-            .map(doc -> mapToResponseDto(user, roomId, doc))
+            .map(doc -> mapToResponseDto(doc, likedPlaceIds, wantedPlaceIds))
             .toList();
 
     // 합치기: 지역 우선 → 기타
@@ -76,10 +85,8 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
   }
 
   private PlaceResponseDto mapToResponseDto(
-      CustomUserDetails user, Long roomId, PlaceDocument doc) {
+      PlaceDocument doc, Set<Long> likedPlaceIds, Set<Long> wantedPlaceIds) {
     Long placeId = Long.parseLong(doc.getId());
-    boolean isLiked = myPlaceReaderService.isLiked(user.getUser().getId(), placeId);
-    boolean isWanted = wantPlaceReaderService.isWanted(roomId, placeId);
 
     return PlaceResponseDto.builder()
         .placeId(placeId)
@@ -89,8 +96,8 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
         .address(doc.getAddress())
         .latitude(doc.getLat())
         .longitude(doc.getLng())
-        .isLiked(isLiked)
-        .isWanted(isWanted)
+        .isLiked(likedPlaceIds.contains(placeId))
+        .isWanted(wantedPlaceIds.contains(placeId))
         .build();
   }
 }

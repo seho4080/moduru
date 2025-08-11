@@ -1,0 +1,143 @@
+.invite-popover {
+  width: 420px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  padding: 20px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14px;
+  color: #222;
+}
+
+.invite-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.dropdown-input-wrapper {
+  position: relative;
+  flex-grow: 1;
+}
+
+.dropdown-input-wrapper input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f4f4f4;
+}
+
+.dropdown-item.empty {
+  color: #aaa;
+  cursor: default;
+}
+
+.invite-button {
+  background-color: #0078ff;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.invite-button:hover {
+  background-color: #005fcc;
+}
+
+.member-list {
+  margin-bottom: 16px;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.member-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #ddd;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 32px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.member-info {
+  flex-grow: 1;
+}
+
+.member-name {
+  font-weight: 500;
+}
+
+.member-email {
+  color: #888;
+  font-size: 13px;
+}
+
+.member-permission {
+  color: #666;
+  font-size: 13px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 16px 0;
+}
+
+.link-row {
+  display: flex;
+  justify-content: flex-end; 
+  align-items: center;
+}
+
+.guide-text {
+  font-size: 13px;
+  color: #666;
+}
+
+.copy-link-button {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.copy-link-button:hover {
+  background-color: #e4e4e4;
+}

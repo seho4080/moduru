@@ -59,11 +59,13 @@ pids
 *.pid
 *.seed
 *.pid.lock
-pg-data/
-init.sql
 
 # 가상환경 
 venv
 # ES 
 volumes
-insert_data
+# DB
+pgdata
+festival_data_embedding.json
+restaurant_data_embedding.json
+spot_data_embedding.json

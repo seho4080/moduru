@@ -1,0 +1,22 @@
+.buttonGroup {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.recommendButton {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2d4d9f;
+  background-color: white;
+  border: 2px solid #2d4d9f;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.recommendButton:hover {
+  background-color: #e6f0ff;
+}

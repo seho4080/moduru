@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import SidebarTabs from './SidebarTabs';
-import SidebarPanel from './SidebarPanel';
-import LoginForm from '../../features/auth/ui/LoginForm';
+import React, { useState } from "react";
+import SidebarTabs from "./SidebarTabs";
+import SidebarPanel from "./SidebarPanel";
+import LoginForm from "../../features/auth/ui/LoginForm";
 
-export default function SidebarContainer({ activeTab, onTabChange, roomId, setHoveredCoords }) {
+export default function SidebarContainer({
+  activeTab,
+  onTabChange,
+  roomId,
+  setHoveredCoords,
+}) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
 
-  const isLoggedIn = !!localStorage.getItem('accessToken');
+  const isLoggedIn = !!localStorage.getItem("accessToken");
 
   const handleClosePanel = () => {
     setIsPanelOpen(false);
@@ -28,13 +33,13 @@ export default function SidebarContainer({ activeTab, onTabChange, roomId, setHo
     if (!isLoggedIn) {
       setIsLoginModalOpen(true);
     } else {
-      alert('프로필 화면으로 이동 (추후 구현)');
+      alert("프로필 화면으로 이동 (추후 구현)");
     }
   };
 
   return (
     <>
-      <div style={{ display: 'flex', height: '100vh' }}>
+      <div style={{ display: "flex", height: "100vh" }}>
         <SidebarTabs
           activeTab={activeTab}
           onTabChange={handleTabClick}

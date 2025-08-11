@@ -12,8 +12,10 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
     "@stomp/stompjs": "^7.1.1",
+    "axios": "^1.11.0",
     "buffer": "^6.0.3",
     "dayjs": "^1.11.13",
+    "livekit-client": "^2.15.4",
     "process": "^0.11.10",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",

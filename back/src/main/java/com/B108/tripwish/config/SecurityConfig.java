@@ -1,5 +1,7 @@
 package com.B108.tripwish.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -58,9 +60,14 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
-    config.addAllowedOrigin("http://localhost:5173");
+    config.setAllowedOriginPatterns(
+        List.of(
+            "https://moduru.co.kr",
+            "https://www.moduru.co.kr",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173"));
     config.setAllowCredentials(true);
-    config.addAllowedOriginPattern("*");
+    //    config.addAllowedOriginPattern("*");
     config.addAllowedHeader("*");
     config.addAllowedMethod("*");
 
