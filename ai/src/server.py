@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Body
+from pydantic import BaseModel
 import modules.gms_api as gms
 import modules.kakao_maps_api as kakao
 import modules.utils as utils
@@ -22,7 +23,7 @@ def recommend_places(region_id, query):
     return {"result": place_list}
 
 
-def k_means_clustering(data, days):
+def recommend_schedule(data, days):
     if not data:
         print("No data provided for clustering.")
         return []
@@ -45,7 +46,6 @@ def k_means_clustering(data, days):
 
 
 def solve_tsp(time_matrix):
-    # NOTE: 데이터 세팅
     num_nodes = len(time_matrix)
     manager = pywrapcp.RoutingIndexManager(num_nodes, 1, 0)  # 0번 노드 시작
 
@@ -65,7 +65,7 @@ def solve_tsp(time_matrix):
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
     search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    search_parameters.time_limit.seconds = 10  # 최대 10초 제한
+    search_parameters.time_limit.seconds = 5  # 최대 5초 제한
 
     # NOTE: 문제 풀기
     solution = routing.SolveWithParameters(search_parameters)
@@ -73,25 +73,27 @@ def solve_tsp(time_matrix):
     if solution:
         # NOTE: 결과 경로와 총 시간 추출
         index = routing.Start(0)
-        plan = []
+        route = []
         total_time = 0
         while not routing.IsEnd(index):
-            plan.append(manager.IndexToNode(index))
+            route.append(manager.IndexToNode(index))
             previous_index = index
             index = solution.Value(routing.NextVar(index))
             total_time += routing.GetArcCostForVehicle(previous_index, index, 0)
-        plan.append(manager.IndexToNode(index))
+        route.append(manager.IndexToNode(index))
 
-        return plan, total_time
+        return route, total_time
     else:
         return None, None
 
 
 def recommend_route(data):
     routes_time = kakao.get_routes_time(data)
-    print(routes_time)
+    place_ids = []
     time_matrix = []
+
     for i in range(len(routes_time)):
+        place_ids.append(routes_time[i]["origin_id"])
         matrix = []
         for j in range(len(routes_time)):
             if i > j:
@@ -102,14 +104,83 @@ def recommend_route(data):
                 matrix.append(routes_time[i]["destinations"][j - 1]["duration"])
         time_matrix.append(matrix)
 
-    print("Time Matrix:", time_matrix)
-    route, total_time = solve_tsp(time_matrix)
-    return route
+    result = solve_tsp(time_matrix)
+
+    # NOTE: 결과 백엔드로 보내기 위한 포맷팅
+    formatted_route = {"route": []}
+    for i in range(len(result[0]) - 1):
+        start = result[0][i]
+        end = result[0][i + 1]
+        duration = time_matrix[start][end]
+
+        # NOTE: 마지막 장소는 다음 이동 시간이 없으므로 None으로 설정
+        if end == 0:
+            formatted_route["route"].append(
+                {
+                    "id": place_ids[start],
+                    "eventOrder": i + 1,
+                    "nextTravelTime": None,
+                }
+            )
+        else:
+            formatted_route["route"].append(
+                {
+                    "id": place_ids[start],
+                    "eventOrder": i + 1,
+                    "nextTravelTime": duration,
+                }
+            )
+    return formatted_route
 
 
-@app.get("/recommend/places")
-def get_recommendations(region_id: int = Query(...), query: str = Query(...)):
+# NOTE: 데이터 검증을 위한 데이터 모델 정의
+class Place(BaseModel):
+    id: int
+    category_id: int
+    lat: float
+    lng: float
+
+
+class ScheduleRequest(BaseModel):
+    place_list: list[Place]
+    days: int
+
+
+@app.post("/recommend/places")
+def get_place_recommendations(region_id: int = Body(...), query: str = Body(...)):
     return recommend_places(region_id, query)
+
+
+# TODO: Implement the schedule recommendation endpoint
+@app.post("/recommend/schedule")
+def get_schedule_recommendation(request: ScheduleRequest):
+    place_list = [p.model_dump() for p in request.place_list]
+    days = request.days
+    final_data = []
+
+    days_list = recommend_schedule(place_list, days)
+
+    for day, day_list in enumerate(days_list, 1):
+        final_data.append(
+            {
+                "transport": "car",
+                "day": day,
+                "route": recommend_route(day_list["points"])["route"],
+            }
+        )
+    return final_data
+
+
+# TODO: Implement the route recommendation endpoint
+@app.post("/recommend/route")
+def recommend_route_api(request: ScheduleRequest):
+    place_list = [p.model_dump() for p in request.place_list]
+    result = {
+        "transport": "car",
+        "day": request.days,
+        "route": recommend_route(place_list)["route"],
+    }
+    return result
 
 
 if __name__ == "__main__":
@@ -122,4 +193,11 @@ if __name__ == "__main__":
         {"id": 3608, "category_id": 2, "lat": 36.345984114769, "lng": 127.456106584105},
         {"id": 3729, "category_id": 2, "lat": 36.3471971249462, "lng": 127.457512826102},
     ]
-    print(recommend_route(place_list))
+    day = 2
+
+    final_data = {
+        "transport": "car",
+        "day": day,
+        "route": recommend_route(place_list)["route"],
+    }
+    print(final_data)
