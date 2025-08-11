@@ -3,6 +3,7 @@ package com.B108.tripwish.domain.place.controller;
 import java.util.List;
 
 import com.B108.tripwish.domain.place.dto.response.PlaceBucketsResponseDto;
+import com.B108.tripwish.global.common.dto.RegionResponseDto;
 import com.B108.tripwish.global.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.ResponseEntity;
@@ -117,6 +118,32 @@ public class PlaceController {
     return ResponseEntity.ok(response); // 200
   }
 
+
+  @Operation(
+          summary = "지역 목록 조회",
+          description = """
+        parentId가 없으면 최상위 지역(시·도) 목록을 반환합니다.
+        parentId가 있으면 해당 parentId(시·도)에 속하는 하위 지역(시·군) 목록을 반환합니다.
+        """,
+          responses = {
+                  @ApiResponse(responseCode = "200", description = "지역 목록 조회 성공"),
+                  @ApiResponse(
+                          responseCode = "400",
+                          description = "잘못된 요청 (parentId 값이 유효하지 않음)",
+                          content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                  ),
+                  @ApiResponse(
+                          responseCode = "500",
+                          description = "서버 내부 오류",
+                          content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+                  )
+          }
+  )
+  @GetMapping("/regions")
+  public ResponseEntity<List<RegionResponseDto>> getRegions(
+          @RequestParam(required = false) Long parentId) {
+    return ResponseEntity.ok(placeService.getRegions(parentId));
+  }
 
 
 }

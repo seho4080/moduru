@@ -5,7 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.B108.tripwish.global.common.dto.RegionResponseDto;
 import com.B108.tripwish.global.common.entity.Region;
+import com.B108.tripwish.global.common.repository.RegionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,7 @@ public class PlaceServiceImpl implements PlaceService {
   private final MyPlaceReaderService myPlaceReaderService;
   private final WantPlaceReaderService wantPlaceReaderService;
   private final ReviewService reviewService;
+  private final RegionRepository regionRepository;
 
   @Transactional(readOnly = true)
   @Override
@@ -199,4 +202,19 @@ public class PlaceServiceImpl implements PlaceService {
       default -> throw new CustomException(ErrorCode.UNSUPPORTED_CATEGORY_TYPE);
     };
   }
+
+
+
+    // NOTE: 하나의 메서드로 상위/하위 통합 조회 의도
+    @Transactional(readOnly = true)
+    public List<RegionResponseDto> getRegions(Long parentId) {
+      List<Region> regions = (parentId == null)
+              ? regionRepository.findAllByParentIsNullOrderByName()
+              : regionRepository.findAllByParentIdOrderByName(parentId);
+      return regions.stream().map(RegionResponseDto::from).toList();
+    }
+
+
+
+
 }
