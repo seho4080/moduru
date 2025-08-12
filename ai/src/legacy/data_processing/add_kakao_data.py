@@ -59,7 +59,7 @@ for idx, item in enumerate(raw_data, 1):
     query = f"{address}"
 
     # Save kakao data or None if not found
-    kakao_data = kakao_maps_api.search_data(query, x, y)
+    kakao_data = kakao_maps_api.search_place(query, x, y)
     if kakao_data:
         item["kakao"] = kakao_data
     else:

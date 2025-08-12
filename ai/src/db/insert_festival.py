@@ -32,7 +32,7 @@ def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
 
 
-def extract_region_code(address):
+def extract_region_id(address):
     if not address:
         return None
     for full_name, code in REGION_MAPPING.items():
@@ -64,22 +64,22 @@ for item in data:
     lng = float(item.get("x")) if item.get("x") else None
     lat = float(item.get("y")) if item.get("y") else None
 
-    region_code = extract_region_code(address)
+    region_id = extract_region_id(address)
 
     embedding = item.get("description_embedding")
     embedding = np.array(embedding, dtype=np.float32).tolist() if embedding else None
 
-    # places 삽입 (region_code 포함)
+    # places 삽입 (region_id 포함)
     cur.execute(
         """
         INSERT INTO moduru.places (
             category_id, kakao_id, place_name, place_url,
             address_name, road_address_name,
-            lng, lat, embedding, region_code
+            lng, lat, embedding, region_id
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
-        (3, None, name, place_url, address, road_address, lng, lat, embedding, region_code),
+        (3, None, name, place_url, address, road_address, lng, lat, embedding, region_id),
     )
     place_id = cur.fetchone()[0]
 

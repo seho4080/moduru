@@ -6,7 +6,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "restaurant_data_embedding.json")
 
-# NOTE: 주소에서 시·도 추출 후 region_code로 매핑하기 위한 딕셔너리
+# NOTE: 주소에서 시·도 추출 후 region_id로 매핑하기 위한 딕셔너리
 REGION_MAPPING = {
     "서울": 1,
     "부산": 2,
@@ -32,7 +32,7 @@ def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
 
 
-def extract_region_code(address):
+def extract_region_id(address):
     if not address:
         return None
     for region_name, code in REGION_MAPPING.items():
@@ -67,7 +67,7 @@ for item in data:
     address_name = kakao.get("address_name") or ""
     road_address_name = kakao.get("road_address_name") or ""
 
-    region_code = extract_region_code(address_name)
+    region_id = extract_region_id(address_name)
 
     embedding = item.get("description_embedding")
     embedding = np.array(embedding, dtype=np.float32).tolist() if embedding else None
@@ -77,11 +77,11 @@ for item in data:
         INSERT INTO moduru.places (
             category_id, kakao_id, place_name, place_url,
             address_name, road_address_name,
-            lng, lat, embedding, region_code
+            lng, lat, embedding, region_id
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
-        (1, kakao_id, name, place_url, address_name, road_address_name, lng, lat, embedding, region_code),
+        (1, kakao_id, name, place_url, address_name, road_address_name, lng, lat, embedding, region_id),
     )
     place_id = cur.fetchone()[0]
 
