@@ -7,6 +7,9 @@ import re  # 정규 표현식 사용
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "restaurant_data_embedding.json")
 
+conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
+cur = conn.cursor()
+
 REGION_MAPPING = {
     "서울특별시": 0,
     "부산광역시": 1,
@@ -182,10 +185,11 @@ REGION_MAPPING = {
 def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
 
+
 def extract_region_id(address):
     if not address:
         return None
-    region_candidates = re.findall(r'[\w]+(?:특별시|광역시|도|시|군|구)', address)
+    region_candidates = re.findall(r"[\w]+(?:특별시|광역시|도|시|군|구)", address)
     if not region_candidates:
         region_candidates = address.split()
     for candidate in reversed(region_candidates):
@@ -193,8 +197,6 @@ def extract_region_id(address):
             return REGION_MAPPING[candidate]
     return None
 
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
-cur = conn.cursor()
 
 with open(DATA_PATH, encoding="utf-8") as f:
     data = json.load(f)

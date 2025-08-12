@@ -6,6 +6,10 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "spot_data_embedding.json")
 
+# DB 연결
+conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
+cur = conn.cursor()
+
 # 시·군·구 단위까지 포함된 지역 코드 매핑
 REGION_MAPPING = {
     "서울특별시": 0,
@@ -182,6 +186,7 @@ REGION_MAPPING = {
 def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
 
+
 def extract_region_id(address):
     if not address:
         return None
@@ -190,9 +195,6 @@ def extract_region_id(address):
             return code
     return None
 
-# DB 연결
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
-cur = conn.cursor()
 
 # JSON 파일 로드
 with open(DATA_PATH, encoding="utf-8") as f:
@@ -239,18 +241,12 @@ for item in data:
 
     # 이미지 삽입
     for img_url in item.get("images", []):
-        cur.execute(
-            "INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)",
-            (place_id, img_url)
-        )
+        cur.execute("INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)", (place_id, img_url))
 
     # 태그 삽입
     for tag in tags:
         tag = truncate(tag, 30)
-        cur.execute(
-            "INSERT INTO moduru.place_metadata_tags (place_id, content) VALUES (%s, %s)",
-            (place_id, tag)
-        )
+        cur.execute("INSERT INTO moduru.place_metadata_tags (place_id, content) VALUES (%s, %s)", (place_id, tag))
 
     # spots 삽입
     cur.execute(
