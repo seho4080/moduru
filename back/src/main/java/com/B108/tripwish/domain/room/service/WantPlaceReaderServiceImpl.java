@@ -94,7 +94,7 @@ public class WantPlaceReaderServiceImpl implements WantPlaceReaderService {
                         .placeName(place.getPlaceName())
                         .placeImg(!place.getImages().isEmpty() ? place.getImages().get(0).getImgUrl() : null)
                         .address(place.getRoadAddressName())
-                        .category(place.getCategory().getCategoryName())
+                        .category(place.getCategoryId().getCategoryName())
                         .lat(place.getLat())
                         .lng(place.getLng())
                         .isLiked(likedPlaceIds.contains(place.getId()))

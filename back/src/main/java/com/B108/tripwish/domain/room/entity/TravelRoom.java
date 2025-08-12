@@ -24,12 +24,13 @@ public class TravelRoom {
   @Column(name = "id")
   private Long id;
 
-  @Column(name = "title", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "region_id", nullable = false)
+  private Region region;
+
+  @Column(name = "title", nullable = true)
   private String title;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "region_id", nullable = true)
-  private Region region;
 
   @Column(name = "start_date", nullable = true)
   private LocalDate startDate;

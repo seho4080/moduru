@@ -24,15 +24,23 @@ public class Schedule {
     @JoinColumn(name = "room_id", unique = true)
     private TravelRoom room;
 
-    @Column(name = "transport", nullable = true)
-    private String transport;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "committed_at")
+    private LocalDateTime committedAt;
+
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    // 저장 시간 지정 메서드
+    public void commit() {
+        this.committedAt = LocalDateTime.now();
+    }
+
+
 }

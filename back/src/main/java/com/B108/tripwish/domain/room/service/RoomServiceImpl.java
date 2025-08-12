@@ -132,7 +132,7 @@ public class RoomServiceImpl implements RoomService {
     String address = kakaomapService.getAddressFromCoords(dto.getLat(), dto.getLng()).getAddress();
 
     CustomPlace customPlace = CustomPlace.builder()
-            .room(room)
+            .roomId(room)
             .name(dto.getName())
             .lat(dto.getLat())
             .lng(dto.getLng())

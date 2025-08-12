@@ -1,7 +1,11 @@
 package com.B108.tripwish.global.common.entity;
 
+import com.B108.tripwish.domain.place.entity.Place;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "regions")
@@ -28,4 +32,7 @@ public class Region {
 
     @Column(name = "lng", nullable = false)
     private Double lng;
+
+    @OneToMany(mappedBy = "regionId", orphanRemoval = false)  // 역방향(선택)
+    private List<Place> places = new ArrayList<>();
 }

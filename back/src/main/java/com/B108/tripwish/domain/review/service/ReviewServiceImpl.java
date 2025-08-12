@@ -3,6 +3,8 @@ package com.B108.tripwish.domain.review.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.B108.tripwish.domain.place.entity.Place;
+import com.B108.tripwish.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +32,8 @@ public class ReviewServiceImpl implements ReviewService {
   private final PlaceReviewTagRepository placeReviewTagRepository;
   private final ReviewTagReaderService reviewTagReaderService;
   private final PlaceTagCountService placeTagCountService;
-  private final UserReaderService userReaderService;
   private final PlaceReaderService placeReaderService;
+  private final UserReaderService userReaderService;
 
   @Override
   public List<String> getTagNamesByPlaceId(Long placeId) {
@@ -46,9 +48,10 @@ public class ReviewServiceImpl implements ReviewService {
     Long userId = currentUser.getUser().getId();
     Long placeId = request.getPlaceId();
 
-    // Review 엔티티는 ID만 저장
-    Review review = Review.builder().userId(userId).placeId(placeId).build();
-    reviewRepository.save(review);
+    // 엔티티 참조(프록시)만 가져와 FK 세팅 → 불필요한 SELECT 방지
+    User userRef   = userReaderService.getReference(userId);
+    Place placeRef = placeReaderService.getReference(placeId);
+    Review review = Review.builder().userId(userRef).place(placeRef).build();
 
     // 태그 저장 및 카운트 증가
     request
@@ -90,9 +93,9 @@ public class ReviewServiceImpl implements ReviewService {
             .filter(t -> t.getId().getReviewId().equals(reviewId))
             .toList();
 
-    tags.forEach(
-        t -> placeTagCountService.decreaseTagCount(review.getPlaceId(), t.getTag().getId()));
+    Long placeId = review.getPlace().getId();
 
+    tags.forEach(t -> placeTagCountService.decreaseTagCount(placeId, t.getTag().getId()));
     tags.forEach(placeReviewTagRepository::delete);
     reviewRepository.delete(review);
 
@@ -108,13 +111,14 @@ public class ReviewServiceImpl implements ReviewService {
     return reviewRepository.findByUserId(userId).stream()
         .map(
             r -> {
-              var placeInfo = placeReaderService.getPlaceInfo(r.getPlaceId()); // DTO 사용
+              Long placeId = r.getPlace().getId();
+              var placeInfo = placeReaderService.getPlaceInfo(placeId);; // DTO 사용
               return ReviewResponseDto.builder()
                   .reviewId(r.getId())
                   .placeId(placeInfo.getPlaceId())
                   .placeName(placeInfo.getPlaceName()) // DTO에서 이름 가져옴
                   .createdAt(r.getCreatedAt())
-                  .tags(placeReviewTagRepository.findTagNamesByPlaceId(r.getPlaceId()))
+                      .tags(placeReviewTagRepository.findTagNamesByPlaceId(placeId))
                   .build();
             })
         .collect(Collectors.toList());

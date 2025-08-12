@@ -13,16 +13,16 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
   @Query("""
     SELECT r FROM Restaurant r
     LEFT JOIN FETCH r.menus
-    WHERE r.place.id = :placeId
+    WHERE r.placeId.id = :placeId
 """)
   Optional<Restaurant> findByPlaceId(@Param("placeId") Long placeId);
 
 
   @Query("""
-  SELECT r FROM Restaurant r
-  LEFT JOIN FETCH r.menus
-  WHERE r.place.id = :placeId
-""")
+    SELECT DISTINCT r FROM Restaurant r
+    LEFT JOIN FETCH r.menus
+    WHERE r.placeId.id = :placeId
+  """)
   Optional<Restaurant> findWithMenusByPlaceId(@Param("placeId") Long placeId);
 
 }

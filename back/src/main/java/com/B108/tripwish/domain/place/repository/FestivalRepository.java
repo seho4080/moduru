@@ -10,11 +10,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface FestivalRepository extends JpaRepository<Festival, Long> {
-  Optional<Festival> findByPlace(Place place);
+  Optional<Festival> findByPlaceId(Place place);
 
   @Query("""
   SELECT f FROM Festival f
-  WHERE f.place.id = :placeId
+  WHERE f.placeId.id = :placeId
 """)
   Optional<Festival> findByPlaceId(@Param("placeId") Long placeId);
 

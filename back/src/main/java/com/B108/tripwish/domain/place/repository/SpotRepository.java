@@ -10,11 +10,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface SpotRepository extends JpaRepository<Spot, Long> {
-  Optional<Spot> findByPlace(Place place);
+  Optional<Spot> findByPlaceId(Place place);
 
   @Query("""
   SELECT s FROM Spot s
-  WHERE s.place.id = :placeId
+  WHERE s.placeId.id = :placeId
 """)
   Optional<Spot> findByPlaceId(@Param("placeId") Long placeId);
 

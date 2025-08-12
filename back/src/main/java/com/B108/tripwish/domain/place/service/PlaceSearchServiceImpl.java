@@ -54,7 +54,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
 
     // 지역 기반 필터링
     Set<Long> regionPlaceIds =
-            placeRepository.findAllByRegion_Id(region.getId()).stream()
+            placeRepository.findAllByRegionId_Id(region.getId()).stream()
                     .map(Place::getId)
                     .collect(Collectors.toSet());
 
@@ -138,7 +138,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
     for (int i=0;i<ids.size();i++) order.put(ids.get(i), i);
 
     List<Place> places = placeRepository.findAllById(ids).stream()
-            .filter(p -> Objects.equals(p.getRegion().getId(), region.getId()))
+            .filter(p -> Objects.equals(p.getRegionId().getId(), region.getId()))
             .sorted(Comparator.comparingInt(p -> order.getOrDefault(p.getId(), Integer.MAX_VALUE)))
             .toList();
 

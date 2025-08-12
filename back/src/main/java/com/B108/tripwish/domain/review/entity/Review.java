@@ -2,6 +2,8 @@ package com.B108.tripwish.domain.review.entity;
 
 import java.time.LocalDateTime;
 
+import com.B108.tripwish.domain.place.entity.Place;
+import com.B108.tripwish.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,11 +19,15 @@ public class Review {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "user_id", nullable = false)
-  private Long userId;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false) // FK 컬럼명
+  private User userId;
 
-  @Column(name = "place_id", nullable = false)
-  private Long placeId;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "place_id", nullable = false)
+  private Place place;
+
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;

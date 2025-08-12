@@ -20,7 +20,10 @@ public class Restaurant {
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "place_id", nullable = false, unique = true)
-  private Place place;
+  private Place placeId;
+
+  @Column(name = "region_id", nullable = false)
+  private Integer regionId;
 
   @Column(columnDefinition = "TEXT")
   private String description;
