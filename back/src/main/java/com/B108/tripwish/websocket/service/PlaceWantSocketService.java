@@ -76,7 +76,7 @@ public class PlaceWantSocketService {
       place.getImages().size();
       lat = place.getLat();
       lng = place.getLng();
-      category = place.getCategory().getCategoryName();
+      category = place.getCategoryId().getCategoryName();
       List<PlaceImage> images = place.getImages();
       imgUrl = (images != null && !images.isEmpty()) ? images.get(0).getImgUrl() : null;
       placeName = place.getPlaceName();

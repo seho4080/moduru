@@ -53,11 +53,13 @@ public class PlaceController {
                   )
           }
   )
-  @GetMapping("/buckets")
-  public ResponseEntity<PlaceBucketsResponseDto> getPlacesBuckets(
+  @GetMapping("/")
+  public ResponseEntity<PlaceListResponseDto> getPlaces(
           @AuthenticationPrincipal CustomUserDetails user,
-          @PathVariable Long roomId) {
-    return ResponseEntity.ok(placeService.getPlacesBuckets(user, roomId));
+          @PathVariable Long roomId,
+          @RequestParam String category
+  ) {
+    return ResponseEntity.ok(placeService.getPlaces(user, roomId, category));
   }
 
 

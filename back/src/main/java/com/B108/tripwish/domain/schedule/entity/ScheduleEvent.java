@@ -1,9 +1,11 @@
 package com.B108.tripwish.domain.schedule.entity;
 
 import com.B108.tripwish.domain.room.entity.WantPlace;
+import com.B108.tripwish.domain.user.entity.User;
 import com.B108.tripwish.global.common.enums.PlaceType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.web.socket.sockjs.transport.TransportType;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -49,6 +51,16 @@ public class ScheduleEvent{
 
     @Column(name = "memo", nullable = true)
     private String memo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transport")
+    private TransportType transport;
+
+    public enum TransportType {
+        driver,
+        transit,
+        walking
+    }
 
 
 }

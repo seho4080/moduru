@@ -36,7 +36,7 @@ public class User {
   @Column(length = 50, nullable = false)
   private String nickname;
 
-  @Column(columnDefinition = "TEXT")
+  @Column(columnDefinition = "TEXT", nullable = true)
   private String profileImg;
 
   @Enumerated(EnumType.STRING)
