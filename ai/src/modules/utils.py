@@ -20,7 +20,7 @@ def cosine_similarity(region_id, query_embedding):
         LEFT JOIN moduru.restaurants r ON p.id = r.place_id AND p.category_id = 1
         LEFT JOIN moduru.spots s       ON p.id = s.place_id AND p.category_id = 2
         LEFT JOIN moduru.festivals f   ON p.id = f.place_id AND p.category_id = 3
-        WHERE p.region_code = %s
+        WHERE p.region_id = %s
         ORDER BY p.embedding <#> %s::vector
         LIMIT 50
         """,
