@@ -6,6 +6,9 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "festival_data_embedding.json")
 
+conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
+cur = conn.cursor()
+
 # NOTE: 주소에서 시·군 추출 후 region_id로 매핑하기 위한 딕셔너리 (그대로 유지)
 REGION_MAPPING = {
     "서울특별시": 0,
@@ -182,6 +185,7 @@ REGION_MAPPING = {
 def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
 
+
 def extract_region_id(address):
     if not address:
         return None
@@ -191,8 +195,6 @@ def extract_region_id(address):
             return code
     return None
 
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
-cur = conn.cursor()
 
 with open(DATA_PATH, encoding="utf-8") as f:
     data = json.load(f)

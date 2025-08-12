@@ -199,6 +199,27 @@ services:
       - backend
     networks:
       - app-network
+  ##########################################
+  # 10. FastAPI(AI 서버)
+  ##########################################
+  ai-server:  
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: ai-server
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=mydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ssafy
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - db
+    networks:
+      - app-network
 networks:
   app-network:
 volumes:
