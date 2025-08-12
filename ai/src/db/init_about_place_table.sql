@@ -15,7 +15,9 @@ VALUES (1, 'restaurant'),
 -- 지역 테이블
 CREATE TABLE regions (
     id SERIAL PRIMARY KEY,
-    region varchar(10)
+    region varchar(10),
+    lat FLOAT,
+    lng FLOAT
 );
 
 -- 지역 데이터 삽입
