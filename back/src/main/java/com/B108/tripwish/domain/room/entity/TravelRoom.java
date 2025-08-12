@@ -25,7 +25,7 @@ public class TravelRoom {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "region_id", nullable = false)
+  @JoinColumn(name = "region_id", nullable = true)
   private Region region;
 
   @Column(name = "title", nullable = true)
