@@ -242,6 +242,17 @@ CREATE TABLE IF NOT EXISTS user_token (
   CONSTRAINT fk_user_token_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE travel_members (
+    room_id  BIGINT NOT NULL,
+    user_id  BIGINT NOT NULL,
+    role     VARCHAR(16) NOT NULL CHECK (role IN ('OWNER','INVITED')),
+    PRIMARY KEY (room_id, user_id),
+    CONSTRAINT fk_travel_members_room
+        FOREIGN KEY (room_id) REFERENCES travel_rooms(id) ON DELETE CASCADE,
+    CONSTRAINT fk_travel_members_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- POSTGRES SEED
 INSERT INTO users (uuid, email, password, provider, nickname, profile_img, gender, birth, created_at, phone, role) VALUES
 ('97e2b112-b3b8-48e1-bc1e-bd4a2291eac0', 'user0@example.com', '{bcrypt}$2a$10$xPl0eMOl9.ZNQqMDHZ0hYeFtNT9KbbCGpbBy89Bmy00furA2WA78m', 'local', 'user0', NULL, 'M', '1990-01-15', '2025-08-12 12:00:00', '010-0000-0000', 'ROLE_USER'),

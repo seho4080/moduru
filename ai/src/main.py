@@ -1,9 +1,6 @@
 from fastapi import FastAPI, Body
 from pydantic import BaseModel
-import modules.gms_api as gms
-import modules.kakao_maps_api as kakao
-import modules.utils as utils
-
+import modules.services as services
 
 app = FastAPI()
 
@@ -23,7 +20,7 @@ class ScheduleRequest(BaseModel):
 
 @app.post("/recommend/places")
 def get_place_recommendations(region_id: int = Body(...), query: str = Body(...)):
-    return utils.recommend_places(region_id, query)
+    return services.recommend_places(region_id, query)
 
 
 # TODO: Implement the schedule recommendation endpoint
@@ -33,14 +30,14 @@ def get_schedule_recommendation(request: ScheduleRequest):
     days = request.days
     final_data = []
 
-    days_list = utils.k_means_clustering(place_list, days)
+    days_list = services.k_means_clustering(place_list, days)
 
     for day, day_list in enumerate(days_list, 1):
         final_data.append(
             {
                 "transport": "car",
                 "day": day,
-                "route": utils.recommend_route(day_list["points"])["route"],
+                "route": services.recommend_route(day_list["points"])["route"],
             }
         )
     return final_data
@@ -53,7 +50,7 @@ def recommend_route_api(request: ScheduleRequest):
     result = {
         "transport": "car",
         "day": request.days,
-        "route": utils.recommend_route(place_list)["route"],
+        "route": services.recommend_route(place_list)["route"],
     }
     return result
 

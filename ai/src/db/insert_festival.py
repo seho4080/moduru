@@ -9,13 +9,12 @@ DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "festival_data_embedding.
 conn = psycopg2.connect(
     host=os.getenv("POSTGRES_HOST", "localhost"),
     port=os.getenv("POSTGRES_PORT", 5432),
-    dbname=os.getenv("POSTGRES_DB", "postgres"),
+    dbname=os.getenv("POSTGRES_DB", "mydb"),
     user=os.getenv("POSTGRES_USER", "postgres"),
     password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
 )
 cur = conn.cursor()
 
-# NOTE: 주소에서 시·군 추출 후 region_id로 매핑하기 위한 딕셔너리 (그대로 유지)
 REGION_MAPPING = {
     "서울특별시": 0,
     "부산광역시": 1,
@@ -25,14 +24,6 @@ REGION_MAPPING = {
     "대전광역시": 5,
     "울산광역시": 6,
     "세종특별자치시": 7,
-    "경기도": 8,
-    "강원특별자치도": 9,
-    "충청북도": 10,
-    "충청남도": 11,
-    "전북특별자치도": 12,
-    "전라남도": 13,
-    "경상북도": 14,
-    "경상남도": 15,
     "제주특별자치도": 16,
     "수원시": 17,
     "성남시": 18,
@@ -229,7 +220,7 @@ for item in data:
 
     cur.execute(
         """
-        INSERT INTO moduru.places (
+        INSERT INTO places (
             category_id, kakao_id, place_name, place_url,
             address_name, road_address_name,
             lng, lat, embedding, region_id
@@ -242,13 +233,13 @@ for item in data:
 
     for img_url in item.get("images", []):
         cur.execute(
-            "INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)",
+            "INSERT INTO place_images (place_id, img_url) VALUES (%s, %s)",
             (place_id, img_url),
         )
 
     cur.execute(
         """
-        INSERT INTO moduru.festivals (
+        INSERT INTO festivals (
             place_id, description, description_short,
             homepage, info_center, period,
             price, organizer, sns
