@@ -41,7 +41,7 @@ public class Place {
   @Column(name = "address_name", length = 500)
   private String addressName; // 지번 주소
 
-  @Column(name = "road_address_name", nullable = false, length = 500)
+  @Column(name = "road_address_name", nullable = true, length = 500)
   private String roadAddressName; // 도로명 주소
 
   @Column(nullable = false)
