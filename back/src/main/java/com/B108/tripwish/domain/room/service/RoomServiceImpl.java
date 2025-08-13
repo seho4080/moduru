@@ -180,6 +180,7 @@ public class RoomServiceImpl implements RoomService {
             .map(member -> TravelMemberDto.builder()
                     .userId(member.getUser().getId())
                     .nickname(member.getUser().getNickname())
+                    .email(member.getUser().getEmail())
                     .profileImg(member.getUser().getProfileImg())
                     .isOwner(member.getRole() == TravelMemberRole.OWNER)
                     .isFriend(false)

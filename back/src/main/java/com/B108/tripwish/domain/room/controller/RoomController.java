@@ -167,33 +167,6 @@
       return ResponseEntity.ok(response);
     }
 
-//    @GetMapping("/{roomId}/members")
-//    public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(@PathVariable Long roomId) {
-//
-//      // 더미 데이터 예시
-//      TravelMemberDto member1 =
-//          TravelMemberDto.builder()
-//              .userId(1L)
-//              .nickname("여행덕후123")
-//              .profileImg("\"profile_basic.png\"")
-//              .isFriend(false)
-//              .isOwner(true)
-//              .build();
-//
-//      TravelMemberDto member2 =
-//          TravelMemberDto.builder()
-//              .userId(2L)
-//              .nickname("빵순이")
-//              .profileImg("\"profile_basic.png\"")
-//              .isFriend(true)
-//              .isOwner(false)
-//              .build();
-//
-//      TravelMemberListResponseDto response =
-//          TravelMemberListResponseDto.builder().members(List.of(member1, member2)).build();
-//
-//      return ResponseEntity.ok(response);
-//    }
 
     @Operation(
         summary = "동행자 강퇴",
