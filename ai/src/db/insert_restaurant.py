@@ -2,10 +2,18 @@ import json
 import psycopg2
 import numpy as np
 import os
-import re  # 정규 표현식 사용
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "restaurant_data_embedding.json")
+
+conn = psycopg2.connect(
+    host=os.getenv("POSTGRES_HOST", "localhost"),
+    port=os.getenv("POSTGRES_PORT", 5432),
+    dbname=os.getenv("POSTGRES_DB", "mydb"),
+    user=os.getenv("POSTGRES_USER", "postgres"),
+    password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
+)
+cur = conn.cursor()
 
 REGION_MAPPING = {
     "서울특별시": 0,
@@ -16,14 +24,6 @@ REGION_MAPPING = {
     "대전광역시": 5,
     "울산광역시": 6,
     "세종특별자치시": 7,
-    "경기도": 8,
-    "강원특별자치도": 9,
-    "충청북도": 10,
-    "충청남도": 11,
-    "전북특별자치도": 12,
-    "전라남도": 13,
-    "경상북도": 14,
-    "경상남도": 15,
     "제주특별자치도": 16,
     "수원시": 17,
     "성남시": 18,
@@ -182,19 +182,15 @@ REGION_MAPPING = {
 def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
 
+
 def extract_region_id(address):
     if not address:
         return None
-    region_candidates = re.findall(r'[\w]+(?:특별시|광역시|도|시|군|구)', address)
-    if not region_candidates:
-        region_candidates = address.split()
-    for candidate in reversed(region_candidates):
-        if candidate in REGION_MAPPING:
-            return REGION_MAPPING[candidate]
+    for region_name, code in REGION_MAPPING.items():
+        if region_name in address:  # 주소 안에 지역명이 포함되어 있으면
+            return code
     return None
 
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
-cur = conn.cursor()
 
 with open(DATA_PATH, encoding="utf-8") as f:
     data = json.load(f)
@@ -226,7 +222,7 @@ for item in data:
 
     cur.execute(
         """
-        INSERT INTO moduru.places (
+        INSERT INTO places (
             category_id, kakao_id, place_name, place_url,
             address_name, road_address_name,
             lng, lat, embedding, region_id
@@ -239,20 +235,20 @@ for item in data:
 
     for img_url in item.get("images", []):
         cur.execute(
-            "INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)",
+            "INSERT INTO place_images (place_id, img_url) VALUES (%s, %s)",
             (place_id, img_url),
         )
 
     for tag in tags:
         tag = truncate(tag, 30)
         cur.execute(
-            "INSERT INTO moduru.place_metadata_tags (place_id, content) VALUES (%s, %s)",
+            "INSERT INTO place_metadata_tags (place_id, content) VALUES (%s, %s)",
             (place_id, tag),
         )
 
     cur.execute(
         """
-        INSERT INTO moduru.restaurants (
+        INSERT INTO restaurants (
             place_id, description, description_short,
             tel, homepage, business_hours,
             rest_date, parking
@@ -265,8 +261,8 @@ for item in data:
         menu = truncate(menu, 30)
         cur.execute(
             """
-            INSERT INTO moduru.restaurant_menus (restaurant_id, menu)
-            VALUES ((SELECT id FROM moduru.restaurants WHERE place_id = %s), %s)
+            INSERT INTO restaurant_menus (restaurant_id, menu)
+            VALUES ((SELECT id FROM restaurants WHERE place_id = %s), %s)
             """,
             (place_id, menu),
         )

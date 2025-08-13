@@ -6,7 +6,15 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "spot_data_embedding.json")
 
-# 시·군·구 단위까지 포함된 지역 코드 매핑
+conn = psycopg2.connect(
+    host=os.getenv("POSTGRES_HOST", "localhost"),
+    port=os.getenv("POSTGRES_PORT", 5432),
+    dbname=os.getenv("POSTGRES_DB", "mydb"),
+    user=os.getenv("POSTGRES_USER", "postgres"),
+    password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
+)
+cur = conn.cursor()
+
 REGION_MAPPING = {
     "서울특별시": 0,
     "부산광역시": 1,
@@ -16,14 +24,6 @@ REGION_MAPPING = {
     "대전광역시": 5,
     "울산광역시": 6,
     "세종특별자치시": 7,
-    "경기도": 8,
-    "강원특별자치도": 9,
-    "충청북도": 10,
-    "충청남도": 11,
-    "전북특별자치도": 12,
-    "전라남도": 13,
-    "경상북도": 14,
-    "경상남도": 15,
     "제주특별자치도": 16,
     "수원시": 17,
     "성남시": 18,
@@ -182,6 +182,7 @@ REGION_MAPPING = {
 def truncate(text, max_length):
     return text[:max_length] if text and len(text) > max_length else text
 
+
 def extract_region_id(address):
     if not address:
         return None
@@ -190,9 +191,6 @@ def extract_region_id(address):
             return code
     return None
 
-# DB 연결
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
-cur = conn.cursor()
 
 # JSON 파일 로드
 with open(DATA_PATH, encoding="utf-8") as f:
@@ -226,7 +224,7 @@ for item in data:
     # places 삽입 (region_id 추가됨)
     cur.execute(
         """
-        INSERT INTO moduru.places (
+        INSERT INTO places (
             category_id, kakao_id, place_name, place_url,
             address_name, road_address_name,
             lng, lat, embedding, region_id
@@ -239,23 +237,17 @@ for item in data:
 
     # 이미지 삽입
     for img_url in item.get("images", []):
-        cur.execute(
-            "INSERT INTO moduru.place_metadata_images (place_id, img_url) VALUES (%s, %s)",
-            (place_id, img_url)
-        )
+        cur.execute("INSERT INTO place_images (place_id, img_url) VALUES (%s, %s)", (place_id, img_url))
 
     # 태그 삽입
     for tag in tags:
         tag = truncate(tag, 30)
-        cur.execute(
-            "INSERT INTO moduru.place_metadata_tags (place_id, content) VALUES (%s, %s)",
-            (place_id, tag)
-        )
+        cur.execute("INSERT INTO place_metadata_tags (place_id, content) VALUES (%s, %s)", (place_id, tag))
 
     # spots 삽입
     cur.execute(
         """
-        INSERT INTO moduru.spots (
+        INSERT INTO spots (
             place_id, description, description_short,
             info_center, homepage, business_hours,
             rest_date, parking, price
