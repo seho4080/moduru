@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.B108.tripwish.global.common.entity.Region;
-
 import jakarta.persistence.*;
 import lombok.*;
+
+import static jakarta.persistence.FetchType.LAZY;
 
 @Entity
 @Table(name = "places")
@@ -20,13 +21,13 @@ public class Place {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "region_id", nullable = true)
-  private Region region;
-
   @ManyToOne
   @JoinColumn(name = "category_id")
-  private Category category;
+  private Category categoryId;
+
+  @ManyToOne(fetch = LAZY)
+  @JoinColumn(name = "region_id")
+  private Region regionId;
 
   @Column(name = "kakao_id")
   private Long kakaoId;
@@ -40,7 +41,7 @@ public class Place {
   @Column(name = "address_name", length = 500)
   private String addressName; // 지번 주소
 
-  @Column(name = "road_address_name", nullable = false, length = 500)
+  @Column(name = "road_address_name", nullable = true, length = 500)
   private String roadAddressName; // 도로명 주소
 
   @Column(nullable = false)
@@ -54,4 +55,5 @@ public class Place {
 
   @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PlaceImage> images = new ArrayList<>();
+
 }

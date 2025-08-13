@@ -2,10 +2,10 @@ package com.B108.tripwish.websocket.service;
 
 import java.util.List;
 
+import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.place.entity.Place;
 import com.B108.tripwish.domain.place.entity.PlaceImage;
 import com.B108.tripwish.domain.place.service.PlaceReaderService;
@@ -76,7 +76,7 @@ public class PlaceWantSocketService {
       place.getImages().size();
       lat = place.getLat();
       lng = place.getLng();
-      category = place.getCategory().getCategoryName();
+      category = place.getCategoryId().getCategoryName();
       List<PlaceImage> images = place.getImages();
       imgUrl = (images != null && !images.isEmpty()) ? images.get(0).getImgUrl() : null;
       placeName = place.getPlaceName();
@@ -123,3 +123,4 @@ public class PlaceWantSocketService {
     messagingTemplate.convertAndSend("/topic/room/" + roomId + "/place-want/remove", response);
   }
 }
+

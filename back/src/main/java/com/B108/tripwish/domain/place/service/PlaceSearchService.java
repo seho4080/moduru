@@ -7,5 +7,12 @@ import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 public interface PlaceSearchService {
 
   PlaceListResponseDto searchPlaces(
+          
+
       CustomUserDetails user, Long roomId, PlaceSearchRequest request);
+
+  PlaceListResponseDto searchPlacesByAI(CustomUserDetails user, Long roomId, PlaceSearchRequest request);
+
 }
+
+
