@@ -7,7 +7,13 @@ import re  # 정규 표현식 사용
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "restaurant_data_embedding.json")
 
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
+conn = psycopg2.connect(
+    host=os.getenv("POSTGRES_HOST", "localhost"),
+    port=os.getenv("POSTGRES_PORT", 5432),
+    dbname=os.getenv("POSTGRES_DB", "postgres"),
+    user=os.getenv("POSTGRES_USER", "postgres"),
+    password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
+)
 cur = conn.cursor()
 
 REGION_MAPPING = {
@@ -187,6 +193,12 @@ def truncate(text, max_length):
 
 
 def extract_region_id(address):
+    if not address:
+        return None
+    for region_name, code in REGION_MAPPING.items():
+        if region_name in address:  # 주소 안에 지역명이 포함되어 있으면
+            return code
+    return None
     if not address:
         return None
     region_candidates = re.findall(r"[\w]+(?:특별시|광역시|도|시|군|구)", address)

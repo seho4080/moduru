@@ -50,7 +50,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data     # 데이터 저장 할 장소
-      - ./db_init.sql:/docker-entrypoint-initdb.d/db_init.sql:ro # db init
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro # db init
       # - ./insert-data:/docker-entrypoint-initdb.d   # init 스크립트 자동 실행
     networks:
       - app-network   # 이렇게 바꾸기!
