@@ -3,6 +3,7 @@ package com.B108.tripwish.domain.place.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.B108.tripwish.domain.place.dto.response.AiPlaceDto;
 import com.B108.tripwish.domain.place.dto.response.AiRecommendResponse;
 import com.B108.tripwish.global.common.entity.Region;
 import com.B108.tripwish.global.exception.CustomException;
@@ -131,11 +132,21 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
             .bodyToMono(AiRecommendResponse.class)
             .block();
 
-    List<Long> ids = (aiRes == null || aiRes.result() == null) ? List.of() : aiRes.result();
+    // ✅ 게터 사용 + AiPlaceDto → id 리스트로 변환
+    List<AiPlaceDto> items = (aiRes == null || aiRes.getResult() == null)
+            ? List.of()
+            : aiRes.getResult();
+
+    List<Long> ids = items.stream()
+            .map(AiPlaceDto::getId)
+            .filter(Objects::nonNull)
+            .toList();
+
     if (ids.isEmpty()) return new PlaceListResponseDto(List.of());
 
-    Map<Long,Integer> order = new HashMap<>();
-    for (int i=0;i<ids.size();i++) order.put(ids.get(i), i);
+    // 원래 순서 유지용 인덱스 맵
+    Map<Long, Integer> order = new HashMap<>();
+    for (int i = 0; i < ids.size(); i++) order.put(ids.get(i), i);
 
     List<Place> places = placeRepository.findAllById(ids).stream()
             .filter(p -> Objects.equals(p.getRegionId().getId(), region.getId()))
@@ -145,7 +156,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
     Long userId = user.getUser().getId();
     List<Long> placeIds = places.stream().map(Place::getId).toList();
 
-    Set<Long> liked = myPlaceReaderService.getMyPlaceIds(userId, placeIds);
+    Set<Long> liked  = myPlaceReaderService.getMyPlaceIds(userId, placeIds);
     Set<Long> wanted = wantPlaceReaderService.getWantPlaceIds(roomId, placeIds, PlaceType.PLACE);
 
     var dtoList = places.stream()
