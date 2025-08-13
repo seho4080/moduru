@@ -24,6 +24,83 @@ CREATE TABLE regions (
     lng FLOAT
 );
 
+-- 장소 테이블
+CREATE TABLE places (
+    id SERIAL PRIMARY KEY,
+    category_id INT NOT NULL REFERENCES categories (id) ON DELETE CASCADE,
+    region_id INT NOT NULL REFERENCES regions (id) ON DELETE CASCADE,
+    kakao_id INT,
+    place_name VARCHAR(50),
+    place_url VARCHAR(500),
+    address_name VARCHAR(150),
+    road_address_name VARCHAR(150) NOT NULL,
+    lng FLOAT NOT NULL,
+    lat FLOAT NOT NULL,
+    embedding VECTOR
+);
+
+-- 장소 태그 테이블
+CREATE TABLE place_metadata_tags (
+    id SERIAL PRIMARY KEY,
+    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
+    content VARCHAR(30) NOT NULL
+);
+
+-- 장소 이미지 테이블
+CREATE TABLE place_images (
+    id BIGSERIAL PRIMARY KEY,
+    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
+    img_url VARCHAR(500) NOT NULL
+);
+
+-- 음식점 테이블
+CREATE TABLE restaurants (
+    id SERIAL PRIMARY KEY,
+    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
+    description TEXT,
+    description_short TEXT,
+    tel VARCHAR(50),
+    homepage VARCHAR(255),
+    business_hours VARCHAR(255),
+    rest_date VARCHAR(100),
+    parking VARCHAR(100)
+);
+
+-- 음식점 메뉴 테이블
+CREATE TABLE restaurant_menus (
+    id SERIAL PRIMARY KEY,
+    restaurant_id INT NOT NULL REFERENCES restaurants (id) ON DELETE CASCADE,
+    menu VARCHAR(30) NOT NULL
+);
+
+-- 명소 테이블
+CREATE TABLE spots (
+    id SERIAL PRIMARY KEY,
+    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
+    description TEXT,
+    description_short TEXT,
+    info_center VARCHAR(50),
+    homepage VARCHAR(255),
+    business_hours VARCHAR(255),
+    rest_date VARCHAR(100),
+    parking VARCHAR(100),
+    price VARCHAR(100)
+);
+
+-- 축제 테이블
+CREATE TABLE festivals (
+    id SERIAL PRIMARY KEY,
+    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
+    description TEXT,
+    description_short TEXT,
+    homepage VARCHAR(255),
+    info_center VARCHAR(100),
+    period VARCHAR(100),
+    price VARCHAR(100),
+    organizer VARCHAR(50),
+    sns VARCHAR(100)
+);
+
 -- 지역 데이터 삽입
 INSERT INTO regions (id, name, parent_id, lat, lng) VALUES
 (0, '서울특별시', NULL, 37.5665, 126.9780),
@@ -194,80 +271,3 @@ INSERT INTO regions (id, name, parent_id, lat, lng) VALUES
 (165, '함양군', 15, 35.5204, 127.7255),
 (166, '거창군', 15, 35.6710, 127.9096),
 (167, '합천군', 15, 35.5667, 128.1667);
-
--- 장소 테이블
-CREATE TABLE places (
-    id SERIAL PRIMARY KEY,
-    category_id INT NOT NULL REFERENCES categories (id) ON DELETE CASCADE,
-    region_id INT NOT NULL REFERENCES regions (id) ON DELETE CASCADE,
-    kakao_id INT,
-    place_name VARCHAR(50),
-    place_url VARCHAR(500),
-    address_name VARCHAR(150),
-    road_address_name VARCHAR(150) NOT NULL,
-    lng FLOAT NOT NULL,
-    lat FLOAT NOT NULL,
-    embedding VECTOR
-);
-
--- 장소 태그 테이블
-CREATE TABLE place_metadata_tags (
-    id SERIAL PRIMARY KEY,
-    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
-    content VARCHAR(30) NOT NULL
-);
-
--- 장소 이미지 테이블
-CREATE TABLE place_metadata_images (
-    id BIGSERIAL PRIMARY KEY,
-    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
-    img_url VARCHAR(500) NOT NULL
-);
-
--- 음식점 테이블
-CREATE TABLE restaurants (
-    id SERIAL PRIMARY KEY,
-    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
-    description TEXT,
-    description_short TEXT,
-    tel VARCHAR(50),
-    homepage VARCHAR(255),
-    business_hours VARCHAR(255),
-    rest_date VARCHAR(100),
-    parking VARCHAR(100)
-);
-
--- 음식점 메뉴 테이블
-CREATE TABLE restaurant_menus (
-    id SERIAL PRIMARY KEY,
-    restaurant_id INT NOT NULL REFERENCES restaurants (id) ON DELETE CASCADE,
-    menu VARCHAR(30) NOT NULL
-);
-
--- 명소 테이블
-CREATE TABLE spots (
-    id SERIAL PRIMARY KEY,
-    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
-    description TEXT,
-    description_short TEXT,
-    info_center VARCHAR(50),
-    homepage VARCHAR(255),
-    business_hours VARCHAR(255),
-    rest_date VARCHAR(100),
-    parking VARCHAR(100),
-    price VARCHAR(100)
-);
-
--- 축제 테이블
-CREATE TABLE festivals (
-    id SERIAL PRIMARY KEY,
-    place_id INT NOT NULL REFERENCES places (id) ON DELETE CASCADE,
-    description TEXT,
-    description_short TEXT,
-    homepage VARCHAR(255),
-    info_center VARCHAR(100),
-    period VARCHAR(100),
-    price VARCHAR(100),
-    organizer VARCHAR(50),
-    sns VARCHAR(100)
-);

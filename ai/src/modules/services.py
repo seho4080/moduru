@@ -3,11 +3,13 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 import os
+import modules.gms_api as gms
+import modules.kakao_maps_api as kakao
 
 conn = psycopg2.connect(
     host=os.getenv("POSTGRES_HOST", "localhost"),
     port=os.getenv("POSTGRES_PORT", 5432),
-    dbname=os.getenv("POSTGRES_DB", "postgres"),
+    dbname=os.getenv("POSTGRES_DB", "mydb"),
     user=os.getenv("POSTGRES_USER", "postgres"),
     password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
 )
@@ -15,7 +17,6 @@ conn = psycopg2.connect(
 
 def cosine_similarity(region_id, query_embedding):
     cur = conn.cursor()
-    cur.execute("SET search_path TO moduru")
 
     cur.execute(
         """SELECT
@@ -24,10 +25,10 @@ def cosine_similarity(region_id, query_embedding):
             p.address_name,
             COALESCE(r.business_hours, s.business_hours) AS business_hours,
             COALESCE(r.description, s.description, f.description) AS description
-        FROM moduru.places p
-        LEFT JOIN moduru.restaurants r ON p.id = r.place_id AND p.category_id = 1
-        LEFT JOIN moduru.spots s       ON p.id = s.place_id AND p.category_id = 2
-        LEFT JOIN moduru.festivals f   ON p.id = f.place_id AND p.category_id = 3
+        FROM places p
+        LEFT JOIN restaurants r ON p.id = r.place_id AND p.category_id = 1
+        LEFT JOIN spots s       ON p.id = s.place_id AND p.category_id = 2
+        LEFT JOIN festivals f   ON p.id = f.place_id AND p.category_id = 3
         WHERE p.region_id = %s
         ORDER BY p.embedding <#> %s::vector
         LIMIT 50
@@ -70,7 +71,7 @@ def recommend_places(region_id, query):
         return {"error": "Invalid Region ID."}
 
     query_embedding = gms.text_embedding(query)
-    similar_places = utils.cosine_similarity(region_id, query_embedding)
+    similar_places = cosine_similarity(region_id, query_embedding)
     place_list = gms.filter_valid(similar_places, query)
     return {"result": place_list}
 
