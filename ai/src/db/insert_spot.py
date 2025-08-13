@@ -6,8 +6,13 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "spot_data_embedding.json")
 
-# DB 연결
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
+conn = psycopg2.connect(
+    host=os.getenv("POSTGRES_HOST", "localhost"),
+    port=os.getenv("POSTGRES_PORT", 5432),
+    dbname=os.getenv("POSTGRES_DB", "postgres"),
+    user=os.getenv("POSTGRES_USER", "postgres"),
+    password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
+)
 cur = conn.cursor()
 
 # 시·군·구 단위까지 포함된 지역 코드 매핑

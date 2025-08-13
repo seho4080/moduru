@@ -6,7 +6,13 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(BASE_DIR, "..", "..", "data", "festival_data_embedding.json")
 
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="ssafy")
+conn = psycopg2.connect(
+    host=os.getenv("POSTGRES_HOST", "localhost"),
+    port=os.getenv("POSTGRES_PORT", 5432),
+    dbname=os.getenv("POSTGRES_DB", "postgres"),
+    user=os.getenv("POSTGRES_USER", "postgres"),
+    password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
+)
 cur = conn.cursor()
 
 # NOTE: 주소에서 시·군 추출 후 region_id로 매핑하기 위한 딕셔너리 (그대로 유지)
