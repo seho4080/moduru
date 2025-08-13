@@ -39,7 +39,7 @@ services:
   ##########################################  
   # 3. DB (postgresql)
   ##########################################
-  db:
+  postgres:
     image: pgvector/pgvector:pg16
     container_name: postgres
     environment:
@@ -53,7 +53,7 @@ services:
       - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro # db init
       # - ./insert-data:/docker-entrypoint-initdb.d   # init 스크립트 자동 실행
     networks:
-      - app-network   # 이렇게 바꾸기!
+      - app-network
   ##########################################
   # 4. 백엔드 (Spring Boot)
   ##########################################
@@ -75,7 +75,7 @@ services:
       - ELASTICSEARCH_HOST=elasticsearch
       - ELASTICSEARCH_PORT=9200
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydb
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EMAIL_ID=lhjlizzie@gmail.com
@@ -111,7 +111,7 @@ services:
       - REDIS_HOST=redis        # ← 여기
       - REDIS_PORT=6379
     depends_on:
-      # - db
+      # - postgres
       - redis
     restart: always
     networks:
@@ -159,12 +159,12 @@ services:
   ##########################################
   data-loader:
     image: python:3.11-slim
-    container_name: data_loader
+    container_name: data-loader
     working_dir: /app
     volumes:
-      - ./insert-data/insert_data:/app         # 스크립트가 있는 로컬 폴더
+      - ./ai:/app
     depends_on:
-      - db
+      - postgres
     networks:
       - app-network
     environment:
@@ -173,14 +173,9 @@ services:
       POSTGRES_DB: mydb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ssafy
-    # command: ["python", "insert_data_docker.py"]  # 스크립트 이름
-    command: >
-        sh -c "set -x && \
-              pip install psycopg2-binary pgvector && \
-              python insert_data_docker.py && \
-              python festival_data_docker.py && \
-              sleep 300"
-# python spot_data_docker.py && \      
+    command: ["sleep", "infinity"]
+    # 도커 실행되면 아래 명령어 1회 실행해서 데이터 넣기
+    # docker-compose run --rm data-loader sh -c "pip install psycopg2-binary pgvector numpy && python src/db/insert_festival.py&& python src/db/insert_restaurant.py&& python src/db/insert_spot.py"
 
   ##########################################
   # 9. nginx(리버스 프록시)
@@ -211,14 +206,14 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - POSTGRES_HOST=db
+      - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=mydb
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=ssafy
       - PYTHONUNBUFFERED=1
     depends_on:
-      - db
+      - postgres
     networks:
       - app-network
 networks:
