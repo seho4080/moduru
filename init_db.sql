@@ -35,10 +35,10 @@ CREATE TABLE IF NOT EXISTS places (
   category_id BIGINT,
   region_id BIGINT,
   kakao_id BIGINT,
-  place_name VARCHAR(500),
-  place_url VARCHAR(500),
-  address_name VARCHAR(500),
-  road_address_name VARCHAR(500) NOT NULL,
+  place_name TEXT,
+  place_url TEXT,
+  address_name TEXT NOT NULL,
+  road_address_name TEXT,
   lng DOUBLE PRECISION NOT NULL,
   lat DOUBLE PRECISION NOT NULL,
   embedding VECTOR,
@@ -49,65 +49,62 @@ CREATE TABLE IF NOT EXISTS places (
 CREATE TABLE IF NOT EXISTS place_images (
   id BIGSERIAL PRIMARY KEY,
   place_id BIGINT NOT NULL,
-  img_url VARCHAR(500) NOT NULL,
+  img_url TEXT NOT NULL,
   CONSTRAINT fk_place_images_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS place_metadata_tags (
   id BIGSERIAL PRIMARY KEY,
   place_id BIGINT NOT NULL,
-  content VARCHAR(500) NOT NULL,
+  content TEXT NOT NULL,
   CONSTRAINT fk_place_metadata_tags_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS restaurants (
   id BIGSERIAL PRIMARY KEY,
   place_id BIGINT NOT NULL UNIQUE,
-  region_id BIGINT NOT NULL,
   description TEXT,
   description_short TEXT,
-  tel VARCHAR(500),
-  homepage VARCHAR(500),
-  business_hours VARCHAR(500),
-  rest_date VARCHAR(500),
-  parking VARCHAR(500),
+  tel TEXT,
+  homepage TEXT,
+  business_hours TEXT,
+  rest_date TEXT,
+  parking TEXT,
   CONSTRAINT fk_restaurants_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS restaurant_menus (
   id BIGSERIAL PRIMARY KEY,
   restaurant_id BIGINT NOT NULL,
-  menu VARCHAR(500) NOT NULL,
+  menu TEXT NOT NULL,
   CONSTRAINT fk_restaurant_menus_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS spots (
   id BIGSERIAL PRIMARY KEY,
   place_id BIGINT NOT NULL UNIQUE,
-  region_id BIGINT NOT NULL,
   description TEXT,
   description_short TEXT,
-  info_center VARCHAR(500),
-  homepage VARCHAR(500),
-  business_hours VARCHAR(500),
-  rest_date VARCHAR(500),
-  parking VARCHAR(500),
-  price VARCHAR(500),
+  info_center TEXT,
+  homepage TEXT,
+  business_hours TEXT,
+  rest_date TEXT,
+  parking TEXT,
+  price TEXT,
   CONSTRAINT fk_spots_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS festivals (
   id BIGSERIAL PRIMARY KEY,
   place_id BIGINT NOT NULL UNIQUE,
-  region_id BIGINT NOT NULL,
   description TEXT,
   description_short TEXT,
-  homepage VARCHAR(500),
-  info_center VARCHAR(500),
-  period VARCHAR(500),
-  price VARCHAR(500),
-  organizer VARCHAR(500),
-  sns VARCHAR(500),
+  homepage TEXT,
+  info_center TEXT,
+  period TEXT,
+  price TEXT,
+  organizer TEXT,
+  sns TEXT,
   CONSTRAINT fk_festivals_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE
 );
 
@@ -256,35 +253,17 @@ CREATE TABLE travel_members (
 -- POSTGRES SEED
 INSERT INTO users (uuid, email, password, provider, nickname, profile_img, gender, birth, created_at, phone, role) VALUES
 ('97e2b112-b3b8-48e1-bc1e-bd4a2291eac0', 'user0@example.com', '{bcrypt}$2a$10$xPl0eMOl9.ZNQqMDHZ0hYeFtNT9KbbCGpbBy89Bmy00furA2WA78m', 'local', 'user0', NULL, 'M', '1990-01-15', '2025-08-12 12:00:00', '010-0000-0000', 'ROLE_USER'),
-('0a2b86be-3e3b-477c-b4d0-04b8a68382e0', 'user1@example.com', '{bcrypt}$2a$10$cJFpa1AdfwFrQyCBPo8duuUDw2MR8doKRPNLY1XtngvCZI10bQMC2
+('0a2b86be-3e3b-477c-b4d0-04b8a68382e0', 'user1@example.com', '{bcrypt}$2a$10$cJFpa1AdfwFrQyCBPo8duuUDw2MR8doKRPNLY1XtngvCZI10bQMC2', 'local', 'user1', NULL, 'F', '1991-02-15', '2025-08-13 12:00:00', '010-0000-0001', 'ROLE_USER'),
+('f3123f3a-023e-4dd1-a3cd-a8822979ff96', 'user2@example.com', '{bcrypt}$2a$10$XYYV7RWWqCLmd12/8W2h2.Rmn/6.bNfEcZuO2C1OTzPRiuyTQMZn6', 'local', 'user2', NULL, 'O', '1992-03-15', '2025-08-14 12:00:00', '010-0000-0002', 'ROLE_USER'),
+('0e5502ae-aedd-43ab-bfbb-cb979c508135', 'user3@example.com', '{bcrypt}$2a$10$xPl0eMOl9.ZNQqMDHZ0hYeFtNT9KbbCGpbBy89Bmy00furA2WA78m', 'local', 'user3', NULL, 'M', '1993-04-15', '2025-08-15 12:00:00', '010-0000-0003', 'ROLE_USER'),
+('f3de9890-55cd-40d5-a609-aae40b5fad19', 'user4@example.com', '{bcrypt}$2a$10$s70OZSVPt/E/KN8Wbc32z.ZDu92dq86q.iihaXSbO1Sn2.xBAz7OW', 'local', 'user4', NULL, 'F', '1994-05-15', '2025-08-16 12:00:00', '010-0000-0004', 'ROLE_USER'),
+('8c1450d8-be92-44f7-b120-261670a971b7', 'user5@example.com', '{bcrypt}$2a$10$C58OR2Ll0QGpNfx1QVnQbuch9bwX.mvV26hWVj1vhkH2FqYh/m8Xy', 'local', 'user5', NULL, 'O', '1995-06-15', '2025-08-17 12:00:00', '010-0000-0005', 'ROLE_USER'),
+('17703821-1cba-4997-83ea-39837ea928da', 'user6@example.com', '{bcrypt}$2a$10$UBKEcD82XQ9BBIaZe6CyYOyEqiQBwk12rRePFwE1WrNQDstXLbr8G', 'local', 'user6', NULL, 'M', '1996-07-15', '2025-08-18 12:00:00', '010-0000-0006', 'ROLE_USER'),
+('4a4b8549-16e8-4ce7-97ed-675c0112348c', 'user7@example.com', '{bcrypt}$2a$10$K2sla1itLrKrx01nwTXT3uii8I4aiPQG8gIcNENGIB9EjPajkzY9y', 'local', 'user7', NULL, 'F', '1997-08-15', '2025-08-19 12:00:00', '010-0000-0007', 'ROLE_USER'),
+('38ea52ff-cf4b-4442-bef5-c189019011be', 'user8@example.com', '{bcrypt}$2a$10$ORs9nbk7VeZuYP974KBu6uabhOE5GjxEek4rMadMFdTyS1A8z8BIS', 'local', 'user8', NULL, 'O', '1998-09-15', '2025-08-20 12:00:00', '010-0000-0008', 'ROLE_USER'),
+('4e6d38c8-b41f-478a-a285-e0cc591153a2', 'user9@example.com', '{bcrypt}$2a$10$wUMgN9haZVnDgfz.Hilxles1woQikPE8Qh8S.Prh4TVqGn3aOlsL6', 'local', 'user9', NULL, 'M', '1999-01-15', '2025-08-21 12:00:00', '010-0000-0009', 'ROLE_USER');
 
-', 'local', 'user1', NULL, 'F', '1991-02-15', '2025-08-13 12:00:00', '010-0000-0001', 'ROLE_USER'),
-('f3123f3a-023e-4dd1-a3cd-a8822979ff96', 'user2@example.com', '{bcrypt}$2a$10$XYYV7RWWqCLmd12/8W2h2.Rmn/6.bNfEcZuO2C1OTzPRiuyTQMZn6
-
-', 'local', 'user2', NULL, 'O', '1992-03-15', '2025-08-14 12:00:00', '010-0000-0002', 'ROLE_USER'),
-('0e5502ae-aedd-43ab-bfbb-cb979c508135', 'user3@example.com', '{bcrypt}$2a$10$xPl0eMOl9.ZNQqMDHZ0hYeFtNT9KbbCGpbBy89Bmy00furA2WA78m
-
-', 'local', 'user3', NULL, 'M', '1993-04-15', '2025-08-15 12:00:00', '010-0000-0003', 'ROLE_USER'),
-('f3de9890-55cd-40d5-a609-aae40b5fad19', 'user4@example.com', '{bcrypt}$2a$10$s70OZSVPt/E/KN8Wbc32z.ZDu92dq86q.iihaXSbO1Sn2.xBAz7OW
-
-', 'local', 'user4', NULL, 'F', '1994-05-15', '2025-08-16 12:00:00', '010-0000-0004', 'ROLE_USER'),
-('8c1450d8-be92-44f7-b120-261670a971b7', 'user5@example.com', '{bcrypt}$2a$10$C58OR2Ll0QGpNfx1QVnQbuch9bwX.mvV26hWVj1vhkH2FqYh/m8Xy
-
-', 'local', 'user5', NULL, 'O', '1995-06-15', '2025-08-17 12:00:00', '010-0000-0005', 'ROLE_USER'),
-('17703821-1cba-4997-83ea-39837ea928da', 'user6@example.com', '{bcrypt}$2a$10$UBKEcD82XQ9BBIaZe6CyYOyEqiQBwk12rRePFwE1WrNQDstXLbr8G
-
-', 'local', 'user6', NULL, 'M', '1996-07-15', '2025-08-18 12:00:00', '010-0000-0006', 'ROLE_USER'),
-('4a4b8549-16e8-4ce7-97ed-675c0112348c', 'user7@example.com', '{bcrypt}$2a$10$K2sla1itLrKrx01nwTXT3uii8I4aiPQG8gIcNENGIB9EjPajkzY9y
-
-', 'local', 'user7', NULL, 'F', '1997-08-15', '2025-08-19 12:00:00', '010-0000-0007', 'ROLE_USER'),
-('38ea52ff-cf4b-4442-bef5-c189019011be', 'user8@example.com', '{bcrypt}$2a$10$ORs9nbk7VeZuYP974KBu6uabhOE5GjxEek4rMadMFdTyS1A8z8BIS
-
-', 'local', 'user8', NULL, 'O', '1998-09-15', '2025-08-20 12:00:00', '010-0000-0008', 'ROLE_USER'),
-('4e6d38c8-b41f-478a-a285-e0cc591153a2', 'user9@example.com', '{bcrypt}$2a$10$wUMgN9haZVnDgfz.Hilxles1woQikPE8Qh8S.Prh4TVqGn3aOlsL6
-
-', 'local', 'user9', NULL, 'M', '1999-01-15', '2025-08-21 12:00:00', '010-0000-0009', 'ROLE_USER');
-
-INSERT INTOregions (id, name, parent_id, lat, lng) VALUES 
+INSERT INTO regions (id, name, parent_id, lat, lng) VALUES 
 (0, '서울특별시', NULL, 37.5665, 126.978),
 (1, '부산광역시', NULL, 35.1796, 129.0756),
 (2, '대구광역시', NULL, 35.8714, 128.6014),
@@ -456,94 +435,11 @@ INSERT INTOregions (id, name, parent_id, lat, lng) VALUES
 
 
 INSERT INTO categories (id, category_name) VALUES
-(1, 'restaurant'),
-    (2, 'spot'),
-    (3, 'festival'),
-    (4, 'common');
+  (1, 'restaurant'),
+  (2, 'spot'),
+  (3, 'festival'),
+  (4, 'common');
 
-INSERT INTO places (category_id, region_id, kakao_id, place_name, place_url, address_name, road_address_name, lng, lat) VALUES
-(1, 1, 1000, 'Place 1', 'http://example.com/p1', 'Addr 1', 'Road Addr 1', 126.90000, 37.50000),
-(2, 2, 1001, 'Place 2', 'http://example.com/p2', 'Addr 2', 'Road Addr 2', 126.91000, 37.51000),
-(3, 3, 1002, 'Place 3', 'http://example.com/p3', 'Addr 3', 'Road Addr 3', 126.92000, 37.52000),
-(4, 4, 1003, 'Place 4', 'http://example.com/p4', 'Addr 4', 'Road Addr 4', 126.93000, 37.53000),
-(1, 5, 1004, 'Dummy Place 5', 'http://example.com/p5', 'Address 5', 'Road Address 5', 126.94000, 37.54000),
-(2, 6, 1005, 'Dummy Place 6', 'http://example.com/p6', 'Address 6', 'Road Address 6', 126.95000, 37.55000),
-(3, 7, 1006, 'Dummy Place 7', 'http://example.com/p7', 'Address 7', 'Road Address 7', 126.96000, 37.56000),
-(4, 8, 1007, 'Dummy Place 8', 'http://example.com/p8', 'Address 8', 'Road Address 8', 126.97000, 37.57000),
-(1, 9, 1008, 'Dummy Place 9', 'http://example.com/p9', 'Address 9', 'Road Address 9', 126.98000, 37.58000),
-(2, 20, 1009, 'Dummy Place 10', 'http://example.com/p10', 'Address 10', 'Road Address 10', 126.99000, 37.59000);
-
-INSERT INTO place_images (place_id, img_url) VALUES
-(1, 'http://img.com/1.jpg'),
-(2, 'http://img.com/2.jpg'),
-(3, 'http://img.com/3.jpg'),
-(4, 'http://img.com/4.jpg'),
-(5, 'http://img.com/5.jpg'),
-(6, 'http://img.com/6.jpg'),
-(7, 'http://img.com/7.jpg'),
-(8, 'http://img.com/8.jpg'),
-(9, 'http://img.com/9.jpg'),
-(10, 'http://img.com/10.jpg');
-
-INSERT INTO place_metadata_tags (place_id, content) VALUES
-(1, 'meta-tag-1'),
-(2, 'meta-tag-2'),
-(3, 'meta-tag-3'),
-(4, 'meta-tag-4'),
-(5, 'meta-tag-5'),
-(6, 'meta-tag-6'),
-(7, 'meta-tag-7'),
-(8, 'meta-tag-8'),
-(9, 'meta-tag-9'),
-(10, 'meta-tag-10');
-
-INSERT INTO restaurants (place_id, region_id, description, description_short, tel, homepage, business_hours, rest_date, parking) VALUES
-(1, 1, 'desc 1', 'short 1', '02-0000-0000', 'http://rest1.com', '09:00-21:00', 'Sun', 'Yes'),
-(2, 2, 'desc 2', 'short 2', '02-0000-0001', 'http://rest2.com', '09:00-21:00', 'Sun', 'Yes'),
-(3, 3, 'desc 3', 'short 3', '02-0000-0002', 'http://rest3.com', '09:00-21:00', 'Sun', 'Yes'),
-(4, 4, 'desc 4', 'short 4', '02-0000-0003', 'http://rest4.com', '09:00-21:00', 'Sun', 'Yes'),
-(5, 5, 'desc 5', 'short 5', '02-0000-0004', 'http://rest5.com', '09:00-21:00', 'Sun', 'Yes'),
-(6, 6, 'desc 6', 'short 6', '02-0000-0005', 'http://rest6.com', '09:00-21:00', 'Sun', 'Yes'),
-(7, 7, 'desc 7', 'short 7', '02-0000-0006', 'http://rest7.com', '09:00-21:00', 'Sun', 'Yes'),
-(8, 8, 'desc 8', 'short 8', '02-0000-0007', 'http://rest8.com', '09:00-21:00', 'Sun', 'Yes'),
-(9, 9, 'desc 9', 'short 9', '02-0000-0008', 'http://rest9.com', '09:00-21:00', 'Sun', 'Yes'),
-(10, 10, 'desc 10', 'short 10', '02-0000-0009', 'http://rest10.com', '09:00-21:00', 'Sun', 'Yes');
-
-INSERT INTO restaurant_menus (restaurant_id, menu) VALUES
-(1, 'Menu 1'),
-(2, 'Menu 2'),
-(3, 'Menu 3'),
-(4, 'Menu 4'),
-(5, 'Menu 5'),
-(6, 'Menu 6'),
-(7, 'Menu 7'),
-(8, 'Menu 8'),
-(9, 'Menu 9'),
-(10, 'Menu 10');
-
-INSERT INTO spots (place_id, region_id, description, description_short, info_center, homepage, business_hours, rest_date, parking, price) VALUES
-(1, 1, 'spot desc 1', 'spot short 1', 'info 1', 'http://spot1.com', '10:00-18:00', 'Mon', 'Lot 1', 'Free'),
-(2, 2, 'spot desc 2', 'spot short 2', 'info 2', 'http://spot2.com', '10:00-18:00', 'Mon', 'Lot 2', 'Free'),
-(3, 3, 'spot desc 3', 'spot short 3', 'info 3', 'http://spot3.com', '10:00-18:00', 'Mon', 'Lot 3', 'Free'),
-(4, 4, 'spot desc 4', 'spot short 4', 'info 4', 'http://spot4.com', '10:00-18:00', 'Mon', 'Lot 4', 'Free'),
-(5, 5, 'spot desc 5', 'spot short 5', 'info 5', 'http://spot5.com', '10:00-18:00', 'Mon', 'Lot 5', 'Free'),
-(6, 6, 'spot desc 6', 'spot short 6', 'info 6', 'http://spot6.com', '10:00-18:00', 'Mon', 'Lot 6', 'Free'),
-(7, 7, 'spot desc 7', 'spot short 7', 'info 7', 'http://spot7.com', '10:00-18:00', 'Mon', 'Lot 7', 'Free'),
-(8, 8, 'spot desc 8', 'spot short 8', 'info 8', 'http://spot8.com', '10:00-18:00', 'Mon', 'Lot 8', 'Free'),
-(9, 9, 'spot desc 9', 'spot short 9', 'info 9', 'http://spot9.com', '10:00-18:00', 'Mon', 'Lot 9', 'Free'),
-(10, 10, 'spot desc 10', 'spot short 10', 'info 10', 'http://spot10.com', '10:00-18:00', 'Mon', 'Lot 10', 'Free');
-
-INSERT INTO festivals (place_id, region_id, description, description_short, homepage, info_center, period, price, organizer, sns) VALUES
-(1, 1, 'festival desc 1', 'festival short 1', 'http://fest1.com', 'center 1', '2025-01', '10$', 'org 1', '@fest1'),
-(2, 2, 'festival desc 2', 'festival short 2', 'http://fest2.com', 'center 2', '2025-02', '10$', 'org 2', '@fest2'),
-(3, 3, 'festival desc 3', 'festival short 3', 'http://fest3.com', 'center 3', '2025-03', '10$', 'org 3', '@fest3'),
-(4, 4, 'festival desc 4', 'festival short 4', 'http://fest4.com', 'center 4', '2025-04', '10$', 'org 4', '@fest4'),
-(5, 5, 'festival desc 5', 'festival short 5', 'http://fest5.com', 'center 5', '2025-05', '10$', 'org 5', '@fest5'),
-(6, 6, 'festival desc 6', 'festival short 6', 'http://fest6.com', 'center 6', '2025-06', '10$', 'org 6', '@fest6'),
-(7, 7, 'festival desc 7', 'festival short 7', 'http://fest7.com', 'center 7', '2025-07', '10$', 'org 7', '@fest7'),
-(8, 8, 'festival desc 8', 'festival short 8', 'http://fest8.com', 'center 8', '2025-08', '10$', 'org 8', '@fest8'),
-(9, 9, 'festival desc 9', 'festival short 9', 'http://fest9.com', 'center 9', '2025-09', '10$', 'org 9', '@fest9'),
-(10, 10, 'festival desc 10', 'festival short 10', 'http://fest10.com', 'center 10', '2025-01', '10$', 'org 10', '@fest10');
 
 INSERT INTO travel_rooms (region_id, title, start_date, end_date, created_at) VALUES
 (1, 'Room 1', '2025-08-01', '2025-08-11', '2025-08-12 12:00:00'),

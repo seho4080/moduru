@@ -35,7 +35,7 @@ def get_schedule_recommendation(request: ScheduleRequest):
     for day, day_list in enumerate(days_list, 1):
         final_data.append(
             {
-                "transport": "car",
+                "transport": "driving",
                 "day": day,
                 "route": services.recommend_route(day_list["points"])["route"],
             }
@@ -48,7 +48,7 @@ def get_schedule_recommendation(request: ScheduleRequest):
 def recommend_route_api(request: ScheduleRequest):
     place_list = [p.model_dump() for p in request.place_list]
     result = {
-        "transport": "car",
+        "transport": "driving",
         "day": request.days,
         "route": services.recommend_route(place_list)["route"],
     }
