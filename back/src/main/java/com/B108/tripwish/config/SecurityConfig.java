@@ -2,6 +2,7 @@ package com.B108.tripwish.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -42,9 +43,12 @@ public class SecurityConfig {
         new AntPathRequestMatcher("/auth/login"),
         new AntPathRequestMatcher("/auth/reissue"),
         new AntPathRequestMatcher("/auth/email/verify"),
-        new AntPathRequestMatcher("/auth/email/send")
+        new AntPathRequestMatcher("/auth/email/send"),
+        new AntPathRequestMatcher("/users/signup"),
+        new AntPathRequestMatcher("/h2-console/**") // H2
     ).permitAll()
     .anyRequest().authenticated()
+
 )
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider),
