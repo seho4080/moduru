@@ -17,7 +17,8 @@ public class Festival {
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "place_id", nullable = false, unique = true)
-  private Place place;
+  private Place placeId;
+
 
   @Column(columnDefinition = "TEXT")
   private String description;

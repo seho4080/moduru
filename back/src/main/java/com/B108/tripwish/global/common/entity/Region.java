@@ -1,7 +1,11 @@
 package com.B108.tripwish.global.common.entity;
 
+import com.B108.tripwish.domain.place.entity.Place;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "regions")
@@ -11,16 +15,24 @@ import lombok.*;
 @Builder
 public class Region {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(name = "name", nullable = false)
-  private String name;
+    @Column(name = "name", nullable = false)
+    private String name;
 
-  @Column(name = "lat", nullable = false)
-  private Double lat;
+    // NOTE: parent_id 컬럼 - 최상위(도 단위)는 null
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Region parent;
 
-  @Column(name = "lng", nullable = false)
-  private Double lng;
+    @Column(name = "lat", nullable = false)
+    private Double lat;
+
+    @Column(name = "lng", nullable = false)
+    private Double lng;
+
+    @OneToMany(mappedBy = "regionId", orphanRemoval = false)  // 역방향(선택)
+    private List<Place> places = new ArrayList<>();
 }

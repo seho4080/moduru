@@ -1,6 +1,8 @@
 package com.B108.tripwish.global.exception;
 
+
 import org.springframework.http.HttpStatus;
+
 
 public enum ErrorCode {
   // 인증 관련
@@ -31,10 +33,16 @@ public enum ErrorCode {
   INVALID_NICKNAME_FORMAT("올바르지 않은 닉네임 형식입니다.", HttpStatus.BAD_REQUEST),
   INVALID_PASSWORD_FORMAT("올바르지 않은 비밀번호 형식입니다.", HttpStatus.BAD_REQUEST),
 
+
   // ROOM 관련 추가 예외
   ROOM_KICK_FORBIDDEN("방장이 아니므로 강퇴할 수 없습니다.", HttpStatus.FORBIDDEN),
   CANNOT_KICK_SELF("자기 자신은 강퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
   ROOM_CANNOT_LEAVE_ONLY_OWNER("방장이 유일한 멤버일 경우 탈퇴할 수 없습니다.", HttpStatus.BAD_REQUEST),
+
+  // AI 호출 관련 실패
+  BAD_REQUEST("잘못된 요청입니다.", HttpStatus.BAD_REQUEST),
+  AI_SERVER_ERROR("AI 서버 호출 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
 
   // 존재하지 않는 데이터
   ROOM_NOT_FOUND("해당 여행방 정보가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
@@ -65,8 +73,16 @@ public enum ErrorCode {
   UNSUPPORTED_CATEGORY_TYPE("지원하지 않는 카테고리 타입입니다.", HttpStatus.BAD_REQUEST),
   UNSUPPORTED_PLACE_TYPE("지원하지 않는 장소 타입입니다.", HttpStatus.BAD_REQUEST),
 
+  // 일정 저장 관련
+  SCHEDULE_VERSION_CONFLICT("일정 버전이 일치하지 않습니다.", HttpStatus.CONFLICT),
+  SCHEDULE_EMPTY_DRAFT("저장할 일정이 없습니다.", HttpStatus.BAD_REQUEST),
+
+
   // 중복 방지
   DUPLICATE_WANT_PLACE("이미 희망장소에 추가된 장소입니다.", HttpStatus.CONFLICT);
+
+
+
 
   private final String message;
   private final HttpStatus status;

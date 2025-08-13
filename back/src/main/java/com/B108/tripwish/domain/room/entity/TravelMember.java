@@ -40,4 +40,6 @@ public class TravelMember {
   public void setRole(TravelMemberRole role) {
     this.role = role;
   }
+
+
 }

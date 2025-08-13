@@ -15,6 +15,7 @@ public class PlaceResponseDto {
   private Long placeId;
   private String placeName;
   private String placeImg;
+  private Long categoryId; // 카테고리 ID 추가
   private String category;
   private String address;
   private Double latitude;
@@ -31,7 +32,8 @@ public class PlaceResponseDto {
         place.getId(),
         place.getPlaceName(),
         imageUrl,
-        place.getCategory().getCategoryName(),
+        place.getCategoryId().getId(),
+        place.getCategoryId().getCategoryName(),
         place.getRoadAddressName(),
         place.getLat(),
         place.getLng(),

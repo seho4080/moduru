@@ -11,6 +11,6 @@ import com.B108.tripwish.domain.review.entity.ReviewTag;
 public interface ReviewTagRepository extends JpaRepository<ReviewTag, Long> {
 
   // 카테고리별 태그 조회
-  @Query("SELECT t FROM ReviewTag t WHERE t.categoryId = :categoryId OR t.categoryId = 4")
+  @Query("SELECT t FROM ReviewTag t WHERE t.category.id IN (:categoryId, :commonCategoryId)")
   List<ReviewTag> findByCategoryIdOrCommon(@Param("categoryId") Long categoryId);
 }

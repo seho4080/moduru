@@ -1,12 +1,14 @@
 package com.B108.tripwish.domain.schedule.entity;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
 import com.B108.tripwish.domain.room.entity.WantPlace;
-
+import com.B108.tripwish.domain.user.entity.User;
+import com.B108.tripwish.global.common.enums.PlaceType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.web.socket.sockjs.transport.TransportType;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "schedule_events")
@@ -15,38 +17,50 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class ScheduleEvent {
+public class ScheduleEvent{
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne
-  @JoinColumn(name = "schedule_id", nullable = false)
-  private Schedule schedule;
+    @ManyToOne
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private Schedule schedule;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "want_id", nullable = false)
-  private WantPlace wantPlace;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "want_id", nullable = false)
+    private WantPlace wantPlace;
 
-  @Column(name = "day", nullable = false)
-  private int day; // 일정  day 순서
+    @Column(name = "day", nullable = false)
+    private int day; // 일정  day 순서
 
-  @Column(name = "date", nullable = false)
-  private LocalDate date; // 여행 날짜
+    @Column(name = "date", nullable = false)
+    private LocalDate date; // 여행 날짜
 
-  @Column(name = "next_travel_time", nullable = true)
-  private Integer nextTravelTime;
+    @Column(name = "next_travel_time", nullable = true)
+    private Integer nextTravelTime;
 
-  @Column(name = "start_time", nullable = true)
-  private LocalTime startTime;
+    @Column(name ="start_time", nullable = true)
+    private LocalTime startTime;
 
-  @Column(name = "end_time", nullable = true)
-  private LocalTime endTime;
+    @Column(name = "end_time", nullable = true)
+    private LocalTime endTime;
 
-  @Column(name = "event_order", nullable = false)
-  private int eventOrder;
+    @Column(name = "event_order", nullable = false)
+    private int eventOrder;
 
-  @Column(name = "memo", nullable = true)
-  private String memo;
+    @Column(name = "memo", nullable = true)
+    private String memo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transport")
+    private TransportType transport;
+
+    public enum TransportType {
+        driver,
+        transit,
+        walking
+    }
+
+
 }

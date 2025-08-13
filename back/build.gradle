@@ -36,8 +36,12 @@
 	}
 
 	dependencies {
+
+		implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+
 		// Web
 		implementation 'org.springframework.boot:spring-boot-starter-web'
+		implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 		// Lombok
 		compileOnly 'org.projectlombok:lombok'
@@ -92,6 +96,10 @@
 
 		//이메일 전송을 위한 Spring Boot Starter Mail 의존성 추가
 		implementation'org.springframework.boot:spring-boot-starter-mail'
+
+		// JSR310 모듈
+		implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
 	}
 
 	tasks.named('test') {

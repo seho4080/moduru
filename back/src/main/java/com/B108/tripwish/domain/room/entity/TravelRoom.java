@@ -4,9 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import com.B108.tripwish.global.common.entity.Region;
+import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,12 +24,13 @@ public class TravelRoom {
   @Column(name = "id")
   private Long id;
 
-  @Column(name = "title", nullable = false)
-  private String title;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "region_id", nullable = true)
   private Region region;
+
+  @Column(name = "title", nullable = true)
+  private String title;
+
 
   @Column(name = "start_date", nullable = true)
   private LocalDate startDate;

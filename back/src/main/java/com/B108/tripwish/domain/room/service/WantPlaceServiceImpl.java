@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.room.service;
 
+import com.B108.tripwish.websocket.service.VotePlaceSocketService;
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
@@ -12,7 +13,6 @@ import com.B108.tripwish.domain.room.repository.WantPlaceRepository;
 import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
-import com.B108.tripwish.websocket.service.VotePlaceSocketService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

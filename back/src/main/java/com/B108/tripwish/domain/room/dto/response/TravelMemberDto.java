@@ -11,6 +11,7 @@ public class TravelMemberDto {
   private Long userId;
   private String profileImg;
   private String nickname;
+  private String email;
   private boolean isOwner;
   private boolean isFriend;
 }
