@@ -1,0 +1,79 @@
+/* src/features/reviewWrite/reviewWrite.css */
+
+/* 전체 모달 타이포 */
+.rw {
+  font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+  font-weight: 400;
+  color: #333;
+}
+
+/* 타이틀/텍스트 */
+.rw-title { font-weight: 600; font-size: 1.5rem; letter-spacing: -0.02em; }
+.rw-h2    { font-weight: 500; font-size: 1.05rem; }
+.rw-meta  { font-size: 0.85rem; color: #666; }
+.rw-item-title { font-size: 0.95rem; font-weight: 500; }
+
+/* 태그 그룹 */
+.rw-tag-group {
+  background: #f8fafc;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(51,153,204,0.06);
+  padding: 18px 20px 14px;
+  margin-bottom: 18px;
+  min-width: 220px;
+}
+
+.rw-tag-title {
+  font-size: 1.1rem;
+  font-weight: 500;   
+  color: #222;        
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+
+/* 칩 */
+.rw-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 18px;
+  border-radius: 999px;
+  background: #fff;
+  color: #333;              
+  border: 1.5px solid #e5e7eb;
+  font-size: 0.98rem;
+  font-weight: 400;      
+  margin-right: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border 0.18s;
+}
+
+/* hover는 비활성 칩에만 적용 */
+.rw-chip:not(.rw-chip--active):hover { background: #f3f4f6; }
+
+.rw-chip:active { transform: scale(0.98); }
+
+/* 활성 칩 */
+.rw-chip--active {
+  background: #3399cc;
+  color: #fff;
+  border-color: #3399cc;
+}
+
+/* 활성 칩 hover 시 색 유지 */
+.rw-chip--active:hover {
+  background: #5c76c8;
+  border-color: #5c76c8;
+  color: #fff;
+}
+
+/* 비활성 칩 hover 시 색상 변경 */
+.rw-chip--idle:hover {
+  background: #eaf4ff;
+  color: #2176c7;
+  border-color: #3399cc;
+}
+
+/* 버튼 */
+.rw-btn-primary { font-weight: 500; }

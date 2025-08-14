@@ -229,6 +229,13 @@ export default function RestaurantDetail({ data = {}, address: addressProp = "" 
         />
       )}
 
+      {/* 상세 설명 */}
+      {description && (
+        <p className="rd-desc" style={{ marginTop: 12 }}>
+          {description}
+        </p>
+      )}
+
       {/* 대표 메뉴: 쉼표 분할 후 줄바꿈 표시 */}
       {normMenus.length > 0 && (
         <div className="rd-menus">
@@ -243,12 +250,7 @@ export default function RestaurantDetail({ data = {}, address: addressProp = "" 
         </div>
       )}
 
-      {/* 상세 설명 */}
-      {description && (
-        <p className="rd-desc" style={{ marginTop: 12 }}>
-          {description}
-        </p>
-      )}
+      
     </section>
   );
 }

@@ -68,7 +68,6 @@ export default function ItineraryItemCard({
     if (typeof onSetTimes === "function") {
       onSetTimes(startTime, endTime);
     } else {
-      // fallback: 내부 디스패치
       dispatch(
         setTimesAction({ dateKey, entryId: item.entryId, startTime, endTime })
       );
@@ -82,7 +81,6 @@ export default function ItineraryItemCard({
     if (typeof onRemove === "function") {
       onRemove();
     } else {
-      // fallback: 내부 디스패치
       dispatch(removeItemAction({ dateKey, entryId: item.entryId }));
     }
     setMenuOpen(false);

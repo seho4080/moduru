@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LegResponseDto {
-    private long fromWantId;
-    private long toWantId;
-    private long distanceMeters;
-    private long durationMinutes;    // ✅ 분 단위
+  private long fromWantId;
+  private long toWantId;
+  private long distanceMeters;
+  private long durationMinutes; // ✅ 분 단위
+  private String transport;
 }
