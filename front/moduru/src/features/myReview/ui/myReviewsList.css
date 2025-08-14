@@ -1,0 +1,109 @@
+/* 컨테이너/카드 기본은 유지 */
+.myreviews-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.myreviews-card {
+  display: flex;
+  background: #fff;
+  border-radius: 12px;             
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); 
+}
+
+/* 썸네일 */
+.myreviews-image img {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* 정보 영역 */
+.myreviews-info {
+  flex: 1;
+  margin-left: 14px;
+  min-width: 0;
+  font-family: 'Noto Sans KR', 'Pretendard', Arial, sans-serif;
+}
+
+/* 장소명: 두께 줄이고 선명도만 살림 */
+.myreviews-place-name {
+  font-size: 1rem;         
+  font-weight: 500;                
+  color: #1f2937;                  
+  letter-spacing: -0.2px;
+  margin: 2px 0 6px 0;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 태그 영역 */
+.myreviews-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;                        
+}
+
+/* 태그: pill + 아웃라인, 톤다운 */
+.myreviews-tag {
+  background: #fff;               
+  border: 1px solid #e5e7eb;      
+  color: #374151;                  
+  padding: 4px 10px;
+  border-radius: 999px;            
+  font-size: 12.5px;
+  font-weight: 400;              
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+.myreviews-tag:hover {
+  background: #f8fafc;
+  border-color: #d1d5db;
+}
+
+/* 빈 상태/로딩 */
+.myreviews-empty,
+.myreviews-loading,
+.no-review-msg {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;                  
+  font-family: 'Noto Sans KR', 'Pretendard', Arial, sans-serif;
+  display: flex;
+  align-items: flex-end;      
+  justify-content: center;
+  min-height: 260px;     
+  padding-bottom: 14px;  
+}
+
+.no-review-title {
+  font-size: 15px;
+  font-weight: 400;                
+  color: #4b5563;                  
+  margin: 0;
+}
+
+
+@media (max-width: 420px) {
+  .myreviews-image img {
+    width: 96px;
+    height: 72px;
+  }
+  .myreviews-info { margin-left: 10px; }
+}
+
+.myreviews-card {
+  display: flex;
+  gap: 12px;
+  position: relative; /* 휴지통 위치 고정을 위해 필요 */
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}

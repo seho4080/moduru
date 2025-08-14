@@ -1,0 +1,209 @@
+// src/features/reviewWrite/ReviewWrite.jsx
+import React, { useRef, useState } from "react";
+import "./reviewWrite.css";
+import StepTitle from "./ui/StepTitle";
+import SelectBox from "./ui/SelectBox";
+import DropdownPanel from "./ui/DropdownPanel";
+import ReviewTags from "./ui/ReviewTags";
+import { createReview } from "./lib/reviewApi";
+
+export default function ReviewWrite({
+  open,
+  onClose,
+  onStart,
+  fetchTrips,          
+  fetchPlacesByTrip,   
+}) {
+  if (!open) return null;
+
+  const [activeTab, setActiveTab] = useState(0); // 0=닫힘, 1=step1, 2=step2
+  const [trips, setTrips]   = useState([]);
+  const [places, setPlaces] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState("");
+
+  const [selectedTrip, setSelectedTrip]   = useState(null);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [selectedKeywords, setSelectedKeywords] = useState([]); // ReviewTags에서 선택된 content 배열
+
+  const overlayRef = useRef(null);
+  const onOverlayClick = (e) => { if (e.target === overlayRef.current) onClose?.(); };
+
+  const toggleOpen = async (step) => {
+    const willOpen = activeTab !== step ? step : 0;
+    setActiveTab(willOpen);
+
+    if (willOpen === 1 && fetchTrips) {
+      setLoading(true); setError("");
+      try {
+        const list = await fetchTrips();
+        setTrips(Array.isArray(list) ? list : []);
+      } catch {
+        setError("여행 목록을 불러오지 못했습니다.");
+      } finally { setLoading(false); }
+    }
+
+    if (willOpen === 2 && fetchPlacesByTrip && selectedTrip) {
+      setLoading(true); setError("");
+      try {
+        const list = await fetchPlacesByTrip(selectedTrip.id);
+        setPlaces(Array.isArray(list) ? list : []);
+      } catch {
+        setError("장소 목록을 불러오지 못했습니다.");
+      } finally { setLoading(false); }
+    }
+  };
+
+  // 작성 버튼: 여행 + 장소 + 키워드 ≥ 1
+  const canSubmit = !!selectedTrip && !!selectedPlace && selectedKeywords.length > 0;
+
+  // 작성 클릭 시 API 호출(테스트: placeId=1, tagIds=[1,2] 고정) + 콘솔 출력
+  const submit = async () => {
+    if (!canSubmit) return;
+
+    const payload = { placeId: 1, tagIds: [1, 2] };
+    try {
+      const res = await createReview(payload);
+      console.log("[리뷰 작성 성공]", res);
+    } catch (e) {
+      console.error("[리뷰 작성 실패]", e.message);
+    }
+
+    onStart?.({ trip: selectedTrip, place: selectedPlace, keywords: selectedKeywords });
+    onClose?.();
+  };
+
+  return (
+    <div
+      ref={overlayRef}
+      className="rw fixed inset-0 z-[1000] flex items-center justify-center bg-black/40"
+      role="dialog"
+      aria-modal="true"
+      onClick={onOverlayClick}
+    >
+      <div className="w-full max-w-3xl rounded-2xl bg-white shadow-xl">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <h2 className="rw-title">여행 경험 공유하기</h2>
+          <button className="rounded-md p-1 text-gray-500" onClick={onClose} aria-label="닫기">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth={2}
+              strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* 본문 */}
+        <div className="max-h-[72vh] overflow-y-auto px-6 py-6">
+          {/* step1 */}
+          <section className="mb-8">
+            <StepTitle title="step1. 여행지" />
+            <SelectBox
+              id="step1"
+              isOpen={activeTab === 1}
+              disabled={false}
+              label={selectedTrip ? selectedTrip.title : "여행을 선택하세요"}
+              description={selectedTrip?.period}
+              onClick={() => toggleOpen(1)}
+            />
+            {activeTab === 1 && (
+              <DropdownPanel loading={loading} error={error} emptyMessage="여행 기록이 없습니다.">
+                <ul className="divide-y">
+                  {trips.map((t) => (
+                    <li key={t.id}>
+                      <button
+                        className="rw-item flex w-full items-center justify-between px-3 py-3 text-left hover:bg-gray-50"
+                        onClick={() => {
+                          setSelectedTrip(t);
+                          setSelectedPlace(null);
+                          setSelectedKeywords([]); // 여행 변경 시 태그 초기화
+                          setPlaces([]);
+                          setActiveTab(0);
+                        }}
+                      >
+                        <div>
+                          <div className="rw-item-title">{t.title}</div>
+                          {t.period && <div className="rw-meta">{t.period}</div>}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </DropdownPanel>
+            )}
+          </section>
+
+          {/* step2 */}
+          <section className="mb-8">
+            <StepTitle title="step2. 장소" />
+            <SelectBox
+              id="step2"
+              isOpen={activeTab === 2}
+              disabled={!selectedTrip}
+              label={
+                selectedPlace
+                  ? selectedPlace.name
+                  : selectedTrip ? "장소를 선택하세요" : "여행을 먼저 선택하세요"
+              }
+              description={selectedPlace?.address}
+              onClick={() => selectedTrip && toggleOpen(2)}
+            />
+            {activeTab === 2 && (
+              <DropdownPanel
+                loading={loading}
+                error={error}
+                emptyMessage={selectedTrip ? "방문 장소가 없습니다." : "여행을 먼저 선택하세요."}
+              >
+                <ul className="divide-y">
+                  {places.map((p) => (
+                    <li key={p.id}>
+                      <button
+                        className="rw-item flex w-full items-center justify-between px-3 py-3 text-left hover:bg-gray-50"
+                        onClick={() => {
+                          setSelectedPlace(p);
+                          setSelectedKeywords([]); // 장소 변경 시 태그 초기화
+                          setActiveTab(0);
+                        }}
+                      >
+                        <div>
+                          <div className="rw-item-title">{p.name}</div>
+                          {p.address && <div className="rw-meta">{p.address}</div>}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </DropdownPanel>
+            )}
+          </section>
+
+          {/* step3: 키워드 */}
+          <section className="mb-6">
+            <StepTitle title="step3. 키워드 선택" />
+            <ReviewTags
+              enabled={!!selectedTrip && !!selectedPlace}
+              selected={selectedKeywords}
+              onChange={setSelectedKeywords}
+              categoryId={1} // 현재 요청: 1 고정
+            />
+          </section>
+        </div>
+
+        {/* 푸터 */}
+        <div className="flex items-center justify-end gap-2 border-t px-6 py-4">
+          <button
+            className={`rw-btn-primary rounded-lg px-4 py-2 text-sm text-white ${
+              canSubmit ? "bg-[#5c76c8] hover:bg-[#4a64b3]" : "bg-gray-300"
+            }`}
+            disabled={!canSubmit}
+            onClick={submit}
+          >
+            작성
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

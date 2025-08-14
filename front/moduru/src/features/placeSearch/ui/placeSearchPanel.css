@@ -24,7 +24,8 @@
 
 .input-wrapper input {
   width: 100%;
-  padding: 10px 38px 10px 14px;
+  /* 아이콘 2개 공간 */
+  padding: 10px 64px 10px 14px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
   font-size: 15px;
@@ -36,15 +37,40 @@
   white-space: nowrap;
 }
 
+/* 🔍 검색 아이콘 버튼 — 맨 오른쪽 */
 .search-icon-inside {
   position: absolute;
-  right: 12px;
+  right: 8px;               /* 끝으로 이동 */
   top: 50%;
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: transparent;
   color: #2d4d9f;
-  pointer-events: none;
   font-size: 18px;
+  cursor: pointer;
 }
+
+/* × 지우기 버튼 — 검색 왼쪽 */
+.clear-icon-inside {
+  position: absolute;
+  right: 36px;              /* 검색 버튼 왼쪽으로 이동 */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.clear-icon-inside:hover { color: #64748b; }
 
 .ai-robot-btn {
   flex-shrink: 0;
@@ -61,15 +87,12 @@
   cursor: pointer;
   transition: background 0.2s;
 }
-
-.ai-robot-btn:hover {
-  background: #e6f0ff;
-}
+.ai-robot-btn:hover { background: #e6f0ff; }
 
 /* 카테고리 탭 영역 */
 .category-tabs {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5개 탭을 동일한 비율로 정렬 */
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   margin-top: 4px;
   margin-bottom: 0;
@@ -92,9 +115,8 @@
   justify-content: center;
   transition: background 0.18s, color 0.18s;
   white-space: nowrap;
-  width: 100%; /* grid 영역을 꽉 채움 */
+  width: 100%;
 }
-
 .category-tab.active {
   background-color: #3399CC;
   color: white;
@@ -123,3 +145,11 @@
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 16px;
 }
+
+/* 키워드 오류 메시지 */
+.error-text {
+  margin-top: 8px;
+  color: #dc2626;
+  font-size: 13px;
+}
+

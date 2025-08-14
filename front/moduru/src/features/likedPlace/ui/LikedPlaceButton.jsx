@@ -1,34 +1,25 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { FaStar, FaRegStar } from 'react-icons/fa';
-import { toggleLike } from '../../../redux/slices/likedPlaceSlice';
-import useLikedToggle from '../model/useLikedToggle';
-import './likedPlaceButton.css';
+// src/features/likedPlace/ui/LikedPlaceButton.jsx
+import { FaStar, FaRegStar } from "react-icons/fa";
+import useLikedToggle from "../model/useLikedToggle";
 
 export default function LikedPlaceButton({ place }) {
-  const dispatch = useDispatch();
-  const isLiked = useSelector((state) =>
-    state.likedPlace?.likedPlaceIds?.includes(place.placeId)
-  );
+  const { isLiked, toggleLikedPlace } = useLikedToggle();
+  const liked = isLiked(place.placeId);
 
-  const { toggleLikedPlace } = useLikedToggle();
-
-  const handleClick = async () => {
-    const success = await toggleLikedPlace(place, isLiked); // ✅ isLiked 전달
-    if (success) {
-      dispatch(toggleLike(place.placeId));
-    }
+  const onClick = async (e) => {
+    e.stopPropagation();
+    await toggleLikedPlace(place); // 낙관적 업데이트+롤백 포함
   };
 
   return (
     <button
-      onClick={handleClick}
-      className="liked-star-btn"
-      title={isLiked ? '좋아요 취소' : '좋아요'}
+      onClick={onClick}
+      className="bg-transparent border-none cursor-pointer p-0 text-lg"
     >
-      {isLiked ? (
-        <FaStar className="star-icon liked" />
+      {liked ? (
+        <FaStar className="text-yellow-400" />
       ) : (
-        <FaRegStar className="star-icon" />
+        <FaRegStar className="text-white" />
       )}
     </button>
   );

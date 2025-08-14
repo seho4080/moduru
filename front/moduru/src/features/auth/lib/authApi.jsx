@@ -92,6 +92,7 @@ export const login = async ({ email, password }) => {
       withCredentials: true,   // 쿠키만
       useToken: false          // (기본 false라 생략 가능)
     });
+    // const res = await api.post('/auth/login', { email, password }, { withCredentials: true });
     
     console.log(api.defaults.baseURL, api.defaults.withCredentials);
     console.log(res.data); // 응답 데이터 확인
@@ -102,7 +103,12 @@ export const login = async ({ email, password }) => {
     }
 
     // 응답에서 필요한 값 꺼내서 반환
-    return { success: true, user: res.data.user ?? null, tokens: res.data };
+    return {
+      success: true,
+      user: res.data.user ?? null,
+      accessToken: res.data.accessToken ?? null,
+      refreshToken: res.data.refreshToken ?? null,
+    };
   } catch (err) {
     console.error('로그인 실패:', err.response?.data || err.message);
     return { 
@@ -116,19 +122,21 @@ export const login = async ({ email, password }) => {
 export const reissueToken = async () => {
   try {
     const res = await api.post('/auth/reissue', null, { withCredentials: true });
-
-
-    console.log('토큰 재발급 응답:', res.data);
+    // 바디에 accessToken/refreshToken이 오지만, 쿠키 기반이면 안 써도 OK
+    // 혼용(Authorization 헤더도 쓰는 경우)이라면 여기서 저장
+    if (res?.data?.accessToken) localStorage.setItem('accessToken', res.data.accessToken);
+    // 서버가 단순 204 No Content를 줄 수 있음 → status로 성공 판단
+    const ok = res.status >= 200 && res.status < 300;
+    console.log('토큰 재발급 응답:', res.status, res.data);
 
     return {
-      success: true,
-      accessToken: res.data.accessToken, // 필요 시만 사용
+      success: ok,
+      // 서버가 body로 accessToken을 줄 수도 있고(선택적),
+      // 보통은 Set-Cookie로만 내려줘서 여기 값이 undefined여도 정상.
+      accessToken: res.data?.accessToken,
     };
   } catch (err) {
-    console.error(
-      '토큰 재발급 실패:',
-      err.response?.data || err.message
-    );
+    console.error('토큰 재발급 실패:', err.response?.status, err.response?.data || err.message);
     return {
       success: false,
       message: err.response?.data?.message || err.message,

@@ -1,128 +1,34 @@
-// src/shared/api/tripRoomApi.js
-import { reissueToken } from '../../auth/lib/authApi';
-import api from '../../../lib/axios';
-/**
- * 공통 fetch wrapper
- * - Access Token이 만료되었을 때 자동 재발급 시도
- * - 쿠키 인증 방식 지원 (credentials: 'include')
- */
-export async function fetchWithAuth(url, options = {}) {
-  let token = localStorage.getItem("accessToken");
+// src/features/tripCreate/lib/tripRoomApi.jsx
+import api from "../../../lib/axios";
 
-  let res = await fetch(url, {
-    ...options,
-    credentials: 'include', // 쿠키 기반 인증 필수
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (res.status === 401) {
-    const contentType = res.headers.get("content-type");
-    let errorBody = "";
-
-    try {
-      if (contentType?.includes('application/json')) {
-        const json = await res.json();
-        errorBody = JSON.stringify(json);
-      } else {
-        errorBody = await res.text();
-      }
-    } catch (err) {
-      errorBody = "응답 파싱 실패";
-    }
-
-    const shouldReissue =
-      errorBody.includes("Access Token") || errorBody.includes("access token");
-
-    if (!shouldReissue) {
-      throw new Error(`401 에러 발생 (재발급 조건 불충족): ${errorBody}`);
-    }
-
-    const result = await reissueToken();
-    if (!result.success) {
-      throw new Error("토큰 만료. 다시 로그인 해주세요.");
-    }
-
-    token = result.accessToken;
-    console.log('[fetchWithAuth] accessToken 재적용 후 재요청', token);
-
-    res = await fetch(url, {
-      ...options,
-      credentials: 'include', // 다시 한 번 명시
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  }
-
-  return res;
-}
-
-/**
- * 여행 방 생성 API 호출
- * - POST /rooms
- */
+/** 여행 방 생성: POST /rooms */
 export async function createTripRoom() {
-  try {
-    const res = await api.post('/rooms', null, { withCredentials: true }); 
-    // axios는 body 없으면 null로 전달 가능, credentials는 여기서 켬
-
-    return res.data.travelRoomId;
-  } catch (err) {
-    const status = err.response?.status;
-    const message =
-      err.response?.data?.message ||
-      err.message ||
-      `여행방 생성 실패 (status: ${status || 'unknown'})`;
-    throw new Error(message);
+  const res = await api.post("/rooms");
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`여행방 생성 실패 (status: ${res.status})`);
   }
+  return res.data?.travelRoomId; // TravelRoomCreateResponseDto { travelRoomId }
 }
 
-/**
- * 여행 방 정보 조회
- * - GET /rooms/{roomId}
- */
+/** 여행 방 정보 조회: GET /rooms/{roomId} */
 export async function getTripRoomInfo(roomId) {
-  try {
-    const res = await api.get(`/rooms/${roomId}`, {
-      withCredentials: true // 쿠키 기반 인증 필요 시
-    });
-    return res.data; // axios 자동 JSON 파싱
-  } catch (err) {
-    const status = err.response?.status;
-    const message =
-      err.response?.data?.message ||
-      err.message ||
-      `여행방 정보 조회 실패 (status: ${status || 'unknown'})`;
-    throw new Error(message);
+  if (!roomId) throw new Error("roomId가 필요합니다.");
+  const res = await api.get(`/rooms/${roomId}`);
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`여행방 정보 조회 실패 (status: ${res.status})`);
   }
+  return res.data; // TravelRoomResponseDto
 }
 
 /**
- * 여행 방 정보 수정 (제목, 지역, 날짜)
- * - PATCH /rooms/{roomId}/update
+ * 여행 방 정보 수정: PATCH /rooms/{roomId}/update
+ * payload: { title?: string, region?: string, startDate?: string, endDate?: string }
  */
-export async function updateTripRoomRegion(
-  roomId,
-  { title, region, startDate, endDate }
-) {
-  try {
-    const res = await api.patch(
-      `/rooms/${roomId}/update`,
-      { title, region, startDate, endDate },
-      { withCredentials: true } // 쿠키 인증 필요 시
-    );
-    return res.data;
-  } catch (err) {
-    const status = err.response?.status;
-    const message =
-      err.response?.data?.message ||
-      err.message ||
-      `지역 업데이트 실패 (status: ${status || 'unknown'})`;
-    throw new Error(message);
+export async function updateTripRoomRegion(roomId, payload) {
+  if (!roomId) throw new Error("roomId가 필요합니다.");
+  const res = await api.patch(`/rooms/${roomId}/update`, payload);
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`여행방 수정 실패 (status: ${res.status})`);
   }
+  return res.data; // TravelRoomResponseDto
 }
-

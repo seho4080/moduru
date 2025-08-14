@@ -1,0 +1,59 @@
+/* src/features/invite/ui/selectedFriendList.css */
+
+/* 리스트 레이아웃 */
+.sel-friend-list{
+  margin:8px 0 12px;
+  padding:0;
+  list-style:none;
+  display:grid;
+  gap:8px;
+}
+
+.sel-friend-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 10px;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  background:#fff;
+}
+
+/* 텍스트 스케일/컬러를 invitePopover와 맞춤(14px 기준) */
+.sel-friend-email{
+  font-size:14px;
+  color:#111827;    /* 본문 텍스트 컬러 */
+  line-height:1.4;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* 제거 버튼 */
+.sel-remove-btn{
+  border:none;
+  background:transparent;
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+  padding:2px 6px;
+  color:#6b7280;
+  border-radius:6px;
+}
+.sel-remove-btn:hover{
+  background:#f3f4f6;
+  color:#374151;
+}
+
+.sel-nick{
+  font-weight:600;
+  color:#111827;
+  font-size:14px;
+}
+.sel-mail{
+  color:#6b7280;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}

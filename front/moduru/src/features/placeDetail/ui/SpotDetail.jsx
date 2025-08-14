@@ -74,7 +74,7 @@ export default function SpotDetail({ data = {}, address: addressProp = "" }) {
           }}
           aria-label="주소"
         >
-          <span className="rd-ico" aria-hidden>📍</span>
+          <span className="rd-ico" aria-hidden>🏠</span>
           <span style={{ lineHeight: 1.4 }}>{mergedAddress}</span>
         </div>
       )}

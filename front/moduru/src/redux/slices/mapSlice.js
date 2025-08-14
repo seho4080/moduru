@@ -1,3 +1,5 @@
+// src/redux/slices/mapSlice.js
+
 // external
 import { createSlice } from "@reduxjs/toolkit";
 
@@ -5,22 +7,28 @@ import { createSlice } from "@reduxjs/toolkit";
  * 지도 관련 상태를 관리하는 Redux Slice
  * - 핀 목록 관리 (추가, 삭제)
  * - 선택된 장소 및 지도 이동 좌표 관리
+ * - 지도 중심 좌표 관리
  */
 const mapSlice = createSlice({
   name: "map",
 
   /**
-   * NOTE: 초기 상태는 핀 목록, 선택된 장소, 핀 좌표를 포함
+   * NOTE: 초기 상태는 핀 목록, 선택된 장소, 핀 좌표,
+   *       지도 중심, 마지막 변경 시각을 포함
    * @type {{
    *   pins: { id: string, lat: number, lng: number }[],
    *   selectedPlace: object | null,
-   *   pinCoords: { lat: number, lng: number } | null
+   *   pinCoords: { lat: number, lng: number } | null,
+   *   center: { lat: number, lng: number },
+   *   lastChangedAt: number
    * }}
    */
   initialState: {
     pins: [],
     selectedPlace: null,
     pinCoords: null,
+    center: { lat: 37.5665, lng: 126.9780 }, // NOTE: 기본 중심(서울 시청 근처)
+    lastChangedAt: 0,                         // NOTE: 동일 좌표 재지정 트리거용
   },
 
   reducers: {
@@ -68,6 +76,19 @@ const mapSlice = createSlice({
       state.selectedPlace = null;
       state.pinCoords = null;
     },
+
+    /**
+     * NOTE: 지도 중심 좌표를 설정
+     * @param {import('immer').Draft} state
+     * @param {import('@reduxjs/toolkit').PayloadAction<{ lat: number, lng: number }>} action
+     */
+    setMapCenter: (state, action) => {
+      const { lat, lng } = action.payload || {};
+      if (typeof lat === "number" && typeof lng === "number") {
+        state.center = { lat, lng };
+        state.lastChangedAt = Date.now();
+      }
+    },
   },
 });
 
@@ -77,6 +98,11 @@ export const {
   setSelectedPlace,
   setPinCoords,
   clearSelectedPlace,
+  setMapCenter,
 } = mapSlice.actions;
+
+// NOTE: 셀렉터
+export const selectMapCenter = (state) => state.map.center;
+export const selectMapTick   = (state) => state.map.lastChangedAt;
 
 export default mapSlice.reducer;
