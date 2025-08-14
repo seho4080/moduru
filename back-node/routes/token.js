@@ -18,8 +18,19 @@ function decodeJwtNoVerify(token) {
     return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
   } catch { return null; }
 }
-
+function getAccessToken(req) {
+  const c = req.cookies || {};
+  let t = c.access_token || c.accessToken;
+  if (!t) {
+    const h = req.get('Authorization');
+    if (h && h.startsWith('Bearer ')) t = h.slice(7).trim();
+  }
+  if (!t) t = req.query?.access_token;
+  return t || null;
+}
 router.post('/', async (req, res) => {
+    const rawJwt = getAccessToken(req);
+    console.log('token',rawJwt);
     console.log('📥 req.body:', req.body);
     console.log('📥 req.cookies:', req.cookies);
     console.log('📥 process.env.LIVEKIT_API_KEY:', process.env.LIVEKIT_API_KEY);

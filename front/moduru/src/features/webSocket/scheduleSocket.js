@@ -1,50 +1,39 @@
-// src/features/schedule/lib/scheduleSocket.js
-
-// external
+// src/features/webSocket/scheduleSocket.js
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
 let scheduleStomp = null;
-let activeSub = null; // 실제 STOMP 구독(1개)
-let currentDestination = null; // 현재 구독 dest
-const listeners = new Set(); // 리스너 팬아웃
+let sub = null;
+let currentDest = null;
+const listeners = new Map();
 
-// ✅ 백엔드 매핑에 맞춘 경로
+const WS_URL = "/api/ws-stomp";
 const DEST = (roomId) => `/topic/room/${roomId}/schedule`;
 
 function ensureClient() {
   if (scheduleStomp) return scheduleStomp;
-
-  const socket = new SockJS("/api/ws-stomp", null, {
-    withCredentials: true,
-  });
+  const socket = new SockJS(WS_URL, null, { withCredentials: true });
 
   scheduleStomp = new Client({
     webSocketFactory: () => socket,
-    reconnectDelay: 5000,
+    reconnectDelay: 3000,
     debug: () => {},
     onConnect: () => {
       console.log("✅ [schedule] connected");
-      // 연결/재연결 시 현재 dest 재구독
-      if (currentDestination) resubscribe(currentDestination);
+      if (currentDest) resubscribe(currentDest);
     },
     onUnhandledMessage: (msg) => {
       console.warn(
         "🟡 [schedule] onUnhandledMessage",
-        "\n - destination:",
         msg.headers?.destination,
-        "\n - body:",
-        safeParse(msg.body)
+        msg.body
       );
     },
-    onStompError: (frame) => console.error("❌ [schedule] STOMP 오류:", frame),
-    onWebSocketError: (err) =>
-      console.error("❌ [schedule] WebSocket 오류:", err),
-    onDisconnect: () => console.warn("⚠️ [schedule] disconnected"),
+    onStompError: (f) => console.error("❌ [schedule] STOMP 오류:", f),
+    onWebSocketError: (e) => console.error("❌ [schedule] WebSocket 오류:", e),
   });
 
   scheduleStomp.activate();
-  if (typeof window !== "undefined") window.scheduleStomp = scheduleStomp;
   return scheduleStomp;
 }
 
@@ -56,140 +45,79 @@ function safeParse(body) {
   }
 }
 
-/**
- * 구독 (동기) — cleanup 함수 반환
- */
-export function subscribeSchedule(roomId, onMessage) {
-  if (!roomId) {
-    console.warn("[schedule] roomId 누락");
-    return () => {};
-  }
-
-  const client = ensureClient();
-  const dest = DEST(roomId);
-
-  // 리스너 등록(중복 방지)
-  listeners.add(onMessage);
-
-  // destination 변경되면 기존 구독 해제 후 새로 세팅
-  if (currentDestination !== dest) {
-    currentDestination = dest;
-    if (client.connected) {
-      resubscribe(dest);
-    } else {
-      console.log("⏳ [schedule] 대기 중(미연결) → 연결되면 구독:", dest);
-    }
-  } else {
-    // 동일 dest인데 구독이 없으면 복구
-    if (client.connected && !activeSub) resubscribe(dest);
-  }
-
-  // 호출자 전용 언서브
-  return () => {
-    listeners.delete(onMessage);
-    if (listeners.size === 0) {
-      try {
-        activeSub?.unsubscribe();
-      } catch {}
-      activeSub = null;
-      console.log("🛑 [schedule] 구독 해제:", currentDestination);
-      currentDestination = null;
-    }
-  };
-}
-
-function resubscribe(destination) {
+function resubscribe(dest) {
   if (!scheduleStomp?.connected) return;
-
   try {
-    activeSub?.unsubscribe();
+    sub?.unsubscribe();
   } catch {}
-  activeSub = scheduleStomp.subscribe(destination, (message) => {
+  sub = scheduleStomp.subscribe(dest, (message) => {
     const body = safeParse(message.body);
-    console.log(
-      "📥 [schedule 수신]",
-      "\n - destination:",
-      destination,
-      "\n - body:",
-      body
-    );
-    listeners.forEach((fn) => {
+    console.log("📥 [schedule 수신]", dest, body);
+    for (const fn of listeners.values()) {
       try {
         fn(body);
       } catch (e) {
-        console.error("❌ [schedule] listener 오류:", e);
+        console.error("❌ listener 오류:", e);
       }
-    });
+    }
   });
   console.log(
     "✅ [schedule] 구독 시작:",
-    destination,
-    `(listeners: ${listeners.size})`
+    dest,
+    `(listenerCount: ${listeners.size})`
   );
 }
 
-/**
- * 발행 (동기)
- */
-export function publishSchedule(
-  { roomId, day, date, events = [] },
-  extra = {}
-) {
-  if (!roomId) return console.warn("⚠️ [schedule] roomId 누락");
-  if (!day || !date) return console.warn("⚠️ [schedule] day/date 누락");
+export function subscribeSchedule(roomId, onMessage, opts = {}) {
+  if (!roomId || typeof onMessage !== "function") return () => {};
+  const client = ensureClient();
+  const dest = DEST(roomId);
 
-  ensureClient();
-  const destination = `/app/room/${roomId}/schedule`;
-  const payload = {
-    roomId,
-    day,
-    date,
-    events: events.map((e) => ({
-      wantId: e.wantId,
-      startTime: e.startTime,
-      endTime: e.endTime,
-      eventOrder: e.eventOrder,
-    })),
-    ...extra,
-  };
+  const key =
+    opts.key || `k_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  listeners.set(key, onMessage);
 
-  const publishNow = () => {
-    console.log(
-      "📤 [schedule 발행]",
-      "\n - destination:",
-      destination,
-      "\n - payload:",
-      payload
-    );
-    scheduleStomp.publish({ destination, body: JSON.stringify(payload) });
-  };
-
-  if (scheduleStomp.connected) {
-    publishNow();
-  } else {
-    const original = scheduleStomp.onConnect;
-    scheduleStomp.onConnect = (frame) => {
-      try {
-        original?.(frame);
-      } catch {}
-      publishNow();
-      scheduleStomp.onConnect = original; // 1회만 지연 발행
-    };
+  if (currentDest !== dest) {
+    currentDest = dest;
+    if (client.connected) resubscribe(dest);
+    else console.log("⏳ [schedule] 연결 대기 → 연결 후 구독:", dest);
+  } else if (client.connected && !sub) {
+    resubscribe(dest);
   }
+
+  return () => {
+    listeners.delete(key);
+    if (listeners.size === 0) {
+      try {
+        sub?.unsubscribe();
+      } catch {}
+      sub = null;
+      currentDest = null;
+      console.log("🛑 [schedule] 구독 해제");
+    }
+  };
 }
 
-export function disconnectSchedule() {
-  try {
-    activeSub?.unsubscribe();
-  } catch {}
-  activeSub = null;
-  currentDestination = null;
-  listeners.clear();
+// ✅ 발행 함수 추가 (named export)
+export function publishSchedule(payload) {
+  const client = ensureClient();
+  const destination = `/app/room/${payload.roomId}/schedule`;
 
-  if (scheduleStomp) {
-    try {
-      scheduleStomp.deactivate();
-    } catch {}
-    scheduleStomp = null;
+  if (!client.connected) {
+    console.warn("⏳ [schedule] 아직 연결 전. 연결되면 발행:", destination);
+    const originalOnConnect = client.onConnect;
+    client.onConnect = (frame) => {
+      originalOnConnect?.(frame);
+      try {
+        client.publish({ destination, body: JSON.stringify(payload) });
+        console.log("📤 [schedule 발행:연결후]", destination, payload);
+      } finally {
+        client.onConnect = originalOnConnect;
+      }
+    };
+    return;
   }
+
+  client.publish({ destination, body: JSON.stringify(payload) });
+  console.log("📤 [schedule 발행]", destination, payload);
 }

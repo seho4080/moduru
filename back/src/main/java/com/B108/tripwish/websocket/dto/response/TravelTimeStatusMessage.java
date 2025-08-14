@@ -8,7 +8,15 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 public class TravelTimeStatusMessage {
-    public enum Status { STARTED, ALREADY_RUNNING, DONE, FAILED }
-    private Long roomId; private Integer day;
-    private Status status; private String message;
+  public enum Status {
+    STARTED,
+    ALREADY_RUNNING,
+    DONE,
+    FAILED
+  }
+
+  private Long roomId;
+  private Integer day;
+  private Status status;
+  private String message;
 }

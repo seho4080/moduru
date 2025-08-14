@@ -1,7 +1,7 @@
 // src/features/sharedPlace/ui/SharedToggleButton.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { sendSocketMessage } from "../../webSocket/socket";
+import { sendSocketMessage } from "../../webSocket/coreSocket";
 
 // placeId 정규화 함수
 const normalizePlaceId = (placeId) =>

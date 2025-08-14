@@ -1,8 +1,8 @@
 // src/shared/ui/PlaceDetailModal.jsx
 import "./placeDetailModal.css";
 import { FaTimes } from "react-icons/fa";
-import { useDispatch } from "react-redux";
-import { clearSelectedPlace } from "../../../redux/slices/mapSlice";
+import { useDispatch } from "react-redux"; // 리덕스 미사용이면 제거해도 됨
+import { clearSelectedPlace } from "../../../redux/slices/mapSlice"; // 리덕스 미사용이면 닫기 콜백으로 대체
 import { useRef, useEffect, useState, useMemo } from "react";
 
 import { getPlaceDetail } from "../../../features/placeDetail/lib/placeDetailApi";
@@ -62,24 +62,33 @@ export default function PlaceDetailModal({ place, roomId }) {
   const { placeName, placeImg, placeId, category: categoryFromProp } = place;
 
   const handleCloseModal = () => {
+    // 리덕스 미사용이면 상위에서 onClose를 내려받아 호출하도록 변경 가능
     dispatch(clearSelectedPlace());
   };
 
-  /* NOTE: placeId 변경에 따라 상세를 재조회한다. */
+  /* NOTE: placeId/roomId 변경에 따라 상세를 재조회한다. (값 준비 시에만 호출) */
   useEffect(() => {
-    const fetchDetail = async () => {
+    if (!roomId || !placeId) {
+      setError(null);      // 불필요한 에러 표시 방지
+      setPlaceDetail(null);
+      return;
+    }
+
+    let alive = true;
+    (async () => {
       try {
         setLoading(true);
         setImgError(false);
         const data = await getPlaceDetail(roomId, placeId);
-        setPlaceDetail(data);
+        if (alive) setPlaceDetail(data);
       } catch (err) {
-        setError(err.message);
+        if (alive) setError(err.message);
       } finally {
-        setLoading(false);
+        if (alive) setLoading(false);
       }
-    };
-    fetchDetail();
+    })();
+
+    return () => { alive = false; };
   }, [roomId, placeId]);
 
   /* NOTE: 카테고리 상세는 스키마가 달라 조건 분기로 컴포넌트를 선택한다. address는 루트 값으로 보강해 전달한다. */

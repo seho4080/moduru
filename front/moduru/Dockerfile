@@ -6,8 +6,7 @@ WORKDIR /app
 
 # 종속성 설치용 파일 복사
 COPY package*.json ./
-# COPY .env ./  # 지금 안 쓴다 해서 주석 처리
-
+COPY .env ./
 # 패키지 설치
 RUN npm install
 

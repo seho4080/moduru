@@ -10,6 +10,9 @@ import { useSelector } from "react-redux";
 import useMarkerMode from "../../map/model/useMarkerMode";
 import useMeasureMode from "../../map/model/useMeasureMode";
 
+// NOTE: 추가 - 지도 중심/틱 구독 셀렉터
+import { selectMapCenter, selectMapTick } from "../../../redux/slices/mapSlice";
+
 const KakaoMap = forwardRef(function KakaoMap(
   {
     mode, // 'marker' | 'measure' | ...
@@ -45,16 +48,33 @@ const KakaoMap = forwardRef(function KakaoMap(
     (state) => state.sharedPlace?.sharedPlaces ?? []
   );
 
+  // NOTE: 추가 - Redux에서 지도 중심과 트리거틱 구독
+  const center = useSelector(selectMapCenter);
+  const tick = useSelector(selectMapTick);
+
   // 1) 지도 초기화
   useEffect(() => {
     if (!containerRef.current || mapObjRef.current) return;
     if (!window.kakao?.maps) return;
 
-    const center = new kakao.maps.LatLng(37.5665, 126.978);
-    const map = new kakao.maps.Map(containerRef.current, { center, level: 5 });
+    // NOTE: 초기 중심을 Redux의 center로
+    const initCenter = new kakao.maps.LatLng(center.lat, center.lng);
+    const map = new kakao.maps.Map(containerRef.current, {
+      center: initCenter,
+      level: 5,
+    });
     map.setZoomable(!!zoomable);
     mapObjRef.current = map;
-  }, [zoomable]);
+  }, [zoomable /* NOTE: center는 초기화 의존성에서 제외 */]);
+
+  // NOTE: 추가 - Redux center/tick 변경 시 panTo
+  useEffect(() => {
+    if (!mapObjRef.current || !window.kakao?.maps) return;
+    if (typeof center?.lat !== "number" || typeof center?.lng !== "number") return;
+
+    const pos = new kakao.maps.LatLng(center.lat, center.lng);
+    mapObjRef.current.panTo(pos);
+  }, [center, tick]);
 
   // 2) 외부 제어 메서드
   useImperativeHandle(
@@ -213,8 +233,6 @@ const KakaoMap = forwardRef(function KakaoMap(
     mapInstance: mapObjRef,
     modeRef,
     removeModeRef,
-    // 제거/선택 모드에서 관리할 마커 배열은 필요에 따라 교체 가능
-    // 현재는 단일 마커 배열을 전달(프로젝트 요구에 맞게 sharedMarkers로 바꿀 수도 있음)
     markers: singlePinMarkers,
     selected,
     onSelectMarker: onSelectMarker || (() => {}),

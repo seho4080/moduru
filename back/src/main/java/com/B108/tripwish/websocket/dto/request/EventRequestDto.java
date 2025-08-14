@@ -1,8 +1,8 @@
 package com.B108.tripwish.websocket.dto.request;
 
-import lombok.*;
-
 import java.time.LocalTime;
+
+import lombok.*;
 
 @Getter
 @NoArgsConstructor
@@ -10,7 +10,7 @@ import java.time.LocalTime;
 @ToString
 @Builder
 public class EventRequestDto {
-    private Long wantId;
-    private Integer order;
-    private LocalTime endTime;
+  private Long wantId;
+  private Integer eventOrder;
+  private LocalTime endTime;
 }
