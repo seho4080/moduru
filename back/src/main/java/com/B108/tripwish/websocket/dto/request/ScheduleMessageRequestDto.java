@@ -14,5 +14,4 @@ public class ScheduleMessageRequestDto {
   private int day;
   private LocalDate date;
   private List<ScheduleEventMessageRequestDto> events;
-
 }

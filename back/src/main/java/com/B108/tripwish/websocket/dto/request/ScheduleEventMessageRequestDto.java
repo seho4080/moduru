@@ -1,11 +1,11 @@
 package com.B108.tripwish.websocket.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
-
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import lombok.*;
 
 @Getter
 @Setter
@@ -14,14 +14,14 @@ import java.time.LocalTime;
 @ToString
 public class ScheduleEventMessageRequestDto implements Serializable {
 
-    private Long wantId;
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime startTime;
+  private Long wantId;
 
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime endTime;
+  @JsonFormat(pattern = "HH:mm")
+  private LocalTime startTime;
 
-    private int eventOrder;
-    private Integer nextTravelTime;
+  @JsonFormat(pattern = "HH:mm")
+  private LocalTime endTime;
 
+  private int eventOrder;
+  private Integer nextTravelTime;
 }
