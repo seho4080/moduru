@@ -53,17 +53,12 @@ export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
             return;
           }
 
-          // let source = [];
-          // if (forceDummy) {
-          //   source = dummyPlaces;
-          // } else {
           const { data, status } = await api.get(`/places/${roomId}`, {
             params: { category: "all" },
           });
           if (reqSeq.current !== mySeq) return;
           const source =
             status === 200 && Array.isArray(data?.places) ? data.places : [];
-          // }
 
           const filtered = source.filter((p) =>
             likedIds.has(Number(p?.placeId ?? p?.id))
@@ -86,17 +81,6 @@ export const usePlaceSearch = (roomId, selectedCategory, options = {}) => {
           setPlaces(patched);
           return;
         }
-
-        // 일반 카테고리
-        // if (forceDummy) {
-        //   const cat = KOR_TO_CODE[selectedCategory] ?? "all";
-        //   const source =
-        //     cat === "all"
-        //       ? dummyPlaces
-        //       : dummyPlaces.filter((d) => d.category === cat);
-        //   if (reqSeq.current === mySeq) setPlaces(source);
-        //   return;
-        // }
 
         const category = KOR_TO_CODE[selectedCategory] ?? "all";
         const { data, status } = await api.get(`/places/${roomId}`, {

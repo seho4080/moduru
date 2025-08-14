@@ -1,48 +1,62 @@
 // src/shared/model/useAuth.js
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
+import api from '../../lib/axios';
 
-const AuthContext = createContext();
-function decodeJwtPayload(token) {
-  if (!token) return null;
-  try {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64 + '==='.slice((base64.length + 3) % 4);
-    return JSON.parse(atob(padded));
-  } catch {
-    return null;
-  }
-}
+const AuthContext = createContext({ isLoggedIn: false, userId: null, loading: true });
+
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // NOTE: 중복 실행 가드
+  const hasFetchedOnce = useRef(false);
+
+  // NOTE: 실제 서버 호출 함수
+  const _fetchMe = useCallback(async () => {
+    try {
+      const res = await api.get('/users/me', { withCredentials: true });
+      const data = res?.data ?? {};
+      const uid =
+        data.userId ??
+        data.id ??
+        data.user?.userId ??
+        data.user?.id ??
+        null;
+
+      console.log('[Auth][me] success:', { uid, raw: data });
+      setUserId(uid ?? null);
+      setIsLoggedIn(uid != null);
+    } catch (e) {
+      console.log('[Auth][me] failed:', e?.response?.status, e?.response?.data);
+      setUserId(null);
+      setIsLoggedIn(false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // NOTE: 초기 1회만 실행 (StrictMode/중복 마운트 대비)
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
+    if (hasFetchedOnce.current) return;
+    hasFetchedOnce.current = true;
+    _fetchMe();
+  }, [_fetchMe]);
 
-    // 🔐 JWT 유효성 검사
-    const isTokenValid = (token) => {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1])); // payload 추출
-        const now = Math.floor(Date.now() / 1000);
-        return payload.exp && payload.exp > now;
-      } catch {
-        return false;
-      }
-    };
+  // NOTE: 외부에서 강제로 재검증할 때는 가드 무시하고 실행
+  const revalidate = useCallback(async () => {
+    setLoading(true);
+    await _fetchMe();
+  }, [_fetchMe]);
 
-    const accessValid = isTokenValid(accessToken);
-    const refreshValid = isTokenValid(refreshToken);
-    
-    const valid = accessValid && refreshValid;
-    console.log('[🟢 토큰 만료 검사 결과]', { accessValid, refreshValid });
-    const p = decodeJwtPayload(accessToken);
-    setUserId(p?.sub || p?.userId || p?.id || null); // 발급 claim에 맞춰 선택
-    setIsLoggedIn(valid);
+  // NOTE: 로그인 직후 uid를 직접 세팅하는 헬퍼
+  const setAuthUser = useCallback((uid) => {
+    setUserId(uid ?? null);
+    setIsLoggedIn(!!uid);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, userId, setIsLoggedIn }}>
+    <AuthContext.Provider value={{ isLoggedIn, userId, loading, revalidate, setAuthUser }}>
       {children}
     </AuthContext.Provider>
   );

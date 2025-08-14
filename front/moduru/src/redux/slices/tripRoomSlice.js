@@ -1,12 +1,23 @@
+// src/redux/slices/tripRoomSlice.js  (파일 경로/이름은 프로젝트에 맞게)
+
+// 기존 import 유지
 import { createSlice } from "@reduxjs/toolkit";
+
+/** title에서 'YYYY-MM-DD'까지 남기고 이후는 제거 */
+function stripTitleToYmd(s) {
+  if (typeof s !== "string") return s;
+  const m = s.match(/\d{4}-\d{2}-\d{2}/); // 첫 날짜 패턴
+  if (!m) return s;
+  return s.slice(0, s.indexOf(m[0]) + m[0].length);
+}
 
 const initialState = {
   roomId: null,
   title: "",
-  region: "", // 현재 지역 (문자열 또는 객체)
+  region: "",
   startDate: "",
   endDate: "",
-  regionVersion: 0, // 지역 변경 트리거용 버전 값 추가
+  regionVersion: 0,
 };
 
 const tripRoomSlice = createSlice({
@@ -15,7 +26,11 @@ const tripRoomSlice = createSlice({
   reducers: {
     // 부분 병합 업데이트
     setTripRoom(state, action) {
-      return { ...state, ...action.payload };
+      const payload = { ...action.payload };
+      if (Object.prototype.hasOwnProperty.call(payload, "title")) {
+        payload.title = stripTitleToYmd(payload.title);
+      }
+      return { ...state, ...payload };
     },
 
     clearTripRoom() {
@@ -24,11 +39,16 @@ const tripRoomSlice = createSlice({
 
     // 지역만 변경 + regionVersion 증가
     updateRoomRegion(state, action) {
-      state.region = action.payload; // payload 예: '서울' 또는 { id, name, lat, lng }
-      state.regionVersion += 1; // 의존하는 훅들 재호출
+      state.region = action.payload;
+      state.regionVersion += 1;
     },
 
-    // regionVersion 강제 증가 (필요할 때)
+    // 필요 시 title만 갱신하는 액션
+    setTitle(state, action) {
+      state.title = stripTitleToYmd(action.payload);
+    },
+
+    // regionVersion 강제 증가
     bumpRegionVersion(state) {
       state.regionVersion += 1;
     },
@@ -40,8 +60,10 @@ export const {
   clearTripRoom,
   updateRoomRegion,
   bumpRegionVersion,
+  setTitle,
 } = tripRoomSlice.actions;
 
 export const selectRegionVersion = (state) => state.tripRoom.regionVersion;
 
 export default tripRoomSlice.reducer;
+

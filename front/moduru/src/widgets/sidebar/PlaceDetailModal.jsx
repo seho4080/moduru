@@ -1,70 +1,176 @@
-import "./placeDetailModal.css";
-import { FaTimes } from "react-icons/fa";
-import { useDispatch } from "react-redux";
-import { clearSelectedPlace } from "../../redux/slices/mapSlice";
-import { useRef, useEffect } from "react";
+// src/widgets/sidebar/SidebarPanel.jsx
 
-function useDraggable(modalRef) {
-  useEffect(() => {
-    const modal = modalRef.current;
-    if (!modal) return;
+import React, { useRef, useEffect, useState } from "react";
+import PlaceSearchPanel from "../../features/placeSearch/ui/PlaceSearchPanel";
+import SharedPlacePanel from "../../features/sharedPlace/ui/SharedPlacePanel";
+import SchedulePanel from "../../features/travelSchedule/ui/SchedulePanel";
 
-    let offsetX = 0;
-    let offsetY = 0;
-    let isDragging = false;
+export default function SidebarPanel({
+  activeTab,
+  isOpen,
+  onClosePanel,
+  onOpenPanel,
+  setHoveredCoords,
+  roomId,
+}) {
+  const panelRef = useRef(null);
+  const [width, setWidth] = useState(450);
+  const isResizing = useRef(false);
 
-    const onMouseDown = (e) => {
-      isDragging = true;
-      offsetX = e.clientX - modal.getBoundingClientRect().left;
-      offsetY = e.clientY - modal.getBoundingClientRect().top;
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    };
-
-    const onMouseMove = (e) => {
-      if (!isDragging) return;
-      modal.style.left = `${e.clientX - offsetX}px`;
-      modal.style.top = `${e.clientY - offsetY}px`;
-      modal.style.transform = "none";
-    };
-
-    const onMouseUp = () => {
-      isDragging = false;
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    modal.addEventListener("mousedown", onMouseDown);
-    return () => modal.removeEventListener("mousedown", onMouseDown);
-  }, [modalRef]);
-}
-
-export default function PlaceDetailModal({ place }) {
-  const dispatch = useDispatch();
-  const modalRef = useRef(null);
-  useDraggable(modalRef);
-
-  const { placeName, placeImg, category } = place;
-
-  const handleCloseModal = () => {
-    dispatch(clearSelectedPlace());
+  const handleMouseDownResize = () => {
+    isResizing.current = true;
+    document.addEventListener("mousemove", handleMouseMoveResize);
+    document.addEventListener("mouseup", handleMouseUpResize);
   };
 
+  const handleMouseMoveResize = (e) => {
+    if (!isResizing.current) return;
+    const newWidth = e.clientX - panelRef.current.getBoundingClientRect().left;
+    setWidth(Math.max(280, Math.min(720, newWidth)));
+  };
+
+  const handleMouseUpResize = () => {
+    isResizing.current = false;
+    document.removeEventListener("mousemove", handleMouseMoveResize);
+    document.removeEventListener("mouseup", handleMouseUpResize);
+  };
+
+  useEffect(() => {
+    document.body.style.cursor = isResizing.current ? "col-resize" : "default";
+    return () => {
+      document.body.style.cursor = "default";
+    };
+  }, [isResizing.current]);
+
+  const isPanelVisible =
+    isOpen && ["place", "schedule", "shared"].includes(activeTab);
+
+  if (!isPanelVisible) {
+    return (
+      <div
+        style={{
+          width: "40px",
+          height: "100vh",
+          backgroundColor: "#f5f5f5",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          boxShadow: "4px 0 10px rgba(0,0,0,0.08)",
+        }}
+        onClick={onOpenPanel}
+      >
+        <button
+          style={{
+            background: "#fff",
+            border: "none",
+            borderRadius: "50%",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            width: "32px",
+            height: "32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.2s",
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.background = "#e6f0ff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M7 5l6 5-6 5"
+              stroke="#007aff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div ref={modalRef} className="place-detail-modal">
-      <div className="place-detail-modal-header">
-        <span className="place-detail-modal-title">{placeName}</span>
-        <button className="place-detail-modal-close" onClick={handleCloseModal}>
-          <FaTimes />
+    <div
+      ref={panelRef}
+      style={{
+        width: `${width}px`,
+        height: "100vh",
+        backgroundColor: "white",
+        boxShadow: "4px 0 10px rgba(0, 0, 0, 0.1)",
+        display: "flex",
+        position: "relative",
+        overflow: "hidden",
+        userSelect: isResizing.current ? "none" : "auto",
+      }}
+    >
+      <div
+        style={{
+          flex: 1,
+          padding: "20px",
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}
+      >
+        {activeTab === "place" && (
+          <PlaceSearchPanel
+            roomId={roomId}
+            setHoveredCoords={setHoveredCoords}
+          />
+        )}
+
+        {activeTab === "shared" && <SharedPlacePanel roomId={roomId} />}
+
+        {activeTab === "schedule" && <SchedulePanel />}
+      </div>
+
+      <div
+        style={{
+          width: "40px",
+          backgroundColor: "#eee",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+        }}
+        onClick={onClosePanel}
+      >
+        <button
+          style={{
+            background: "#fff",
+            border: "none",
+            borderRadius: "50%",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            width: "32px",
+            height: "32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.2s",
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.background = "#e6f0ff")}
+          onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M13 5l-6 5 6 5"
+              stroke="#007aff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
       </div>
 
-      <img src={placeImg} alt={placeName} className="place-detail-modal-img" />
-
-      <div className="place-detail-modal-body">
-        <p className="place-detail-modal-category">카테고리: {category}</p>
-      </div>
+      <div
+        onMouseDown={handleMouseDownResize}
+        style={{
+          width: "6px",
+          cursor: "col-resize",
+          backgroundColor: "#ccc",
+        }}
+      />
     </div>
   );
 }

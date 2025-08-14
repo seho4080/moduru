@@ -36,6 +36,11 @@ const TRIGGERS = new Set([
 ]);
 
 export const schedulePublishMiddleware = (store) => (next) => (action) => {
+  // ✅ WS에서 들어온 액션(meta.fromWs)은 재발행을 스킵 (무한루프 방지)
+  if (action?.meta?.fromWs) {
+    return next(action);
+  }
+
   const result = next(action);
 
   if (!TRIGGERS.has(action.type)) return result;
@@ -73,12 +78,17 @@ export const schedulePublishMiddleware = (store) => (next) => (action) => {
     if (!dateKey) continue;
 
     const list = daysMap[dateKey] || [];
-    const events = list.map((it, idx) => ({
-      wantId: it.wantId ?? it.placeId ?? it.id, // 서버가 받는 PK로 매핑
-      startTime: it.startTime ?? null,
-      endTime: it.endTime ?? null,
-      eventOrder: idx, // 0부터 or 1부터는 서버 요구에 맞춰 조정
-    }));
+
+    // 서버가 받는 PK 매핑: wantId가 최우선, 없으면 placeId/id
+    // wantId 없는 항목은 제외(서버 식별 불가)
+    const events = list
+      .map((it, idx) => ({
+        wantId: it.wantId ?? it.placeId ?? it.id,
+        startTime: it.startTime ?? null,
+        endTime: it.endTime ?? null,
+        eventOrder: idx, // 서버 요구에 따라 0/1 기반 조정 필요
+      }))
+      .filter((e) => e.wantId != null);
 
     const day = calcDay(startDate, dateKey);
 

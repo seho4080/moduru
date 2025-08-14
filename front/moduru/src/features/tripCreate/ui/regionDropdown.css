@@ -1,11 +1,12 @@
+/* 컨테이너/라벨 */
 .region-dropdown-container {
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
+  position: relative; /* 패널 위치 기준 */
 }
-
 .region-label {
   margin-bottom: 10px;
   font-weight: 600;
@@ -13,24 +14,119 @@
   color: #222;
 }
 
-.region-select {
-  width: 100%;
-  padding: 14px 16px;
+/* 헤더(버튼) */
+.rd-header {
+  border: 1.5px solid #3399cc;
   border-radius: 10px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  font-size: 1.05rem;
-  transition: border 0.2s, background 0.2s;
-  box-sizing: border-box;
-  color: #111827;
+  padding: 13px 16px;
+  font-size: 16px;
+  background: #f8fbff;
+  color: #222;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(51,153,204,0.06);
+  transition: border .18s, box-shadow .18s, background .18s;
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
 }
-
-.region-select option[value=""] {
-  color: #9ca3af;
+.rd-header:hover {
+  border-color: #2176c7;
+  box-shadow: 0 4px 16px rgba(51,153,204,0.12);
 }
-
-.region-select:focus {
-  border-color: #007aff;
-  outline: none;
+.rd-header.is-open {
   background: #fff;
+}
+.rd-text.placeholder { color: #9ca3af; }
+.rd-arrow { margin-left: 8px; display: flex; align-items: center; }
+
+/* 패널 (드롭다운) */
+.rd-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;                /* 헤더 너비와 동일하게 펼치기 */
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(51,153,204,0.10);
+  z-index: 1001;          /* 모달 안에서도 위로 */
+  display: flex;          /* 2단 컬럼 */
+  overflow: hidden;
+  animation: rdFadeIn .18s;
+}
+@keyframes rdFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 좌/우 컬럼 */
+.rd-col {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  flex: 1 1 0;            /* 양쪽 같은 폭 */
+  min-width: 0;
+  scrollbar-gutter: stable both-edges;
+}
+.rd-col.left {
+  background: #f8fbff;
+  border-right: 1px solid #e5e7eb;
+}
+.rd-col.right {
+  background: #fff;       /* 투명 X → 여백 없음 */
+}
+
+/* 항목 */
+.rd-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #222;
+  cursor: pointer;
+  background: #f8fbff;    /* readability */
+  transition: background .15s, color .15s;
+}
+.rd-item .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rd-col.left .chevron { 
+  display: none !important;
+}
+.rd-item .chevron {
+  opacity: .5;
+  font-size: 13px;
+}
+.rd-item:hover {
+  background: #eaf4ff;
+  color: #3399cc;
+}
+.rd-item.active {
+  background: #3399cc;
+  color: #fff;
+  font-weight: 600;
+}
+.rd-item.disabled {
+  color: #98a2b3;
+  cursor: default;
+  background: none;
+}
+
+/* 스크롤바 */
+.rd-col::-webkit-scrollbar { width: 8px; }
+.rd-col::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,.2); border-radius: 4px; }
+.rd-col::-webkit-scrollbar-track { background: transparent; }
+
+/* 모바일 대응 */
+@media (max-width: 480px) {
+  .rd-panel { left: -2vw; right: -2vw; } /* 살짝 더 넓게 */
 }

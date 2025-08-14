@@ -1,5 +1,5 @@
 // src/lib/axios.js
-import axios from 'axios';
+import axios from "axios";
 // ⬇️ 토큰 재발급 API (쿠키 기반으로 동작해야 함: withCredentials:true)
 // import { reissueToken } from '@/features/auth/lib/authApi'; // 경로는 프로젝트에 맞게
 
@@ -18,7 +18,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: false, // ✅ 기본은 쿠키 미포함(요청별로 켜기)
+  withCredentials: true, // ✅ 전역 쿠키 전송 (쿠키 인증 기본값)
 });
 
 /**
@@ -36,7 +36,7 @@ api.interceptors.request.use(
   (config) => {
     // 커스텀 플래그(useToken)가 true면 로컬 저장 토큰을 Authorization에 주입
     if (config.useToken) {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
@@ -50,6 +50,22 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+
+
+const refreshClient = axios.create({
+  baseURL: '/api',
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+async function reissueToken() {
+  console.log('[REISSUE] /auth/reissue call');
+  const res = await refreshClient.post('/auth/reissue', null, { withCredentials: true });
+  // 바디에 accessToken이 오면 필요할 때만 저장(혼용 전략일 때)
+  if (res?.data?.accessToken) localStorage.setItem('accessToken', res.data.accessToken);
+  console.log('토큰 재발급 응답:', res.status, res.data);
+  return { success: res.status >= 200 && res.status < 300 ,accessToken: res?.data?.accessToken,};
+}
 /**
  * 응답 인터셉터
  *
@@ -66,58 +82,68 @@ api.interceptors.request.use(
  *  - 403(Forbidden)은 권한문제이므로 보통 재발급 대상이 아님 → 여기서는 로그만 남김
  */
 api.interceptors.response.use(
+  // 📌 정상 응답은 그대로 반환
   (res) => res,
+  
+  // 📌 에러 응답 처리
   async (error) => {
-    const status = error?.response?.status;
-    const originalRequest = error.config;
-
-    // 원요청 정보가 없거나(취소/네트워크) 재시도 플래그가 이미 켜져 있으면 패스
-    if (!originalRequest || originalRequest._retry) {
+    const { response, config } = error;
+    const status = response?.status || 0;
+    console.warn('[AXIOS-INT]', error.config?.method?.toUpperCase(), error.config?.url, '→', error.response?.status);
+    /**
+     * 🔒 재시도 불가 조건
+     *
+     * 1) config 자체가 없으면 (요청이 없거나 네트워크 취소)
+     * 2) 이미 _retry 플래그가 true면 (무한루프 방지)
+     * 3) 요청 URL이 /auth/reissue면 (재발급 호출 자체에서 또 재발급 안 함)
+     */
+    const isReissueCall = (config?.url || '').includes('/auth/reissue');
+    if (!config || config._retry || isReissueCall) {
       return Promise.reject(error);
     }
 
-    // 재발급 엔드포인트에서 401이 반복되면 루프에 빠질 수 있으니 즉시 중단
-    const isReissueCall =
-      typeof originalRequest.url === 'string' &&
-      originalRequest.url.includes('/auth/reissue');
+    /**
+     * 🛠 403을 '인증 없음' 케이스로 간주하는 조건
+     *
+     * - 보통 Access Token 부재/만료 시 401을 내려야 하지만,
+     *   현재 백엔드가 403을 내려서 재발급 로직이 안 타는 상황을 대비
+     *
+     * - 다음 조건 중 하나라도 맞으면 403을 '인증 없음'으로 처리:
+     *   1) 응답 데이터 code 값이 'ACCESS_TOKEN_REQUIRED'
+     *   2) 응답 메시지에 '권한' 문구 포함 (ex: "권한 부족(403): 접근 권한 확인 필요")
+     *   3) WWW-Authenticate 헤더에 Bearer 포함 (토큰 기반 인증임을 의미)
+     */
 
-    // 401만 재발급 시도 대상 (403은 권한 문제로 보통 재발급과 무관)
-    if (status === 401 && !isReissueCall) {
-      originalRequest._retry = true; // 🔒 재시도 1회 제한
-
+    // ✅ 임시: 401 이거나 403 이면 1회 재발급 시도 (RBAC 403도 1번만 시도 후 종료)
+    const shouldReissue = (status === 401 || status === 403) && !isReissueCall;
+    if (shouldReissue) {
+      config._retry = true; // 무한루프 방지 플래그 설정
       try {
-        // ⬇️ 토큰 재발급: 백엔드가 "쿠키"를 보고 새 accessToken을 내려줘야 함
-        //    구현 예시) const result = await reissueToken();
-        //    반드시 withCredentials:true로 호출되도록 reissueToken 내부에 옵션 포함 필요
-        const result = await reissueToken(); // <-- 실제 import 필요
+        /**
+         * 🔄 토큰 재발급 요청
+         * - reissueToken 내부에서 withCredentials:true로 쿠키를 포함해야 함
+         * - 성공 시 { success: true } 형태로 반환된다고 가정
+         */
+        const r = await reissueToken();
 
-        if (result?.success && result.accessToken) {
-          // 새 토큰 저장
-          localStorage.setItem('accessToken', result.accessToken);
-
-          // 원요청에 새 토큰 주입 후 재시도
-          originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers.Authorization = `Bearer ${result.accessToken}`;
-
-          // 원요청의 쿠키 사용 여부(withCredentials)는 원래 값 유지
-          return api(originalRequest);
+        if (r?.success) {
+          // 💡 쿠키 기반 인증이면 Authorization 헤더를 갱신할 필요 없음
+          //    (HttpOnly 쿠키는 자동으로 요청에 포함됨)
+          //    만약 Bearer 토큰 방식이면 여기서 config.headers.Authorization 갱신 필요
+          config.withCredentials = true;
+          if (config.headers?.Authorization) { // 혹시 이전에 붙인 게 있으면 제거
+            delete config.headers.Authorization;
+          }
+          // 원래 요청을 재시도
+          return api(config);
         }
-
-        // 재발급 실패: 로그인 화면 등으로 유도(프로덕트 정책에 맞춰 처리)
-        console.warn('토큰 재발급 실패 → 로그인 필요');
-        // window.location.href = '/login';
-        return Promise.reject(error);
       } catch (e) {
-        // 재발급 도중 예외 발생: 동일하게 사용자 흐름 정리
-        console.warn('토큰 재발급 예외 → 로그인 필요');
-        return Promise.reject(e);
+        // 재발급 중 예외 발생 → 그대로 실패 처리
+        /* no-op */
       }
     }
 
-    // 그 외 에러는 그대로 전달 (필요 시 공통 로깅)
-    if (status === 403) {
-      console.warn('권한 부족(403): 접근 권한 확인 필요');
-    }
+    // 📌 재발급 불가/조건 불충족 → 그대로 에러 반환
     return Promise.reject(error);
   }
 );

@@ -4,8 +4,7 @@ import React from "react";
 // external
 import Header from "../../widgets/header";
 import Footer from "../../widgets/footer";
-import ProfileBox from "../../features/myPage/ui/ProfileBox";
-import ActivityBox from "../../features/myPage/ui/ActivityBox";
+import { Outlet } from "react-router-dom";
 
 const MyPageLayout = () => {
   return (
@@ -14,9 +13,8 @@ const MyPageLayout = () => {
         <Header />
       </div>
 
-      <main className="flex-1 flex flex-col md:flex-row justify-center items-stretch gap-8 px-4 py-12 max-w-[1000px] w-[90%] bg-white rounded-[40px] shadow-md">
-        <ProfileBox />
-        <ActivityBox />
+      <main className="flex-1 flex flex-col md:flex-row justify-center items-stretch gap-12 px-4 max-w-[1000px] w-[90%] bg-white rounded-[40px] shadow-md" style={{ paddingTop: 0, marginTop: 0 }}>
+        <Outlet />
       </main>
 
       <footer className="mt-10 text-sm text-gray-500 text-center">

@@ -1,10 +1,7 @@
 /* 배경 전체 (회색 반투명) */
 .trip-modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.3);
   z-index: 999;
 }
@@ -15,8 +12,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
-  width: 380px;
+  background: #fff;
+  width: 420px;
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -35,7 +32,7 @@
 
 /* 제목 */
 .region-title {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   font-size: 20px;
   font-weight: 600;
   text-align: center;
@@ -48,66 +45,144 @@
   user-select: none;
 }
 
-/* 드롭다운 상단 클릭 영역 */
+/* 상단 헤더 */
 .dropdown-header {
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
-  padding: 12px;
+  border: 1.5px solid #3399cc;
+  border-radius: 10px;
+  padding: 13px 16px;
   font-size: 16px;
+  font-weight: 500;
+  background: #f8fbff;
+  color: #222;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 8px rgba(51,153,204,0.06);
+  transition: border 0.18s, box-shadow 0.18s;
 }
-
-/* 화살표 아이콘 영역 */
+.dropdown-header:hover {
+  border-color: #2176c7;
+  box-shadow: 0 4px 16px rgba(51,153,204,0.12);
+}
 .dropdown-header .arrow {
   margin-left: 8px;
+  display: flex;
+  align-items: center;
 }
 
-/* 목록 전체 */
-.dropdown-list {
+/* 2단 패널(좌/우) */
+.dropdown-panel {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 8px);
   left: 0;
-  right: 0;
-  max-height: 180px;
-  overflow-y: auto;
-  background: white;
-  border: 1.5px solid #ccc;
-  border-radius: 8px;
+  display: inline-flex;            /* 플렉스 행 배치 */
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(51,153,204,0.10);
+  overflow: hidden;
   z-index: 1001;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  animation: dropdownFadeIn 0.18s;
+  /* min-width: 440px; 고정폭 제거 */
+}
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 각 항목 (서울, 부산 등) */
+/* 좌/우 컬럼 공통: 두 컬럼 폭을 동일하게 고정 */
+.dropdown-col {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  scrollbar-gutter: stable both-edges;
+
+  /* 핵심: 두 컬럼을 정확히 같은 폭으로 */
+  width: 200px;
+  flex: 0 0 200px; /* 줄어들거나 늘어나지 않음 */
+}
+
+/* 좌측 컬럼 */
+.dropdown-col.left {
+  background: #f8fbff;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* 오른쪽 컬럼 */
+.dropdown-col.right {
+  background: transparent;
+}
+
+/* 스크롤바 커스텀 */
+.dropdown-col::-webkit-scrollbar { width: 8px; }
+.dropdown-col::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+.dropdown-col::-webkit-scrollbar-track { background: transparent; }
+
+/* 항목 */
 .dropdown-item {
-  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #222;
   cursor: pointer;
-
-  /* ✅ 화살표 제거 */
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: none !important;
-  background-repeat: no-repeat;
-  background-position: right center;
-  background-size: 0 !important;
+  background: #f8fbff;
+  font-weight: 400;
+  transition: background 0.15s, color 0.15s;
 }
-
-.dropdown-item:hover {
-  background-color: #f2f2f2;
+.dropdown-item .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.dropdown-item .chevron {
+  opacity: 0.5;
+  font-size: 13px;
+}
+.dropdown-item:hover { background: #eaf4ff; color: #3399cc; }
+.dropdown-item.active { background: #3399cc; color: #fff; font-weight: 600; }
+.dropdown-item.disabled { color: #98a2b3; cursor: default; background: none; }
+
+/* 상위 지역(좌측 컬럼) 화살표 숨김 */
+.dropdown-col.left .dropdown-item .chevron { display: none; }
 
 /* 버튼 */
 .submit-btn {
   width: 100%;
   background-color: #007aff;
-  color: white;
+  color: #fff;
   font-size: 16px;
   font-weight: 600;
   padding: 12px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
+}
+.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* 모바일 대응: 화면 폭의 절반씩 */
+@media (max-width: 480px) {
+  .trip-modal { width: 98vw; }
+  .dropdown-panel { width: 96vw; }      /* 패널은 화면 맞춤 */
+  .dropdown-col {
+    width: 48vw;
+    flex: 0 0 48vw;                     /* 두 컬럼 동일 비율 */
+  }
+}
+
+.dropdown-header,
+.dropdown-panel,
+.dropdown-item {
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
 }

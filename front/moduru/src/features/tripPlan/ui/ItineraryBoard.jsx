@@ -8,19 +8,82 @@ import {
   removeItem,
   setTimes,
 } from "../../../redux/slices/itinerarySlice";
+import { setDraftVersion } from "../../../redux/slices/scheduleDraftSlice";
 
-/**
- * 보드: 여행 날짜 구간(startDate~endDate)을 열로 표시하고,
- * 외부 장소 드롭/같은 날짜 내 재정렬/다른 날짜로 이동/시간 편집/삭제를 지원한다.
- * - 외부 드롭 payload: { type: "PLACE", place }
- * - 내부 카드 드래그 payload: { type: "ENTRY", entryId, fromDate, fromIdx }
- */
-export default function ItineraryBoard() {
+import TimeEditor from "./TimeEditor";
+import { selectLegEta } from "../../../redux/slices/etaSlice";
+
+// WebSocket 구독
+import { subscribeSchedule } from "../../webSocket/scheduleSocket";
+
+export default function ItineraryBoard({
+  transport = "driving",
+  showEta = true,
+}) {
   const dispatch = useDispatch();
+
   const { startDate, endDate } = useSelector((s) => s.tripRoom ?? {});
+  const roomId = useSelector((s) => s.tripRoom?.id ?? s.tripRoom?.roomId);
   const daysMap = useSelector((s) => s.itinerary?.days ?? {});
 
-  // YYYY-MM-DD 배열 생성
+  // schedule 구독: 방 아이디 기준으로 구독/해제
+  useEffect(() => {
+    if (!roomId) return;
+    console.log("[ItineraryBoard] subscribe schedule for roomId:", roomId);
+
+    const unsub = subscribeSchedule(
+      roomId,
+      (msg) => {
+        console.log("[ItineraryBoard] schedule message received:", msg);
+        // 백 DTO 스펙: { roomId, day, date, events: [{ wantId, startTime, endTime, eventOrder }], senderId, draftVersion }
+        const { day, date, events, draftVersion } = msg || {};
+
+        // 1) draftVersion은 가드 밖에서 먼저 반영 (버전만 오는 패킷도 처리)
+        const dayNum = Number(day);
+        const verNum = Number(draftVersion);
+        if (Number.isFinite(dayNum) && Number.isFinite(verNum)) {
+          dispatch({
+            type: setDraftVersion.type,
+            payload: { day: dayNum, draftVersion: verNum },
+            meta: { fromWs: true }, // ✅ WS 유입 표시
+          });
+        }
+
+        // 2) 날짜/이벤트 없으면 시간 반영은 생략
+        if (!date || !Array.isArray(events)) return;
+
+        // 3) 시간 반영 (wantId 기준)
+        events.forEach((ev) => {
+          if (!ev?.wantId) return;
+          +dispatch({
+            type: setTimes.type,
+            payload: {
+              dateKey: date,
+              wantId: ev.wantId,
+              startTime: ev.startTime ?? "",
+              endTime: ev.endTime ?? "",
+            },
+            meta: { fromWs: true }, // ✅ WS 유입 표시
+          });
+        });
+
+        // 필요 시 eventOrder 기반 정렬 반영은 여기에서 프로젝트 규칙에 맞게 구현
+      },
+      { key: "itinerary-board" }
+    );
+
+    return () => {
+      try {
+        unsub?.();
+      } finally {
+        console.log(
+          "[ItineraryBoard] unsubscribe schedule for roomId:",
+          roomId
+        );
+      }
+    };
+  }, [roomId, dispatch]);
+
   const dates = useMemo(() => {
     const out = [];
     if (!startDate) return out;
@@ -43,8 +106,10 @@ export default function ItineraryBoard() {
           dayNumber={idx + 1}
           dateKey={dateKey}
           items={daysMap[dateKey] || []}
-          onAddPlace={(place) =>
-            dispatch(addPlaceToDay({ date: dateKey, place }))
+          transport={transport}
+          showEta={showEta}
+          onAddPlace={(place, index) =>
+            dispatch(addPlaceToDay({ date: dateKey, place, index }))
           }
           onReorder={(fromIdx, toIdx) =>
             dispatch(moveItemWithin({ dateKey, fromIdx, toIdx }))
@@ -64,20 +129,20 @@ export default function ItineraryBoard() {
   );
 }
 
-/** 날짜 열: 외부 드롭(추가), 같은 날짜 내 재정렬, 다른 날짜로 이동을 처리한다. */
 function DayColumn({
   dayNumber,
   dateKey,
   items,
+  transport,
+  showEta,
   onAddPlace,
   onReorder,
   onMoveAcross,
   onRemove,
   onSetTimes,
 }) {
-  const dragFrom = useRef(null); // 같은 날짜 내 드래그 시작 인덱스 저장
+  const listRef = useRef(null);
 
-  // 드롭 데이터 파싱 유틸: application/json → 없으면 text/plain 시도
   const parseDropData = (e) => {
     let json = e.dataTransfer.getData("application/json");
     if (!json) json = e.dataTransfer.getData("text/plain");
@@ -89,34 +154,30 @@ function DayColumn({
     }
   };
 
-  const onDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-    try {
-      const json = e.dataTransfer.getData("application/json");
-      const data = json && JSON.parse(json);
-      if (data?.type === "ENTRY" && data.fromDate === dateKey) {
-        e.dataTransfer.dropEffect = "move"; // 같은 날짜 이동
-      } else {
-        e.dataTransfer.dropEffect = "copy"; // 외부 추가
-      }
-    } catch {
-      e.dataTransfer.dropEffect = "copy";
-    }
-  };
-
-  const onDrop = (e) => {
+  // 배경 드롭도 커서 높이 기준으로 정확한 위치 삽입
+  const onSectionDrop = (e) => {
     e.preventDefault();
     const data = parseDropData(e);
     if (!data) return;
 
-    // 외부(PLACE) 드롭: 해당 날짜 맨 끝에 추가
+    // 커서 y 로 insertIndex 계산 (각 카드 중간선 기준)
+    let insertIndex = items.length;
+    const nodes = listRef.current?.querySelectorAll('[data-entry="card"]');
+    if (nodes && nodes.length) {
+      const y = e.clientY;
+      insertIndex = 0;
+      for (let i = 0; i < nodes.length; i++) {
+        const rect = nodes[i].getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        if (y > mid) insertIndex = i + 1;
+      }
+    }
+
     if (data.type === "PLACE" && data.place) {
-      onAddPlace(data.place);
+      onAddPlace(data.place, insertIndex);
       return;
     }
 
-    // 내부 카드(ENTRY) 드롭
     if (
       data.type === "ENTRY" &&
       data.entryId &&
@@ -124,12 +185,25 @@ function DayColumn({
       Number.isInteger(data.fromIdx)
     ) {
       if (data.fromDate === dateKey) {
-        // 같은 날짜에서 "열 배경"으로 드롭하면 맨 끝으로 이동
-        onReorder(data.fromIdx, items.length);
-        return;
+        // 같은 날짜 내 재정렬
+        let toIdx = insertIndex;
+        if (data.fromIdx < insertIndex) toIdx = insertIndex - 1; // 보정
+        if (data.fromIdx !== toIdx) onReorder(data.fromIdx, toIdx);
+      } else {
+        // 다른 날짜로 이동
+        onMoveAcross(data.fromDate, data.fromIdx, insertIndex);
       }
-      // 다른 날짜로 이동: 위치 지정 없으면 맨 끝
-      onMoveAcross(data.fromDate, data.fromIdx, undefined);
+    }
+  };
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+    try {
+      const d = parseDropData(e);
+      e.dataTransfer.dropEffect =
+        d?.type === "ENTRY" && d?.fromDate === dateKey ? "move" : "copy";
+    } catch {
+      e.dataTransfer.dropEffect = "copy";
     }
   };
 
@@ -137,7 +211,7 @@ function DayColumn({
     <section
       className="w-[360px] flex-shrink-0 rounded-lg border border-slate-200 bg-white"
       onDragOver={onDragOver}
-      onDrop={onDrop}
+      onDrop={onSectionDrop}
       aria-label={`Day ${dayNumber} ${dateKey}`}
     >
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2">
@@ -145,129 +219,164 @@ function DayColumn({
         <div className="text-xs text-slate-500">{dateKey}</div>
       </header>
 
-      <div className="p-2 flex flex-col gap-2">
-        {items.length === 0 && (
-          <div className="h-24 rounded-md border border-dashed border-slate-300 text-slate-400 text-sm flex items-center justify-center">
-            여기로 드래그하여 담을 수 있습니다
-          </div>
-        )}
+      <div ref={listRef} className="p-2 flex flex-col gap-2">
+        {/* 맨 앞 드롭 슬롯 (index 0) */}
+        <DropSlot
+          ariaLabel="맨 앞에 추가"
+          onDropData={(data) => {
+            if (data.type === "PLACE" && data.place) onAddPlace(data.place, 0);
+            else if (data.type === "ENTRY" && Number.isInteger(data.fromIdx)) {
+              if (data.fromDate === dateKey) {
+                const toIdx = data.fromIdx < 0 ? 0 : data.fromIdx > 0 ? 0 : 0;
+                if (data.fromIdx !== toIdx) onReorder(data.fromIdx, 0);
+              } else {
+                onMoveAcross(data.fromDate, data.fromIdx, 0);
+              }
+            }
+          }}
+        />
 
         {items.map((it, idx) => (
-          <div
-            key={it.entryId}
-            draggable
-            onDragStart={(e) => {
-              const body = JSON.stringify({
-                type: "ENTRY",
-                entryId: it.entryId,
-                fromDate: dateKey,
-                fromIdx: idx,
-              });
-              e.dataTransfer.setData("application/json", body);
-              e.dataTransfer.setData("text/plain", body); // 호환용
-              e.dataTransfer.effectAllowed = "move";
-              dragFrom.current = idx;
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const data = parseDropData(e);
-              if (!data) return;
+          <React.Fragment key={`${it.entryId}:${it.eventOrder ?? idx}`}>
+            <div
+              data-entry="card"
+              draggable
+              onDragStart={(e) => {
+                const body = JSON.stringify({
+                  type: "ENTRY",
+                  entryId: it.entryId,
+                  fromDate: dateKey,
+                  fromIdx: idx,
+                });
+                e.dataTransfer.setData("application/json", body);
+                e.dataTransfer.setData("text/plain", body);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const data = parseDropData(e);
+                if (!data) return;
 
-              // 카드 위에 PLACE 드롭 → 추가 허용 (필요시 특정 위치 삽입으로 확장 가능)
-              if (data.type === "PLACE" && data.place) {
-                onAddPlace(data.place);
-                e.stopPropagation(); // 부모 섹션 onDrop 중복 처리 방지
-                return;
-              }
+                // PLACE: 카드 위/아래 절반 기준 삽입
+                if (data.type === "PLACE" && data.place) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const insertIndex =
+                    e.clientY < rect.top + rect.height / 2 ? idx : idx + 1;
+                  onAddPlace(data.place, insertIndex);
+                  e.stopPropagation();
+                  return;
+                }
 
-              // 같은 날짜 내 재정렬
-              const fromIdx = dragFrom.current;
-              if (
-                data.type === "ENTRY" &&
-                data.fromDate === dateKey &&
-                fromIdx != null &&
-                fromIdx !== idx
-              ) {
-                onReorder(fromIdx, idx);
-              }
-              e.stopPropagation(); // 부모 섹션 onDrop 실행 방지
-              dragFrom.current = null;
-            }}
-          >
-            <ItineraryCard
-              item={it}
-              onRemove={() => onRemove(it.entryId)}
-              onSetTimes={(s, e) => onSetTimes(it.entryId, s, e)}
+                // ENTRY 같은 날짜: 절반 기준 재정렬 (보정 포함)
+                if (
+                  data.type === "ENTRY" &&
+                  data.fromDate === dateKey &&
+                  Number.isInteger(data.fromIdx)
+                ) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  let insertIndex =
+                    e.clientY < rect.top + rect.height / 2 ? idx : idx + 1;
+                  if (data.fromIdx < insertIndex) insertIndex -= 1; // 보정
+                  if (data.fromIdx !== insertIndex)
+                    onReorder(data.fromIdx, insertIndex);
+                  e.stopPropagation();
+                  return;
+                }
+
+                // ENTRY 다른 날짜: 절반 기준으로 교차 이동
+                if (
+                  data.type === "ENTRY" &&
+                  data.fromDate !== dateKey &&
+                  Number.isInteger(data.fromIdx)
+                ) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const insertIndex =
+                    e.clientY < rect.top + rect.height / 2 ? idx : idx + 1;
+                  onMoveAcross(data.fromDate, data.fromIdx, insertIndex);
+                  e.stopPropagation();
+                  return;
+                }
+              }}
+              className="relative flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2"
+            >
+              <ItineraryCard
+                item={it}
+                onRemove={() => onRemove(it.entryId)}
+                onSetTimes={(s, e) => onSetTimes(it.entryId, s, e)}
+              />
+            </div>
+
+            {/* 구간(leg) ETA 표시: 현재 카드(it) → 다음 카드(items[idx+1]) */}
+            {showEta && items[idx + 1] && (
+              <LegETA
+                day={dayNumber}
+                transport={transport}
+                fromId={it.wantId ?? it.placeId}
+                toId={items[idx + 1].wantId ?? items[idx + 1].placeId}
+              />
+            )}
+
+            {/* 카드 뒤 드롭 슬롯 (index: idx+1) */}
+            <DropSlot
+              ariaLabel={`위치 ${idx + 1} 뒤에 추가`}
+              onDropData={(data) => {
+                const index = idx + 1;
+                if (data.type === "PLACE" && data.place)
+                  onAddPlace(data.place, index);
+                else if (
+                  data.type === "ENTRY" &&
+                  Number.isInteger(data.fromIdx)
+                ) {
+                  if (data.fromDate === dateKey) {
+                    let toIdx = index;
+                    if (data.fromIdx < index) toIdx = index - 1; // 보정
+                    if (data.fromIdx !== toIdx) onReorder(data.fromIdx, toIdx);
+                  } else {
+                    onMoveAcross(data.fromDate, data.fromIdx, index);
+                  }
+                }
+              }}
             />
-          </div>
+          </React.Fragment>
         ))}
       </div>
     </section>
   );
 }
 
-/** HH:MM 24h 검증 */
-const isHHMM = (v) =>
-  typeof v === "string" &&
-  /^\d{2}:\d{2}$/.test(v) &&
-  Number(v.slice(0, 2)) < 24 &&
-  Number(v.slice(3, 5)) < 60;
-
-/** 인라인 시간 편집 팝오버 */
-function TimeEditor({ initialStart, initialEnd, onConfirm, onCancel }) {
-  const [start, setStart] = useState(initialStart ?? "");
-  const [end, setEnd] = useState(initialEnd ?? "");
-  const valid = (!start || isHHMM(start)) && (!end || isHHMM(end));
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape") onCancel?.();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onCancel]);
+function DropSlot({ onDropData, ariaLabel = "여기에 놓기" }) {
+  const parseDropData = (e) => {
+    let json = e.dataTransfer.getData("application/json");
+    if (!json) json = e.dataTransfer.getData("text/plain");
+    if (!json) return null;
+    try {
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  };
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-2 shadow-md">
-      <div className="flex items-center gap-2">
-        <label className="text-xs w-14">시작</label>
-        <input
-          type="time"
-          value={start}
-          onChange={(e) => setStart(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
-        />
-      </div>
-      <div className="mt-2 flex items-center gap-2">
-        <label className="text-xs w-14">종료</label>
-        <input
-          type="time"
-          value={end}
-          onChange={(e) => setEnd(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
-        />
-      </div>
-      <div className="mt-3 flex justify-end gap-2">
-        <button
-          type="button"
-          className="px-3 py-1 text-sm border rounded"
-          onClick={onCancel}
-        >
-          취소
-        </button>
-        <button
-          type="button"
-          className="px-3 py-1 text-sm rounded bg-blue-600 text-white disabled:opacity-50"
-          disabled={!valid}
-          onClick={() =>
-            onConfirm?.({ startTime: start || null, endTime: end || null })
-          }
-        >
-          적용
-        </button>
-      </div>
-    </div>
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const data = parseDropData(e);
+        if (!data) return;
+        onDropData?.(data);
+        e.stopPropagation();
+      }}
+      aria-label={ariaLabel}
+      className="h-2 my-1 rounded-sm transition-all"
+      style={{
+        outline: "1px dashed rgba(100,116,139,.5)",
+        outlineOffset: 4,
+      }}
+    />
   );
 }
 
@@ -297,38 +406,40 @@ function ItineraryCard({ item, onRemove, onSetTimes }) {
   }, [open]);
 
   return (
-    <div className="relative flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2">
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap gap-x-2 items-baseline">
-          <span className="text-[15px] font-semibold break-words">
-            {displayName}
-          </span>
-          {item?.category && (
-            <span className="text-[12px] text-slate-600 break-words">
-              {item.category}
+    <div className="relative w-full">
+      <div className="min-w-0 flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-x-2 items-baseline">
+            <span className="text-[15px] font-semibold break-words">
+              {displayName}
             </span>
-          )}
+            {item?.category && (
+              <span className="text-[12px] text-slate-600 break-words">
+                {item.category}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="mt-1 text-[12px] text-slate-700 underline underline-offset-2"
+            onClick={() => setOpen((v) => !v)}
+            title="시간 편집"
+          >
+            {timeLabel}
+          </button>
         </div>
 
         <button
           type="button"
-          className="mt-1 text-[12px] text-slate-700 underline underline-offset-2"
-          onClick={() => setOpen((v) => !v)}
-          title="시간 편집"
+          className="ml-auto h-6 w-6 rounded-full border border-slate-300 text-[12px] font-bold leading-none"
+          onClick={onRemove}
+          aria-label="삭제"
+          title="삭제"
         >
-          {timeLabel}
+          ×
         </button>
       </div>
-
-      <button
-        type="button"
-        className="ml-auto h-6 w-6 rounded-full border border-slate-300 text-[12px] font-bold leading-none"
-        onClick={onRemove}
-        aria-label="삭제"
-        title="삭제"
-      >
-        ×
-      </button>
 
       {open && (
         <div ref={popRef} className="absolute right-0 top-8 z-10">
@@ -343,6 +454,41 @@ function ItineraryCard({ item, onRemove, onSetTimes }) {
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function LegETA({ day, transport, fromId, toId }) {
+  const eta = useSelector((s) =>
+    selectLegEta(s, {
+      day,
+      transport, // "driving" | "transit" | "walking"
+      fromWantId: Number(fromId),
+      toWantId: Number(toId),
+    })
+  );
+
+  if (!eta) {
+    return (
+      <div
+        className="mx-2 my-1 rounded bg-slate-50 text-slate-500 text-xs px-2 py-1 border border-slate-200"
+        title="소요시간 계산 결과 대기 중"
+      >
+        {transport} · 계산 대기
+      </div>
+    );
+  }
+
+  const min = Math.round(eta.durationMinutes ?? 0); // 분 단위
+  const km =
+    eta.distanceMeters != null ? (eta.distanceMeters / 1000).toFixed(1) : null;
+
+  return (
+    <div
+      className="mx-2 my-1 rounded bg-indigo-50 text-indigo-700 text-xs px-2 py-1 border border-indigo-200"
+      title={`업데이트: ${eta.updatedAt ?? "-"}`}
+    >
+      {transport} · {min}분{km ? ` · ${km}km` : ""}
     </div>
   );
 }

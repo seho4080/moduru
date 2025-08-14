@@ -4,37 +4,95 @@ import logo from '../../assets/moduru-logo.png';
 import { FaUser, FaCalendarAlt, FaMicrophone } from 'react-icons/fa';
 import { useAuth } from '../../shared/model/useAuth';
 import UserMenu from './UserMenu';
-import { Room, createLocalAudioTrack } from 'livekit-client';
+import { Room, RoomEvent } from 'livekit-client';
 import { useSelector } from 'react-redux';
+import api from '../../lib/axios';
+
 
 export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) {
-  const { isLoggedIn, userId } = useAuth();
+  const { isLoggedIn } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
 
-  // RTC 관련
+  // RTC
   const roomRef = useRef(null);
   const [connecting, setConnecting] = useState(false);
   const [voiceConnected, setVoiceConnected] = useState(false);
   const WS_URL = import.meta.env?.VITE_LIVEKIT_WS || 'wss://moduru.co.kr/ws';
   const roomId = useSelector((state) => state.tripRoom.roomId);
 
-  // ✅ 서버 알림 제거: 로컬 정리만 수행
+  // stats timers
+  const voiceStatsSenderRef = useRef(null);
+  const voiceStatsReceiverRef = useRef(null);
+
+  // --- 송신 통계 (outbound) ---
+  function watchAudioSender(room) {
+    try {
+      const pcPub = room.engine?.pcManager?.publisher?.peerConnection;
+      if (!pcPub) return console.warn('[voice] no publisher pc');
+      const sender = pcPub.getSenders().find(s => s.track?.kind === 'audio');
+      if (!sender) return console.warn('[voice] no audio sender');
+
+      let last = 0;
+      clearInterval(voiceStatsSenderRef.current);
+      voiceStatsSenderRef.current = setInterval(async () => {
+        const stats = await sender.getStats();
+        stats.forEach(r => {
+          if (r.type === 'outbound-rtp' && r.kind === 'audio') {
+            console.log('[voice] OUT bytesSent:', r.bytesSent, 'packetsSent:', r.packetsSent, 'audioLevel:', r.audioLevel);
+            if (last && r.bytesSent === last) console.warn('[voice] OUT not increasing');
+            last = r.bytesSent;
+          }
+        });
+      }, 1000);
+    } catch (e) {
+      console.warn('[voice] watchAudioSender error', e);
+    }
+  }
+
+  // --- 수신 통계 (inbound) ---
+  function watchAudioReceiver(room) {
+    try {
+      const pcSub = room.engine?.pcManager?.subscriber?.peerConnection;
+      if (!pcSub) return console.warn('[voice] no subscriber pc');
+      const receiver = pcSub.getReceivers().find(r => r.track?.kind === 'audio');
+      if (!receiver) return console.warn('[voice] no audio receiver');
+
+      let last = 0;
+      clearInterval(voiceStatsReceiverRef.current);
+      voiceStatsReceiverRef.current = setInterval(async () => {
+        const stats = await receiver.getStats();
+        stats.forEach(r => {
+          if (r.type === 'inbound-rtp' && r.kind === 'audio') {
+            console.log('[voice] IN  bytesReceived:', r.bytesReceived, 'packetsReceived:', r.packetsReceived, 'jitter:', r.jitter);
+            if (last && r.bytesReceived === last) console.warn('[voice] IN no incoming packets');
+            last = r.bytesReceived;
+          }
+        });
+      }, 1000);
+    } catch (e) {
+      console.warn('[voice] watchAudioReceiver error', e);
+    }
+  }
+
+  // 정리
   const disconnectVoice = useCallback(async () => {
     const r = roomRef.current;
     roomRef.current = null;
-
     try {
+      clearInterval(voiceStatsSenderRef.current);
+      clearInterval(voiceStatsReceiverRef.current);
+
       if (r) {
-        try { r?.localParticipant?.tracks?.forEach?.((pub) => pub?.track?.stop?.()); } catch {}
+        try { r?.localParticipant?.tracks?.forEach?.(pub => pub?.track?.stop?.()); } catch {}
         try { await r.disconnect(); } catch {}
         if (typeof r?.release === 'function') {
           try { await r.release(true); } catch {}
         }
       }
     } finally {
-      // no-op: 서버 통지 없음 (웹훅이 소스 오브 트루스)
+      // no-op
     }
   }, []);
 
@@ -49,48 +107,67 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
 
   const handleClickVoice = async () => {
     if (connecting) return;
-    if (!roomId) {
-      console.warn('[voice] missing roomId');
-      return;
-    }
+    if (!roomId) { console.warn('[voice] missing roomId'); return; }
 
     // 연결됨 → 끊기
     if (voiceConnected) {
       setConnecting(true);
-      try {
-        await disconnectVoice(); // ✅ 서버 알림 없음
-      } catch (e) {
-        console.warn('[voice] disconnect err', e);
-      } finally {
-        setVoiceConnected(false);
-        setConnecting(false);
-      }
+      try { await disconnectVoice(); }
+      catch (e) { console.warn('[voice] disconnect err', e); }
+      finally { setVoiceConnected(false); setConnecting(false); }
       return;
     }
 
     // 미연결 → 연결
     setConnecting(true);
     try {
-      const res = await fetch('/api/signal/token', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId }),
+      const { data } = await api.post('/signal/token', { roomId }); // withCredentials 전역 ON
+      const { token, wsUrl } = data;
+      
+      const room = new Room({
+        adaptiveStream: true,
+        dynacast: true,
+        // autoSubscribe: true, // 필요 시 명시
       });
-      if (!res.ok) throw new Error(`token failed: ${res.status}`);
-      const { token, wsUrl } = await res.json();
-
-      const room = new Room({ adaptiveStream: true, dynacast: true });
       roomRef.current = room;
-      await room.connect(wsUrl ?? WS_URL, token);
 
-      const mic = await createLocalAudioTrack({
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
+      // 이벤트 로그
+      room.on(RoomEvent.Connected, () => console.log('[voice] Room Connected'));
+      room.on(RoomEvent.Disconnected, () => console.log('[voice] Room Disconnected'));
+      room.on(RoomEvent.ConnectionStateChanged, (state) => console.log('[voice] ConnState', state));
+      room.on(RoomEvent.TrackSubscribed, async (track, pub, participant) => {
+        console.log('[voice] TrackSubscribed', participant.identity, pub.kind, pub.source);
+        if (track.kind === 'audio') {
+          try {
+            try { await room.startAudio(); } catch {}         // 재생 언락 재시도
+            const el = track.attach();                        // 오디오 엘리먼트 부착
+            el.autoplay = true;
+            el.muted = false;
+            el.playsInline = true;
+            document.body.appendChild(el);
+            await el.play().catch(err => console.warn('[voice] audio play blocked:', err));
+            console.log('[voice] remote audio element attached & play() tried');
+          } catch (e) {
+            console.warn('[voice] attach/play error', e);
+          }
+        }
       });
-      await room.localParticipant.publishTrack(mic);
-      try { await room.startAudio(); } catch {}
+      room.on(RoomEvent.TrackMuted, (_pub, p) => console.warn('[voice] Remote track muted by', p.identity));
+      room.on(RoomEvent.TrackUnmuted, (_pub, p) => console.log('[voice] Remote track unmuted by', p.identity));
+
+      // 브라우저 오디오 자동재생 정책 해제(가능한 빨리)
+      try { await room.startAudio(); } catch (e) { console.warn('[voice] startAudio err (pre-connect)', e); }
+
+      await room.connect(wsUrl ?? WS_URL, token);
+      console.log('[voice] connected to room');
+
+      // 마이크 enable (생성 + publish + unmute)
+      await room.localParticipant.setMicrophoneEnabled(true);
+      console.log('[voice] mic enabled & published');
+
+      // 통계 모니터링
+      watchAudioSender(room);
+      watchAudioReceiver(room);
 
       setVoiceConnected(true);
     } catch (e) {
@@ -102,11 +179,8 @@ export default function SidebarTabs({ activeTab, onTabChange, onProfileClick }) 
     }
   };
 
-  // ✅ 언마운트/탭 종료 시 로컬 정리만
   useEffect(() => {
-    const onBeforeUnload = () => {
-      try { /* 베스트에форт: sync 정리 */ } catch {}
-    };
+    const onBeforeUnload = () => { try { /* best-effort cleanup */ } catch {} };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', onBeforeUnload);

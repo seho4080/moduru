@@ -10,8 +10,8 @@ import {
   FaMinus
 } from 'react-icons/fa';
 
-import CustomSelectModal from './CustomSelectModal';
-import CustomPlace from './CustomPlace';   
+import CustomSelectModal from '../../customPin/ui/CustomSelectModal';
+import CustomPlace from '../../customPin/ui/CustomPlace';   
 
 export default function Controls({
   mode, setMode,
