@@ -3,6 +3,9 @@ package com.B108.tripwish.domain.user.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
+import com.B108.tripwish.domain.place.entity.Place;
+import com.B108.tripwish.domain.place.repository.PlaceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class MyPlaceServiceImpl implements MyPlaceService {
 
   private final MyPlaceRepository myPlaceRepository;
   private final PlaceReaderService placeReaderService;
+  private final PlaceRepository placeRepository;
 
   @Override
   @Transactional
@@ -44,11 +48,20 @@ public class MyPlaceServiceImpl implements MyPlaceService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<MyPlaceInfoResponse> getLikedPlaces(CustomUserDetails userDetails) {
+  public List<PlaceResponseDto> getLikedPlaces(CustomUserDetails userDetails, Long regionId) {
     Long userId = userDetails.getUser().getId();
 
-    return myPlaceRepository.findByUser_Id(userId).stream()
-        .map(mp -> placeReaderService.getMyPlaceInfo(mp.getPlaceId()))
-        .collect(Collectors.toList());
+    List<Place> places;
+
+    if (regionId != null) {
+      places = placeRepository.findAllLikedByUserIdAndRegion(userId, regionId);
+    } else {
+      places = placeRepository.findAllLikedByUserIdWithDetail(userId);
+    }
+
+    // 좋아요 목록이므로 isLiked=true, isWanted는 필요 없으면 false
+    return places.stream()
+            .map(p -> PlaceResponseDto.fromEntity(p, true, false))
+            .toList();
   }
 }
