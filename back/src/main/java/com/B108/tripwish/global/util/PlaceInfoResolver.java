@@ -50,38 +50,37 @@ public class PlaceInfoResolver {
             .collect(Collectors.toMap(CustomPlace::getId, Function.identity()));
   }
 
-    // WantPlace → PlaceInfo로 변환
-    public PlaceInfo getPlaceInfo(WantPlace wp) {
-        if (wp.getType() == PlaceType.PLACE) {
-            Place place = placeMap.get(wp.getRefId());
-            if (place == null) return null;
+  // WantPlace → PlaceInfo로 변환
+  public PlaceInfo getPlaceInfo(WantPlace wp) {
+    if (wp.getType() == PlaceType.PLACE) {
+      Place place = placeMap.get(wp.getRefId());
+      if (place == null) return null;
 
-            return PlaceInfo.builder()
-                    .name(place.getPlaceName())
-                    .imageUrl(!place.getImages().isEmpty() ? place.getImages().get(0).getImgUrl() : null)
-                    .address(place.getRoadAddressName())
-                    .categoryId(place.getCategoryId().getId())
-                    .category(place.getCategoryId().getCategoryName())
-                    .lat(place.getLat())
-                    .lng(place.getLng())
-                    .build();
+      return PlaceInfo.builder()
+          .name(place.getPlaceName())
+          .imageUrl(!place.getImages().isEmpty() ? place.getImages().get(0).getImgUrl() : null)
+          .address(place.getRoadAddressName())
+          .categoryId(place.getCategoryId().getId())
+          .category(place.getCategoryId().getCategoryName())
+          .lat(place.getLat())
+          .lng(place.getLng())
+          .build();
 
-        } else if (wp.getType() == PlaceType.CUSTOM) {
-            CustomPlace custom = customMap.get(wp.getRefId());
-            if (custom == null) return null;
+    } else if (wp.getType() == PlaceType.CUSTOM) {
+      CustomPlace custom = customMap.get(wp.getRefId());
+      if (custom == null) return null;
 
-            return PlaceInfo.builder()
-                    .name(custom.getName())
-                    .imageUrl(null)
-                    .address(custom.getAddress())
-                    .categoryId(0L)
-                    .category(null)
-                    .lat(custom.getLat())
-                    .lng(custom.getLng())
-                    .build();
-        }
-
-        return null;
+      return PlaceInfo.builder()
+          .name(custom.getName())
+          .imageUrl(null)
+          .address(custom.getAddress())
+          .categoryId(0L)
+          .category(null)
+          .lat(custom.getLat())
+          .lng(custom.getLng())
+          .build();
     }
 
+    return null;
+  }
 }

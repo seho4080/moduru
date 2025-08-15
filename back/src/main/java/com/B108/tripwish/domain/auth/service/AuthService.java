@@ -6,7 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthService {
-  JwtToken login(String email, String password, HttpServletResponse response, HttpServletRequest request);
+  JwtToken login(
+      String email, String password, HttpServletResponse response, HttpServletRequest request);
 
   void logout(String accessToken);
 
