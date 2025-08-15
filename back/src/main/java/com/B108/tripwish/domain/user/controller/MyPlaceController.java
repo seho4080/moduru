@@ -2,6 +2,7 @@ package com.B108.tripwish.domain.user.controller;
 
 import java.util.List;
 
+import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -55,9 +56,10 @@ public class MyPlaceController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류 발생", content = @Content)
       })
   @GetMapping
-  public ResponseEntity<List<MyPlaceInfoResponse>> getLikedPlaces(
-      @AuthenticationPrincipal CustomUserDetails user) {
-    List<MyPlaceInfoResponse> likedPlaces = myPlaceService.getLikedPlaces(user);
+  public ResponseEntity<List<PlaceResponseDto>> getLikedPlaces(
+      @AuthenticationPrincipal CustomUserDetails user,
+      @RequestParam(required = false) Long region) {
+    List<PlaceResponseDto> likedPlaces = myPlaceService.getLikedPlaces(user, region);
     return ResponseEntity.ok(likedPlaces);
   }
 }
