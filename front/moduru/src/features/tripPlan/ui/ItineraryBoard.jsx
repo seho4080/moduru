@@ -1,6 +1,6 @@
 // src/features/itinerary/ui/ItineraryBoard.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useMemo, useState, useEffect, useRef, forwardRef } from "react";
+import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import {
   addPlaceToDay,
   moveItemWithin,
@@ -9,486 +9,887 @@ import {
   setTimes,
 } from "../../../redux/slices/itinerarySlice";
 import { setDraftVersion } from "../../../redux/slices/scheduleDraftSlice";
+import SharedPlaceCard from "../../sharedPlace/ui/SharedPlaceCard";
 
-import TimeEditor from "./TimeEditor";
-import { selectLegEta } from "../../../redux/slices/etaSlice";
+import {
+  DndContext,
+  DragOverlay,
+  pointerWithin,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-// WebSocket 구독
-import { subscribeSchedule } from "../../webSocket/scheduleSocket";
+// 웹소켓: 스케줄(공통) 동기화
+import { connectWebSocket, unsubscribeKeys } from "../../webSocket/coreSocket";
+// 웹소켓: 소요시간 계산 발행/결과 구독
+import { publishTravel } from "../../webSocket/travelSocket";
+// ❗️프로젝트 경로 기준으로 맞춰주세요 (travel 또는 travelTime)
+import useTravelResultSocket from "../../travelTime/ui/useTravelResultSocket";
+// 상태 스트림(STARTED/DONE 등) 직접 구독해서 '일자별' 로딩 제어
+import { subscribeTravelStatus } from "../../webSocket/travelStatusSocket";
 
-export default function ItineraryBoard({
-  transport = "driving",
-  showEta = true,
-}) {
+// ETA 셀렉터
+import { selectLegEta, selectDayTotals } from "../../../redux/slices/etaSlice";
+
+/* ---------------- constants / helpers ---------------- */
+const CARD_WIDTH = 240; // 일정 카드 폭 (공유장소와 동일)
+const BOARD_COL_WIDTH = 280; // 컬럼 폭(카드 + 여백)
+
+const SCHEDULE_HANDLER = "schedule";
+const EMPTY_OBJ = Object.freeze({});
+const EMPTY_ARR = Object.freeze([]);
+
+const TRANSPORT_LABEL = {
+  driving: "운전",
+  transit: "대중교통",
+  walking: "도보",
+  null: "미지정",
+};
+
+function labelOf(m) {
+  return TRANSPORT_LABEL[m ?? "null"] || "미지정";
+}
+
+function notify(type, message) {
+  if (window?.toast?.[type]) window.toast[type](message);
+  else if (window?.toast) window.toast(message);
+  else if (type === "error") alert(message);
+  else console.log(`[${type}] ${message}`);
+}
+
+/* ===================================================== */
+
+const ItineraryBoard = forwardRef(function ItineraryBoard(
+  { transport = "driving", showEta = true },
+  ref
+) {
   const dispatch = useDispatch();
 
-  const { startDate, endDate } = useSelector((s) => s.tripRoom ?? {});
+  const startDate = useSelector((s) => s.tripRoom?.startDate);
+  const endDate = useSelector((s) => s.tripRoom?.endDate);
   const roomId = useSelector((s) => s.tripRoom?.id ?? s.tripRoom?.roomId);
-  const daysMap = useSelector((s) => s.itinerary?.days ?? {});
+  const daysMap = useSelector((s) => s.itinerary?.days) || EMPTY_OBJ;
 
-  // schedule 구독: 방 아이디 기준으로 구독/해제
+  // 결과 채널 구독 → etaSlice에 반영
+  useTravelResultSocket(roomId);
+
+  /* ---------- 서버→클라: 시간/버전 동기화 구독 ---------- */
   useEffect(() => {
     if (!roomId) return;
-    console.log("[ItineraryBoard] subscribe schedule for roomId:", roomId);
+    const key = `itinerary-board|${roomId}|${SCHEDULE_HANDLER}`;
 
-    const unsub = subscribeSchedule(
-      roomId,
-      (msg) => {
-        console.log("[ItineraryBoard] schedule message received:", msg);
-        // 백 DTO 스펙: { roomId, day, date, events: [{ wantId, startTime, endTime, eventOrder }], senderId, draftVersion }
-        const { day, date, events, draftVersion } = msg || {};
+    connectWebSocket(roomId, [
+      {
+        handler: SCHEDULE_HANDLER,
+        key,
+        callback: (msg) => {
+          const { day, date, events, draftVersion } = msg || {};
 
-        // 1) draftVersion은 가드 밖에서 먼저 반영 (버전만 오는 패킷도 처리)
-        const dayNum = Number(day);
-        const verNum = Number(draftVersion);
-        if (Number.isFinite(dayNum) && Number.isFinite(verNum)) {
-          dispatch({
-            type: setDraftVersion.type,
-            payload: { day: dayNum, draftVersion: verNum },
-            meta: { fromWs: true }, // ✅ WS 유입 표시
-          });
-        }
+          const dayNum = Number(day);
+          const verNum = Number(draftVersion);
+          if (Number.isFinite(dayNum) && Number.isFinite(verNum)) {
+            dispatch({
+              type: setDraftVersion.type,
+              payload: { day: dayNum, draftVersion: verNum },
+              meta: { fromWs: true },
+            });
+          }
 
-        // 2) 날짜/이벤트 없으면 시간 반영은 생략
-        if (!date || !Array.isArray(events)) return;
-
-        // 3) 시간 반영 (wantId 기준)
-        events.forEach((ev) => {
-          if (!ev?.wantId) return;
-          +dispatch({
-            type: setTimes.type,
-            payload: {
-              dateKey: date,
-              wantId: ev.wantId,
-              startTime: ev.startTime ?? "",
-              endTime: ev.endTime ?? "",
-            },
-            meta: { fromWs: true }, // ✅ WS 유입 표시
-          });
-        });
-
-        // 필요 시 eventOrder 기반 정렬 반영은 여기에서 프로젝트 규칙에 맞게 구현
+          if (date && Array.isArray(events)) {
+            events.forEach((ev) => {
+              if (!ev?.wantId) return;
+              dispatch({
+                type: setTimes.type,
+                payload: {
+                  dateKey: date,
+                  wantId: ev.wantId,
+                  startTime: ev.startTime ?? "",
+                  endTime: ev.endTime ?? "",
+                },
+                meta: { fromWs: true },
+              });
+            });
+          }
+        },
       },
-      { key: "itinerary-board" }
-    );
+    ]);
 
-    return () => {
-      try {
-        unsub?.();
-      } finally {
-        console.log(
-          "[ItineraryBoard] unsubscribe schedule for roomId:",
-          roomId
-        );
-      }
-    };
+    return () => unsubscribeKeys([key]);
   }, [roomId, dispatch]);
 
+  /* ---------- 날짜 배열: start/end 있으면 사용, 없으면 daysMap 키 폴백 ---------- */
   const dates = useMemo(() => {
     const out = [];
-    if (!startDate) return out;
-    const s = new Date(startDate);
-    const e = endDate ? new Date(endDate) : s;
-    for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      out.push(`${y}-${m}-${dd}`);
+    if (startDate) {
+      const s = new Date(startDate);
+      const e = endDate ? new Date(endDate) : s;
+      for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        out.push(`${y}-${m}-${dd}`);
+      }
+      return out;
     }
-    return out;
-  }, [startDate, endDate]);
+    const keys = Object.keys(daysMap || {}).filter(Boolean);
+    keys.sort((a, b) => String(a).localeCompare(String(b)));
+    return keys;
+  }, [startDate, endDate, daysMap]);
 
+  /* ---------- dnd-kit ---------- */
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const board = useMemo(() => {
+    const byDate = {};
+    const idToMeta = new Map();
+    for (const dateKey of dates) {
+      const items = (daysMap[dateKey] || EMPTY_ARR).map((it) => ({
+        ...it,
+        _id: String(it.entryId), // dnd-kit key
+      }));
+      byDate[dateKey] = items;
+      items.forEach((it, idx) => {
+        idToMeta.set(it._id, { dateKey, index: idx, item: it });
+      });
+    }
+    return { byDate, idToMeta };
+  }, [dates, daysMap]);
+
+  /* ---------- dnd handlers ---------- */
+  const [activeId, setActiveId] = useState(null);
+  const handleDragStart = (event) => setActiveId(String(event.active.id));
+
+  const getActiveCenterY = (active) => {
+    const r = active?.rect?.current;
+    if (!r) return null;
+    const top = r.translated?.top ?? r.top ?? r.initial?.top ?? null;
+    const height = r.rect?.height ?? r.initial?.height ?? 0;
+    if (top == null) return null;
+    return top + height / 2;
+  };
+
+  const computeInsertIndexInColumn = (dateKey, pointerY) => {
+    const container = document.querySelector(`[data-col="${dateKey}"]`);
+    const nodes = container?.querySelectorAll(
+      `[data-entry="card"][data-date="${dateKey}"]`
+    );
+    const len = nodes?.length ?? 0;
+    if (!len) return 0;
+    for (let i = 0; i < len; i++) {
+      const rect = nodes[i].getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      if (pointerY < mid) return i;
+    }
+    return len;
+  };
+
+  const getTargetPosition = (overId) => {
+    if (!overId) return null;
+    const id = String(overId);
+    if (id.startsWith("col:")) {
+      const dk = id.slice(4);
+      return { dateKey: dk, index: null, isContainer: true };
+    }
+    if (board.idToMeta.has(id)) {
+      const meta = board.idToMeta.get(id);
+      return { dateKey: meta.dateKey, index: meta.index, isContainer: false };
+    }
+    return null;
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    const activeIdStr = String(active?.id || "");
+    const overIdStr = over ? String(over.id) : null;
+
+    setActiveId(null);
+    if (!activeIdStr || !overIdStr) return;
+    if (!board.idToMeta.has(activeIdStr)) return;
+
+    const from = board.idToMeta.get(activeIdStr);
+    const to = getTargetPosition(overIdStr);
+    if (!to) return;
+
+    const fromDate = from.dateKey;
+    const toDate = to.dateKey;
+
+    // 같은 컬럼: 빈공간 드롭 → 포인터 기준 삽입
+    if (fromDate === toDate && to.isContainer) {
+      const pointerY = getActiveCenterY(active);
+      const insertPos =
+        pointerY == null
+          ? (board.byDate[toDate] || EMPTY_ARR).length
+          : computeInsertIndexInColumn(toDate, pointerY);
+      const finalIndex = from.index < insertPos ? insertPos - 1 : insertPos;
+      if (from.index !== finalIndex) {
+        dispatch(
+          moveItemWithin({
+            dateKey: fromDate,
+            fromIdx: from.index,
+            toIdx: finalIndex,
+          })
+        );
+      }
+      return;
+    }
+
+    // 같은 컬럼: 카드 위로 드롭
+    if (fromDate === toDate) {
+      let toIndex = to.index;
+      if (over?.rect && active?.rect && !to.isContainer) {
+        const midY = over.rect.top + over.rect.height / 2;
+        if (active.rect.current.translated?.top > midY) toIndex = to.index + 1;
+      }
+      const finalIndex = from.index < toIndex ? toIndex - 1 : toIndex;
+      if (from.index !== finalIndex) {
+        dispatch(
+          moveItemWithin({
+            dateKey: fromDate,
+            fromIdx: from.index,
+            toIdx: finalIndex,
+          })
+        );
+      }
+      return;
+    }
+
+    // 다른 컬럼으로 이동
+    const pointerY = getActiveCenterY(active);
+    let insertIndex;
+    if (to.isContainer) {
+      insertIndex =
+        pointerY == null
+          ? (board.byDate[toDate] || EMPTY_ARR).length
+          : computeInsertIndexInColumn(toDate, pointerY);
+    } else {
+      insertIndex = to.index;
+      if (over?.rect && active?.rect) {
+        const midY = over.rect.top + over.rect.height / 2;
+        if (active.rect.current.translated?.top > midY)
+          insertIndex = to.index + 1;
+      }
+    }
+
+    dispatch(
+      moveItemAcross({
+        fromDate: fromDate,
+        toDate: toDate,
+        fromIdx: from.index,
+        toIdx: insertIndex,
+      })
+    );
+  };
+
+  const activeItem = activeId ? board.idToMeta.get(activeId)?.item : null;
+
+  /* ---------- 일자별 교통수단/로딩/에러 ---------- */
+  const [transportByDate, setTransportByDate] = useState({});
+  const [loadingByDate, setLoadingByDate] = useState({});
+  const [errorByDate, setErrorByDate] = useState({});
+
+  // 날짜 변경 시 기본값 보정
+  useEffect(() => {
+    setTransportByDate((prev) => {
+      const next = { ...prev };
+      dates.forEach((dk) => {
+        if (!next[dk]) next[dk] = transport;
+      });
+      Object.keys(next).forEach((k) => {
+        if (!dates.includes(k)) delete next[k];
+      });
+      return next;
+    });
+    setLoadingByDate((prev) => {
+      const next = { ...prev };
+      dates.forEach((dk) => {
+        if (next[dk] == null) next[dk] = false;
+      });
+      Object.keys(next).forEach((k) => {
+        if (!dates.includes(k)) delete next[k];
+      });
+      return next;
+    });
+    setErrorByDate((prev) => {
+      const next = { ...prev };
+      dates.forEach((dk) => {
+        if (next[dk] == null) next[dk] = null;
+      });
+      Object.keys(next).forEach((k) => {
+        if (!dates.includes(k)) delete next[k];
+      });
+      return next;
+    });
+  }, [dates, transport]);
+
+  /* ---------- ⏱️ 30초 타임아웃 관리 ---------- */
+  const calcTimersRef = useRef({}); // { [dateKey]: timeoutId }
+
+  const startCalcTimeout = (dateKey, ms = 30000) => {
+    const prev = calcTimersRef.current[dateKey];
+    if (prev) {
+      clearTimeout(prev);
+      delete calcTimersRef.current[dateKey];
+    }
+    calcTimersRef.current[dateKey] = setTimeout(() => {
+      setLoadingByDate((p) => ({ ...p, [dateKey]: false }));
+      if (window?.toast?.warning) window.toast.warning("계산 시간 초과입니다.");
+      else if (window?.toast) window.toast("계산 시간 초과입니다.");
+      else console.warn("계산 시간 초과입니다.");
+      delete calcTimersRef.current[dateKey];
+    }, ms);
+  };
+
+  const clearCalcTimeout = (dateKey) => {
+    const t = calcTimersRef.current[dateKey];
+    if (t) {
+      clearTimeout(t);
+      delete calcTimersRef.current[dateKey];
+    }
+  };
+
+  const clearAllCalcTimeouts = () => {
+    Object.values(calcTimersRef.current).forEach((t) => clearTimeout(t));
+    calcTimersRef.current = {};
+  };
+
+  useEffect(() => () => clearAllCalcTimeouts(), []);
+  useEffect(() => {
+    const live = new Set(dates);
+    Object.keys(calcTimersRef.current).forEach((dk) => {
+      if (!live.has(dk)) clearCalcTimeout(dk);
+    });
+  }, [dates]);
+
+  /* ---------- 상태 스트림 구독: STARTED/ALREADY_RUNNING/DONE/FAILED ---------- */
+  useEffect(() => {
+    if (!roomId) return;
+
+    const off = subscribeTravelStatus(roomId, ({ status, body }) => {
+      const dayNum = Number(body?.day);
+      const dk =
+        Number.isFinite(dayNum) && dayNum > 0 ? dates[dayNum - 1] : null;
+
+      switch (status) {
+        case "STARTED":
+          if (dk) {
+            setLoadingByDate((p) => ({ ...p, [dk]: true }));
+            setErrorByDate((p) => ({ ...p, [dk]: null }));
+            startCalcTimeout(dk); // ⏱️
+          }
+          break;
+
+        case "ALREADY_RUNNING":
+          notify("info", "이미 계산 중입니다.");
+          if (dk) {
+            setLoadingByDate((p) => ({ ...p, [dk]: true }));
+            startCalcTimeout(dk); // ⏱️ 갱신
+          }
+          break;
+
+        case "DONE":
+          if (dk) {
+            setLoadingByDate((p) => ({ ...p, [dk]: false }));
+            setErrorByDate((p) => ({ ...p, [dk]: null }));
+            clearCalcTimeout(dk); // ⏱️
+          }
+          break;
+
+        case "FAILED":
+          if (dk) {
+            setLoadingByDate((p) => ({ ...p, [dk]: false }));
+            setErrorByDate((p) => ({
+              ...p,
+              [dk]: body?.message || "소요시간 계산 실패",
+            }));
+            clearCalcTimeout(dk); // ⏱️
+          }
+          break;
+
+        default:
+          break;
+      }
+    });
+
+    return off;
+  }, [roomId, dates]);
+
+  /* ---------- 네이티브 드롭 파싱 ---------- */
+  function parseDropData(e) {
+    let json = null;
+    try {
+      json = e.dataTransfer?.getData("application/json");
+      if (!json) json = e.dataTransfer?.getData("text/plain");
+    } catch {}
+    if (!json) return null;
+    try {
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  }
+
+  /* ---------- 소요시간 계산 요청(일자별) ---------- */
+  const requestCalcForDate = (dateKey) => {
+    if (!roomId) return;
+    const items = board.byDate[dateKey] || EMPTY_ARR;
+    if (items.length < 2) {
+      notify("info", "이동 경로가 2개 이상일 때만 계산됩니다.");
+      return;
+    }
+    const t = transportByDate[dateKey] || "driving";
+    const day = dates.indexOf(dateKey) + 1;
+
+    const events = items.map((it, i) => ({
+      wantId: it.wantId ?? it.placeId,
+      eventOrder: i + 1,
+      startTime: it.startTime || undefined,
+      endTime: it.endTime || undefined,
+    }));
+
+    setLoadingByDate((p) => ({ ...p, [dateKey]: true }));
+    startCalcTimeout(dateKey); // STARTED가 늦어질 수 있으니 낙관적 시작
+
+    publishTravel({
+      roomId,
+      day,
+      date: dateKey,
+      transpot: t, // 서버 호환: transpot
+      events,
+    });
+  };
+
+  /* ---------- render ---------- */
   return (
-    <div className="flex gap-4 overflow-x-auto p-2">
-      {dates.map((dateKey, idx) => (
-        <DayColumn
-          key={dateKey}
-          dayNumber={idx + 1}
-          dateKey={dateKey}
-          items={daysMap[dateKey] || []}
-          transport={transport}
-          showEta={showEta}
-          onAddPlace={(place, index) =>
-            dispatch(addPlaceToDay({ date: dateKey, place, index }))
-          }
-          onReorder={(fromIdx, toIdx) =>
-            dispatch(moveItemWithin({ dateKey, fromIdx, toIdx }))
-          }
-          onMoveAcross={(fromDate, fromIdx, toIdx) =>
-            dispatch(
-              moveItemAcross({ fromDate, toDate: dateKey, fromIdx, toIdx })
-            )
-          }
-          onRemove={(entryId) => dispatch(removeItem({ dateKey, entryId }))}
-          onSetTimes={(entryId, startTime, endTime) =>
-            dispatch(setTimes({ dateKey, entryId, startTime, endTime }))
-          }
-        />
-      ))}
+    <div
+      ref={ref}
+      id="itinerary-board-root"
+      className="flex gap-4 overflow-x-auto p-2"
+    >
+      <DndContext
+        sensors={sensors}
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        {dates.map((dateKey, idx) => {
+          const items = board.byDate[dateKey] || EMPTY_ARR;
+          const t = transportByDate[dateKey] || "driving";
+          const loading = !!loadingByDate[dateKey];
+          const errMsg = errorByDate[dateKey];
+
+          return (
+            <section
+              key={dateKey}
+              className="flex-shrink-0 rounded-lg border border-slate-200 bg-white"
+              style={{ width: BOARD_COL_WIDTH }}
+              aria-label={`Day ${idx + 1} ${dateKey}`}
+              onDragOver={(e) => {
+                // SharedPlaceCard 외부 드롭 허용
+                e.preventDefault();
+                try {
+                  const json = e.dataTransfer?.getData("application/json");
+                  if (json) e.dataTransfer.dropEffect = "copy";
+                } catch {}
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const data = parseDropData(e);
+                if (data?.type === "PLACE" && data?.place) {
+                  const clientY = e.clientY ?? null;
+                  let insertIndex = items.length;
+                  if (clientY != null) {
+                    insertIndex = computeInsertIndexInColumn(dateKey, clientY);
+                  }
+                  dispatch(
+                    addPlaceToDay({
+                      date: dateKey,
+                      place: data.place,
+                      index: insertIndex,
+                    })
+                  );
+                }
+              }}
+            >
+              {/* 컬럼 헤더: 일자 + 교통수단 선택 + 소요시간 계산 버튼 */}
+              <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-semibold">Day {idx + 1}</div>
+                    <div className="text-xs text-slate-500">{dateKey}</div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <TransportRadio
+                      name={`transport-${dateKey}`}
+                      value={t}
+                      disabled={loading}
+                      onChange={(val) =>
+                        setTransportByDate((prev) => ({
+                          ...prev,
+                          [dateKey]: val,
+                        }))
+                      }
+                    />
+                    <button
+                      type="button"
+                      className={`text-xs rounded border px-2 py-1 ${
+                        loading
+                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                          : "bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700"
+                      }`}
+                      onClick={() => requestCalcForDate(dateKey)}
+                      disabled={loading}
+                      aria-busy={loading}
+                    >
+                      {loading ? "계산 중..." : "계산"}
+                    </button>
+                  </div>
+                </div>
+
+                {errMsg ? (
+                  <div className="mt-1 text-[11px] text-red-600">{errMsg}</div>
+                ) : null}
+              </header>
+
+              <ColumnDroppable dateKey={dateKey}>
+                <div
+                  className="p-2 flex flex-col items-center gap-2 min-h-[80px]"
+                  data-col={dateKey}
+                >
+                  <SortableContext
+                    items={items.map((it) => it._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {items.map((it, itemIdx) => (
+                      <React.Fragment key={it._id}>
+                        <SortableItineraryCard
+                          item={it}
+                          dateKey={dateKey}
+                          onRemove={() =>
+                            dispatch(
+                              removeItem({ dateKey, entryId: it.entryId })
+                            )
+                          }
+                          onConfirmTimes={(s, e) =>
+                            dispatch(
+                              setTimes({
+                                dateKey,
+                                entryId: it.entryId,
+                                startTime: s,
+                                endTime: e,
+                              })
+                            )
+                          }
+                        />
+
+                        {/* 카드 사이 ETA (컬럼별 선택 교통수단 기준) */}
+                        {showEta && items[itemIdx + 1] && (
+                          <LegETA
+                            day={idx + 1}
+                            requestedTransport={t}
+                            fromId={it.wantId ?? it.placeId}
+                            toId={
+                              items[itemIdx + 1].wantId ??
+                              items[itemIdx + 1].placeId
+                            }
+                            cardWidth={CARD_WIDTH}
+                          />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </SortableContext>
+
+                  {/* 합계(해당 일자에 2개 이상 장소 있을 때만) */}
+                  {showEta &&
+                    items.filter((x) =>
+                      Number.isFinite(Number(x.wantId ?? x.placeId ?? x.id))
+                    ).length >= 2 && (
+                      <DayTotals
+                        day={idx + 1}
+                        requestedTransport={t}
+                        cardWidth={CARD_WIDTH}
+                      />
+                    )}
+                </div>
+              </ColumnDroppable>
+            </section>
+          );
+        })}
+
+        <DragOverlay>
+          {activeItem ? (
+            <div className="relative" style={{ width: CARD_WIDTH }}>
+              <SharedPlaceCard
+                place={activeItem}
+                showVote={false}
+                showAddress={false}
+                isDraggable={false}
+                enableTimePopover={false}
+                cardWidth={CARD_WIDTH}
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
+  );
+});
+
+/* ---------------- small components ---------------- */
+
+function ColumnDroppable({ dateKey, children }) {
+  const { setNodeRef, isOver } = useDroppable({ id: `col:${dateKey}` });
+  return (
+    <div
+      ref={setNodeRef}
+      className={isOver ? "outline outline-2 outline-indigo-300" : ""}
+      style={{ minHeight: 24 }}
+    >
+      {children}
     </div>
   );
 }
 
-function DayColumn({
-  dayNumber,
-  dateKey,
-  items,
-  transport,
-  showEta,
-  onAddPlace,
-  onReorder,
-  onMoveAcross,
-  onRemove,
-  onSetTimes,
-}) {
-  const listRef = useRef(null);
+function SortableItineraryCard({ item, dateKey, onRemove, onConfirmTimes }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item._id });
 
-  const parseDropData = (e) => {
-    let json = e.dataTransfer.getData("application/json");
-    if (!json) json = e.dataTransfer.getData("text/plain");
-    if (!json) return null;
-    try {
-      return JSON.parse(json);
-    } catch {
-      return null;
-    }
-  };
-
-  // 배경 드롭도 커서 높이 기준으로 정확한 위치 삽입
-  const onSectionDrop = (e) => {
-    e.preventDefault();
-    const data = parseDropData(e);
-    if (!data) return;
-
-    // 커서 y 로 insertIndex 계산 (각 카드 중간선 기준)
-    let insertIndex = items.length;
-    const nodes = listRef.current?.querySelectorAll('[data-entry="card"]');
-    if (nodes && nodes.length) {
-      const y = e.clientY;
-      insertIndex = 0;
-      for (let i = 0; i < nodes.length; i++) {
-        const rect = nodes[i].getBoundingClientRect();
-        const mid = rect.top + rect.height / 2;
-        if (y > mid) insertIndex = i + 1;
-      }
-    }
-
-    if (data.type === "PLACE" && data.place) {
-      onAddPlace(data.place, insertIndex);
-      return;
-    }
-
-    if (
-      data.type === "ENTRY" &&
-      data.entryId &&
-      data.fromDate != null &&
-      Number.isInteger(data.fromIdx)
-    ) {
-      if (data.fromDate === dateKey) {
-        // 같은 날짜 내 재정렬
-        let toIdx = insertIndex;
-        if (data.fromIdx < insertIndex) toIdx = insertIndex - 1; // 보정
-        if (data.fromIdx !== toIdx) onReorder(data.fromIdx, toIdx);
-      } else {
-        // 다른 날짜로 이동
-        onMoveAcross(data.fromDate, data.fromIdx, insertIndex);
-      }
-    }
-  };
-
-  const onDragOver = (e) => {
-    e.preventDefault();
-    try {
-      const d = parseDropData(e);
-      e.dataTransfer.dropEffect =
-        d?.type === "ENTRY" && d?.fromDate === dateKey ? "move" : "copy";
-    } catch {
-      e.dataTransfer.dropEffect = "copy";
-    }
-  };
-
-  return (
-    <section
-      className="w-[360px] flex-shrink-0 rounded-lg border border-slate-200 bg-white"
-      onDragOver={onDragOver}
-      onDrop={onSectionDrop}
-      aria-label={`Day ${dayNumber} ${dateKey}`}
-    >
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-3 py-2">
-        <div className="text-sm font-semibold">Day {dayNumber}</div>
-        <div className="text-xs text-slate-500">{dateKey}</div>
-      </header>
-
-      <div ref={listRef} className="p-2 flex flex-col gap-2">
-        {/* 맨 앞 드롭 슬롯 (index 0) */}
-        <DropSlot
-          ariaLabel="맨 앞에 추가"
-          onDropData={(data) => {
-            if (data.type === "PLACE" && data.place) onAddPlace(data.place, 0);
-            else if (data.type === "ENTRY" && Number.isInteger(data.fromIdx)) {
-              if (data.fromDate === dateKey) {
-                const toIdx = data.fromIdx < 0 ? 0 : data.fromIdx > 0 ? 0 : 0;
-                if (data.fromIdx !== toIdx) onReorder(data.fromIdx, 0);
-              } else {
-                onMoveAcross(data.fromDate, data.fromIdx, 0);
-              }
-            }
-          }}
-        />
-
-        {items.map((it, idx) => (
-          <React.Fragment key={`${it.entryId}:${it.eventOrder ?? idx}`}>
-            <div
-              data-entry="card"
-              draggable
-              onDragStart={(e) => {
-                const body = JSON.stringify({
-                  type: "ENTRY",
-                  entryId: it.entryId,
-                  fromDate: dateKey,
-                  fromIdx: idx,
-                });
-                e.dataTransfer.setData("application/json", body);
-                e.dataTransfer.setData("text/plain", body);
-                e.dataTransfer.effectAllowed = "move";
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const data = parseDropData(e);
-                if (!data) return;
-
-                // PLACE: 카드 위/아래 절반 기준 삽입
-                if (data.type === "PLACE" && data.place) {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const insertIndex =
-                    e.clientY < rect.top + rect.height / 2 ? idx : idx + 1;
-                  onAddPlace(data.place, insertIndex);
-                  e.stopPropagation();
-                  return;
-                }
-
-                // ENTRY 같은 날짜: 절반 기준 재정렬 (보정 포함)
-                if (
-                  data.type === "ENTRY" &&
-                  data.fromDate === dateKey &&
-                  Number.isInteger(data.fromIdx)
-                ) {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  let insertIndex =
-                    e.clientY < rect.top + rect.height / 2 ? idx : idx + 1;
-                  if (data.fromIdx < insertIndex) insertIndex -= 1; // 보정
-                  if (data.fromIdx !== insertIndex)
-                    onReorder(data.fromIdx, insertIndex);
-                  e.stopPropagation();
-                  return;
-                }
-
-                // ENTRY 다른 날짜: 절반 기준으로 교차 이동
-                if (
-                  data.type === "ENTRY" &&
-                  data.fromDate !== dateKey &&
-                  Number.isInteger(data.fromIdx)
-                ) {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const insertIndex =
-                    e.clientY < rect.top + rect.height / 2 ? idx : idx + 1;
-                  onMoveAcross(data.fromDate, data.fromIdx, insertIndex);
-                  e.stopPropagation();
-                  return;
-                }
-              }}
-              className="relative flex items-start gap-2 rounded-md border border-slate-200 bg-white p-2"
-            >
-              <ItineraryCard
-                item={it}
-                onRemove={() => onRemove(it.entryId)}
-                onSetTimes={(s, e) => onSetTimes(it.entryId, s, e)}
-              />
-            </div>
-
-            {/* 구간(leg) ETA 표시: 현재 카드(it) → 다음 카드(items[idx+1]) */}
-            {showEta && items[idx + 1] && (
-              <LegETA
-                day={dayNumber}
-                transport={transport}
-                fromId={it.wantId ?? it.placeId}
-                toId={items[idx + 1].wantId ?? items[idx + 1].placeId}
-              />
-            )}
-
-            {/* 카드 뒤 드롭 슬롯 (index: idx+1) */}
-            <DropSlot
-              ariaLabel={`위치 ${idx + 1} 뒤에 추가`}
-              onDropData={(data) => {
-                const index = idx + 1;
-                if (data.type === "PLACE" && data.place)
-                  onAddPlace(data.place, index);
-                else if (
-                  data.type === "ENTRY" &&
-                  Number.isInteger(data.fromIdx)
-                ) {
-                  if (data.fromDate === dateKey) {
-                    let toIdx = index;
-                    if (data.fromIdx < index) toIdx = index - 1; // 보정
-                    if (data.fromIdx !== toIdx) onReorder(data.fromIdx, toIdx);
-                  } else {
-                    onMoveAcross(data.fromDate, data.fromIdx, index);
-                  }
-                }
-              }}
-            />
-          </React.Fragment>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function DropSlot({ onDropData, ariaLabel = "여기에 놓기" }) {
-  const parseDropData = (e) => {
-    let json = e.dataTransfer.getData("application/json");
-    if (!json) json = e.dataTransfer.getData("text/plain");
-    if (!json) return null;
-    try {
-      return JSON.parse(json);
-    } catch {
-      return null;
-    }
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    cursor: isDragging ? "grabbing" : "grab",
+    opacity: isDragging ? 0.85 : 1,
+    width: CARD_WIDTH,
   };
 
   return (
     <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        const data = parseDropData(e);
-        if (!data) return;
-        onDropData?.(data);
-        e.stopPropagation();
-      }}
-      aria-label={ariaLabel}
-      className="h-2 my-1 rounded-sm transition-all"
-      style={{
-        outline: "1px dashed rgba(100,116,139,.5)",
-        outlineOffset: 4,
-      }}
-    />
-  );
-}
-
-/** 일정 카드: 제목/카테고리/시간 레이블, 삭제, 시간편집 팝오버 포함 */
-function ItineraryCard({ item, onRemove, onSetTimes }) {
-  const [open, setOpen] = useState(false);
-  const popRef = useRef(null);
-
-  const displayName =
-    item?.placeName || item?.name || item?.title || "이름 없음";
-  const timeLabel =
-    item?.startTime && item?.endTime
-      ? `${item.startTime} - ${item.endTime}`
-      : item?.startTime
-      ? `${item.startTime} - ?`
-      : item?.endTime
-      ? `? - ${item.endTime}`
-      : "시간 미정";
-
-  useEffect(() => {
-    const onDocClick = (e) => {
-      if (!open) return;
-      if (popRef.current && !popRef.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
-
-  return (
-    <div className="relative w-full">
-      <div className="min-w-0 flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap gap-x-2 items-baseline">
-            <span className="text-[15px] font-semibold break-words">
-              {displayName}
-            </span>
-            {item?.category && (
-              <span className="text-[12px] text-slate-600 break-words">
-                {item.category}
-              </span>
-            )}
-          </div>
-
-          <button
-            type="button"
-            className="mt-1 text-[12px] text-slate-700 underline underline-offset-2"
-            onClick={() => setOpen((v) => !v)}
-            title="시간 편집"
-          >
-            {timeLabel}
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="ml-auto h-6 w-6 rounded-full border border-slate-300 text-[12px] font-bold leading-none"
-          onClick={onRemove}
-          aria-label="삭제"
-          title="삭제"
-        >
-          ×
-        </button>
-      </div>
-
-      {open && (
-        <div ref={popRef} className="absolute right-0 top-8 z-10">
-          <TimeEditor
-            initialStart={item?.startTime ?? ""}
-            initialEnd={item?.endTime ?? ""}
-            onConfirm={({ startTime, endTime }) => {
-              onSetTimes?.(startTime, endTime);
-              setOpen(false);
-            }}
-            onCancel={() => setOpen(false)}
-          />
-        </div>
-      )}
+      ref={setNodeRef}
+      style={style}
+      className="relative"
+      data-entry="card"
+      data-date={dateKey}
+      {...attributes}
+      {...listeners}
+    >
+      <SharedPlaceCard
+        place={item}
+        showVote={false}
+        showAddress={false}
+        isDraggable={false}
+        enableTimePopover
+        startTime={item?.startTime ?? ""}
+        endTime={item?.endTime ?? ""}
+        onConfirmTimes={(s, e) => onConfirmTimes?.(s, e)}
+        onRemove={onRemove}
+        cardWidth={CARD_WIDTH}
+      />
     </div>
   );
 }
 
-function LegETA({ day, transport, fromId, toId }) {
-  const eta = useSelector((s) =>
-    selectLegEta(s, {
-      day,
-      transport, // "driving" | "transit" | "walking"
-      fromWantId: Number(fromId),
-      toWantId: Number(toId),
-    })
-  );
+/**
+ * 구간 ETA 렌더러:
+ * - 사용자가 선택한 transport 최우선
+ * - 서버가 transit 대신 walking으로 응답하는 경우 안전 Fallback
+ * - 마지막엔 driving도 시도
+ */
+function LegETA({
+  day,
+  requestedTransport,
+  fromId,
+  toId,
+  cardWidth = CARD_WIDTH,
+}) {
+  const fromWantId = Number(fromId);
+  const toWantId = Number(toId);
 
-  if (!eta) {
+  const data = useSelector((s) => {
+    const tryPick = (t) =>
+      selectLegEta(s, { day, transport: t, fromWantId, toWantId });
+    // 우선순위: 요청 모드 → (transit이면 walking) → driving
+    let hit = tryPick(requestedTransport);
+    if (!hit && requestedTransport === "transit") hit = tryPick("walking");
+    if (!hit) hit = tryPick("driving");
+    return hit
+      ? {
+          mode: requestedTransport,
+          durationMinutes: Number(hit.durationMinutes ?? 0),
+          distanceMeters: Number(hit.distanceMeters ?? 0),
+          updatedAt: hit.updatedAt ?? null,
+        }
+      : null;
+  }, shallowEqual);
+
+  if (!data) {
     return (
       <div
-        className="mx-2 my-1 rounded bg-slate-50 text-slate-500 text-xs px-2 py-1 border border-slate-200"
+        className="text-xs px-2 py-1 border rounded bg-slate-50 text-slate-500 border-slate-200"
+        style={{ width: cardWidth }}
         title="소요시간 계산 결과 대기 중"
       >
-        {transport} · 계산 대기
+        {labelOf(requestedTransport)} · 계산 대기
       </div>
     );
   }
 
-  const min = Math.round(eta.durationMinutes ?? 0); // 분 단위
+  const min = Math.round(data.durationMinutes);
   const km =
-    eta.distanceMeters != null ? (eta.distanceMeters / 1000).toFixed(1) : null;
+    data.distanceMeters != null
+      ? (data.distanceMeters / 1000).toFixed(1)
+      : null;
 
   return (
     <div
-      className="mx-2 my-1 rounded bg-indigo-50 text-indigo-700 text-xs px-2 py-1 border border-indigo-200"
-      title={`업데이트: ${eta.updatedAt ?? "-"}`}
+      className="text-xs px-2 py-1 border rounded bg-indigo-50 text-indigo-700 border-indigo-200"
+      style={{ width: cardWidth }}
+      title={`업데이트: ${data.updatedAt ?? "-"}`}
     >
-      {transport} · {min}분{km ? ` · ${km}km` : ""}
+      {labelOf(requestedTransport)} · {min}분{km ? ` · ${km}km` : ""}
     </div>
   );
 }
+
+/**
+ * 일차 합계:
+ * - totals 존재 시 그대로 사용
+ * - totals 없으면 해당 모드의 leg 합산으로 폴백
+ * - transit 요청인데 walking/driving 값이 오면 그것도 반영
+ */
+function DayTotals({ day, requestedTransport, cardWidth = CARD_WIDTH }) {
+  const data = useSelector((s) => {
+    const tryTotals = (t) => selectDayTotals(s, { day, transport: t });
+
+    // 1) 요청 모드 totals
+    let t = tryTotals(requestedTransport);
+    if (t) {
+      return {
+        mode: requestedTransport,
+        totalDurationMinutes: Number(t.totalDurationMinutes ?? 0),
+        totalDistanceMeters: Number(t.totalDistanceMeters ?? 0),
+        updatedAt: t.updatedAt ?? null,
+      };
+    }
+
+    // 2) transit 요청인데 walking totals가 있을 수 있음
+    if (requestedTransport === "transit") {
+      t = tryTotals("walking");
+      if (t) {
+        return {
+          mode: "walking",
+          totalDurationMinutes: Number(t.totalDurationMinutes ?? 0),
+          totalDistanceMeters: Number(t.totalDistanceMeters ?? 0),
+          updatedAt: t.updatedAt ?? null,
+        };
+      }
+    }
+
+    // 3) driving totals 폴백
+    t = tryTotals("driving");
+    if (t) {
+      return {
+        mode: "driving",
+        totalDurationMinutes: Number(t.totalDurationMinutes ?? 0),
+        totalDistanceMeters: Number(t.totalDistanceMeters ?? 0),
+        updatedAt: t.updatedAt ?? null,
+      };
+    }
+
+    // 4) totals가 전혀 없을 때 leg 합산 폴백
+    const modesToTry =
+      requestedTransport === "transit"
+        ? ["transit", "walking", "driving"]
+        : [requestedTransport, "driving"];
+    for (const m of modesToTry) {
+      let dur = 0,
+        dist = 0,
+        any = false;
+      const prefix = `day:${day}|${m}|`;
+      for (const [k, v] of Object.entries(s.eta?.byLeg || {})) {
+        if (k.startsWith(prefix)) {
+          dur += Number(v.durationMinutes || 0);
+          dist += Number(v.distanceMeters || 0);
+          any = true;
+        }
+      }
+      if (any) {
+        return {
+          mode: m,
+          totalDurationMinutes: dur,
+          totalDistanceMeters: dist,
+          updatedAt: null,
+        };
+      }
+    }
+    return null;
+  }, shallowEqual);
+
+  if (!data) return null;
+
+  const km =
+    data.totalDistanceMeters != null
+      ? (data.totalDistanceMeters / 1000).toFixed(1)
+      : null;
+  const min = Math.round(data.totalDurationMinutes ?? 0);
+
+  return (
+    <div
+      className="mt-1 text-xs px-2 py-1 border rounded bg-emerald-50 text-emerald-700 border-emerald-200"
+      style={{ width: cardWidth }}
+      title={`업데이트: ${data.updatedAt ?? "-"}`}
+    >
+      합계 · {labelOf(data.mode)} · {min}분{km ? ` · ${km}km` : ""}
+    </div>
+  );
+}
+
+// 교통수단 라디오 (운전/대중교통)
+function TransportRadio({ value, onChange, disabled, name = "transport" }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <label className="inline-flex items-center gap-1">
+        <input
+          type="radio"
+          name={name}
+          value="driving"
+          checked={value === "driving"}
+          onChange={() => onChange?.("driving")}
+          disabled={disabled}
+        />
+        <span>운전</span>
+      </label>
+      <label className="inline-flex items-center gap-1">
+        <input
+          type="radio"
+          name={name}
+          value="transit"
+          checked={value === "transit"}
+          onChange={() => onChange?.("transit")}
+          disabled={disabled}
+        />
+        <span>대중교통</span>
+      </label>
+    </div>
+  );
+}
+
+export default ItineraryBoard;
