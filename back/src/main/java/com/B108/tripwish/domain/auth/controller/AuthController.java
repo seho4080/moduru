@@ -60,10 +60,10 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
       })
   @PostMapping("/login")
-  public LoginResponseDto login(@RequestBody LoginRequestDto login, HttpServletResponse response) {
+  public LoginResponseDto login(@RequestBody LoginRequestDto login, HttpServletResponse response, HttpServletRequest request) {
     String email = login.getEmail();
     String password = login.getPassword();
-    JwtToken jwtToken = authService.login(email, password, response);
+    JwtToken jwtToken = authService.login(email, password, response, request);
     log.info(
         "jwtToken accessToken = {}, refreshToken = {}",
         jwtToken.getAccessToken(),
@@ -155,7 +155,7 @@ public class AuthController {
     if (refreshToken == null) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-    JwtToken token = authService.reissue(refreshToken, response);
+    JwtToken token = authService.reissue(refreshToken, response, request);
 
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
   }

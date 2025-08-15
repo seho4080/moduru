@@ -18,13 +18,11 @@ public class PlaceReaderServiceImpl implements PlaceReaderService {
 
   private final PlaceRepository placeRepository;
 
-
   @Override
   @Transactional
-  public Place getReference(Long placeId){
+  public Place getReference(Long placeId) {
     return placeRepository.getReferenceById(placeId);
   }
-
 
   @Override
   @Transactional(readOnly = true)

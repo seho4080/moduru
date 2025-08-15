@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.B108.tripwish.domain.review.dto.ReviewTagDto;
+import com.B108.tripwish.domain.review.entity.ReviewTag;
 import com.B108.tripwish.domain.review.service.ReviewTagService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,8 +30,7 @@ public class ReviewTagController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
   @GetMapping("/category/{categoryId}")
-  public ResponseEntity<List<ReviewTagDto>> getTagsByCategory(
-      @PathVariable("categoryId") Long categoryId) {
+  public ResponseEntity<List<ReviewTag>> getTagsByCategory(@PathVariable Long categoryId) {
     return ResponseEntity.ok(reviewTagService.getTagsByCategoryIncludingCommon(categoryId));
   }
 }
