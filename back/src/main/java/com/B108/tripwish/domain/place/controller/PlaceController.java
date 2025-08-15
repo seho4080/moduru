@@ -57,23 +57,6 @@ public class PlaceController {
   }
 
   @Operation(
-      summary = "AI 기반 장소 목록 조회",
-      description = "자연어 질의를 받아 roomId의 지역 범위 내에서 AI가 추천한 장소 목록을 반환합니다.",
-      responses = {
-        @ApiResponse(responseCode = "200"),
-        @ApiResponse(responseCode = "400", content = @Content),
-        @ApiResponse(responseCode = "404", content = @Content),
-        @ApiResponse(responseCode = "500", content = @Content)
-      })
-  @PostMapping("/ai-search")
-  public ResponseEntity<PlaceListResponseDto> postAiSearch(
-      @AuthenticationPrincipal CustomUserDetails user,
-      @PathVariable Long roomId,
-      @RequestBody AiPlaceRequestDto request) {
-    return ResponseEntity.ok(placeSearchService.searchPlacesByAI(user, roomId, request));
-  }
-
-  @Operation(
       summary = "장소 상세 정보 조회",
       description = "장소의 이미지, 장소명, 리뷰 태그, 주소, 및 장소에 해당하는 설명을 조회할 수 있습니다.",
       responses = {
