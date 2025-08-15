@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.place.controller;
 
+import com.B108.tripwish.domain.place.dto.request.AiPlaceRequestDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -68,7 +69,7 @@ public class PlaceController {
   public ResponseEntity<PlaceListResponseDto> postAiSearch(
       @AuthenticationPrincipal CustomUserDetails user,
       @PathVariable Long roomId,
-      @RequestBody PlaceSearchRequest request) {
+      @RequestBody AiPlaceRequestDto request) {
     return ResponseEntity.ok(placeSearchService.searchPlacesByAI(user, roomId, request));
   }
 

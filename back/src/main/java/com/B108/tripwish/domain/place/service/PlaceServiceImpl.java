@@ -107,47 +107,6 @@ public class PlaceServiceImpl implements PlaceService {
     return new PlaceListResponseDto(result);
   }
 
-  // 카테고리별 분류(my place까지 출력되게끔)
-  @Transactional(readOnly = true)
-  @Override
-  public PlaceBucketsResponseDto getPlacesBuckets(CustomUserDetails user, Long roomId) {
-    Region region = roomService.getRegionByRoomId(roomId);
-    List<Place> places = placeRepository.findAllByRegionIdWithImagesAndCategory(region.getId());
-
-    Long userId = user.getUser().getId();
-    List<Long> placeIds = places.stream().map(Place::getId).toList();
-
-    Set<Long> likedPlaceIds = myPlaceReaderService.getMyPlaceIds(userId, placeIds);
-    Set<Long> wantedPlaceIds =
-        wantPlaceReaderService.getWantPlaceIds(roomId, placeIds, PlaceType.PLACE);
-
-    List<PlaceResponseDto> allDtos =
-        places.stream()
-            .map(
-                p ->
-                    PlaceResponseDto.fromEntity(
-                        p, likedPlaceIds.contains(p.getId()), wantedPlaceIds.contains(p.getId())))
-            .toList();
-
-    // categoryId 기준으로 한 번에 그룹핑
-    var byCategory = allDtos.stream().collect(groupingBy(PlaceResponseDto::getCategoryId));
-
-    List<PlaceResponseDto> restaurants = byCategory.getOrDefault(1L, List.of());
-    List<PlaceResponseDto> spots = byCategory.getOrDefault(2L, List.of());
-    List<PlaceResponseDto> festivals = byCategory.getOrDefault(3L, List.of());
-
-    // null-safe 좋아요 필터
-    List<PlaceResponseDto> myPlaces =
-        allDtos.stream().filter(d -> Boolean.TRUE.equals(d.getIsLiked())).toList();
-
-    return PlaceBucketsResponseDto.builder()
-        .restaurants(restaurants)
-        .spots(spots)
-        .festivals(festivals)
-        .myPlaces(myPlaces)
-        .build();
-  }
-
   @Override
   public PlaceDetailResponseDto getPlaceDetail(CustomUserDetails user, Long roomId, Long placeId) {
     Place place =
