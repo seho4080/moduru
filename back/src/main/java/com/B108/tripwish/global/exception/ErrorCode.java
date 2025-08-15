@@ -61,7 +61,6 @@ public enum ErrorCode {
   // AI 관련
   AI_BAD_RESPONSE("AI 서버 응답 형식이 올바르지 않습니다.", HttpStatus.BAD_GATEWAY),
 
-
   // 파일 삭제 관련
   FILE_DELETE_FAIL("이미지 삭제 중 오류가 발생했습니다.", HttpStatus.BAD_REQUEST),
 

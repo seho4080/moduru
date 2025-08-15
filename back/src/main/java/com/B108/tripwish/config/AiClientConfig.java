@@ -24,14 +24,16 @@ public class AiClientConfig {
   @Value("${ai.api-key:}")
   private String apiKey;
 
-    @Bean
-    public WebClient aiWebClient() {
-        HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-                .responseTimeout(Duration.ofSeconds(120))
-                .doOnConnected(conn -> {
-                    conn.addHandlerLast(new ReadTimeoutHandler(120));
-                    conn.addHandlerLast(new WriteTimeoutHandler(30));
+  @Bean
+  public WebClient aiWebClient() {
+    HttpClient httpClient =
+        HttpClient.create()
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+            .responseTimeout(Duration.ofSeconds(120))
+            .doOnConnected(
+                conn -> {
+                  conn.addHandlerLast(new ReadTimeoutHandler(120));
+                  conn.addHandlerLast(new WriteTimeoutHandler(30));
                 });
 
     WebClient.Builder b =

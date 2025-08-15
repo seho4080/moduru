@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.auth.controller;
 
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
   private final AuthService authService;
   private final AuthMailService authMailService;
+  private final Environment env;
 
   @Operation(
       summary = "로그인",
@@ -60,17 +62,19 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
       })
   @PostMapping("/login")
-  public LoginResponseDto login(@RequestBody LoginRequestDto login, HttpServletResponse response, HttpServletRequest request) {
+  public LoginResponseDto login(
+      @RequestBody LoginRequestDto login,
+      HttpServletResponse response,
+      HttpServletRequest request // ★ 추가
+      ) {
     String email = login.getEmail();
     String password = login.getPassword();
-    JwtToken jwtToken = authService.login(email, password, response, request);
+    JwtToken jwtToken = authService.login(email, password, response, request); // ★ 수정
     log.info(
         "jwtToken accessToken = {}, refreshToken = {}",
         jwtToken.getAccessToken(),
         jwtToken.getRefreshToken());
-    return new LoginResponseDto(
-        jwtToken.getAccessToken(), jwtToken.getRefreshToken()); // 개발 중 응답 확인용
-    //    return ResponseEntity.ok(new CommonResponse("LOGIN_SUCCESS", "로그인이 완료되었습니다.");
+    return new LoginResponseDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken());
   }
 
   @Operation(
@@ -103,12 +107,10 @@ public class AuthController {
       throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
     }
 
-    // 서비스 호출
     authService.logout(accessToken);
 
-    // 쿠키 삭제 처리
     Cookie accessTokenCookie = new Cookie("access_token", null);
-    accessTokenCookie.setMaxAge(0); // 즉시 만료
+    accessTokenCookie.setMaxAge(0);
     accessTokenCookie.setPath("/");
     accessTokenCookie.setHttpOnly(true);
     accessTokenCookie.setSecure(false); // 배포 시 true
@@ -155,7 +157,7 @@ public class AuthController {
     if (refreshToken == null) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-    JwtToken token = authService.reissue(refreshToken, response, request);
+    JwtToken token = authService.reissue(refreshToken, response, request); // ★ 수정
 
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
   }
@@ -175,12 +177,28 @@ public class AuthController {
       })
   @PostMapping("/email/send")
   public ResponseEntity<CommonResponse> sendAuthCode(@RequestBody EmailRequestDto requestDto) {
-    Long key = (long) requestDto.getEmail().hashCode(); // NOTE: Redis 저장 키
-    authMailService.sendCodeEmail(requestDto.getEmail(), key); // NOTE: 인증번호 반환값은 무시
-    return ResponseEntity.ok(new CommonResponse("CODE_SENT", "인증번호가 발송되었습니다."));
+    long start = System.currentTimeMillis();
+    log.info(
+        "MAIL CHECK → user={}, pw.len={}, pw='{}'",
+        env.getProperty("spring.mail.username"),
+        env.getProperty("spring.mail.password", "").length(),
+        env.getProperty("spring.mail.password"));
+    log.info("[AUTH][EMAIL][SEND] >> request email={}", requestDto.getEmail());
+    try {
+      Long key = (long) requestDto.getEmail().hashCode();
+      authMailService.sendCodeEmail(requestDto.getEmail(), key);
+      log.info(
+          "[AUTH][EMAIL][SEND] << dispatched (async) key={} in {}ms",
+          key,
+          System.currentTimeMillis() - start);
+      return ResponseEntity.ok(new CommonResponse("CODE_SENT", "인증번호가 발송되었습니다."));
+    } catch (Exception e) {
+      log.error(
+          "[AUTH][EMAIL][SEND] !! error email={} msg={}", requestDto.getEmail(), e.getMessage(), e);
+      throw e;
+    }
   }
 
-  // 이메일 인증 확인
   @Operation(
       summary = "이메일 인증 코드 검증",
       description = "사용자가 입력한 인증 코드가 이메일에 발송된 코드와 일치하는지 확인합니다.",
@@ -197,11 +215,11 @@ public class AuthController {
   @PostMapping("/email/verify")
   public ResponseEntity<CommonResponse> verifyAuthCode(
       @RequestBody EmailVerifyRequestDto requestDto) {
+    log.info(
+        "[AUTH][EMAIL][VERIFY] >> email={} code={}", requestDto.getEmail(), requestDto.getCode());
     boolean result = authMailService.verifyCode(requestDto.getEmail(), requestDto.getCode());
-    if (result) {
-      return ResponseEntity.ok(new CommonResponse("EMAIL_VERIFIED", "이메일 인증이 완료되었습니다."));
-    } else {
-      throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
-    }
+    log.info("[AUTH][EMAIL][VERIFY] << result={}", result);
+    if (result) return ResponseEntity.ok(new CommonResponse("EMAIL_VERIFIED", "이메일 인증이 완료되었습니다."));
+    else throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
   }
 }

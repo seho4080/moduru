@@ -42,12 +42,12 @@ public class RedisSubscriberConfig {
     listenerContainer.addMessageListener(
         travelTimeResultSubscriber, new PatternTopic("travel:result"));
     listenerContainer.addMessageListener(
-            aiScheduleStatusSubscriber, new PatternTopic("ai-schedule:status"));
+        aiScheduleStatusSubscriber, new PatternTopic("ai-schedule:status"));
     listenerContainer.addMessageListener(
-            aiScheduleResultSubscriber, new PatternTopic("ai-schedule:result"));
+        aiScheduleResultSubscriber, new PatternTopic("ai-schedule:result"));
     listenerContainer.addMessageListener(
-            aiRouteResultSubscriber, new PatternTopic("ai-route:result"));
+        aiRouteResultSubscriber, new PatternTopic("ai-route:result"));
     listenerContainer.addMessageListener(
-            aiRouteStatusSubscriber, new PatternTopic("ai-route:status"));
+        aiRouteStatusSubscriber, new PatternTopic("ai-route:status"));
   }
 }
