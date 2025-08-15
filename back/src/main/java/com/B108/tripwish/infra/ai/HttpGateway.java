@@ -30,15 +30,16 @@ public class HttpGateway implements RouteAiGateway, ScheduleAiGateway, PlaceAiGa
     private final WebClient aiWebClient;
     private final ObjectMapper objectMapper;
 
-    @Override
-    public AiRouteResult recommendRoute(AiRouteSpec spec) {
-        return aiWebClient.post()
-                .uri("/recommend/route")
-                .bodyValue(spec)
-                .retrieve()
-                .bodyToMono(AiRouteResult.class)
-                .block(Duration.ofSeconds(120));
-    }
+  @Override
+  public AiRouteResult recommendRoute(AiRouteSpec spec) {
+    return aiWebClient
+        .post()
+        .uri("/recommend/route")
+        .bodyValue(spec)
+        .retrieve()
+        .bodyToMono(AiRouteResult.class)
+        .block(Duration.ofSeconds(120));
+  }
 
     @Override
     public List<AiScheduleResult> recommendSchedule(AiScheduleSpec spec) {
