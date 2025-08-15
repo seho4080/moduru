@@ -1,0 +1,85 @@
+/* ===== 테이블 컬럼 폭: 액션 컬럼 추가 ===== */
+.travel-table-head,
+.travel-row{
+  /* 기존: 2fr 1.2fr 1.6fr 1fr → 액션 1.6fr 추가 */
+  grid-template-columns: 2fr 1.2fr 1.6fr 0.8fr 1.6fr !important;
+}
+
+/* 헤더를 살짝 왼쪽으로(패딩 제거 + 미세 이동) */
+.travel-table-head.head-shift{
+  padding-left: 0 !important;
+  margin-left: -6px;  /* 필요하면 -4~-8px 사이로 조절 */
+}
+
+/* 행도 좌측 여백 살짝 줄여 정렬 맞춤 */
+.travel-row{
+  padding: 14px 8px 14px 2px !important;
+}
+
+/* 액션 헤더 정렬 */
+.head-actions{
+  text-align: right;
+  padding-right: 6px;
+}
+
+/* 액션 컬럼 */
+.col-actions{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 버튼 공통 */
+.row-btn{
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 30px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+  white-space: nowrap;
+}
+.row-btn:hover{
+  background: #f9fafb;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+/* 입장하기: 강조(초록) */
+.btn-enter{
+  border-color: #10b981;
+  color: #0f766e;
+  background: #ecfdf5;
+}
+.btn-enter:hover{
+  background: #d1fae5;
+}
+
+/* 일정 조회: 보조(회색) */
+.btn-schedule{
+  border-color: #d1d5db;
+  color: #374151;
+  background: #ffffff;
+}
+.btn-schedule:hover{
+  background: #f3f4f6;
+}
+
+/* 모바일/태블릿에서 액션 컬럼 폭 보정 */
+@media (max-width: 1024px){
+  .travel-table-head,
+  .travel-row{
+    grid-template-columns: 1.8fr 1fr 1.2fr 0.7fr 1.6fr !important;
+  }
+}
+@media (max-width: 768px){
+  .travel-table-head,
+  .travel-row{
+    grid-template-columns: 1.6fr 0.9fr 1.1fr 0.7fr 1.8fr !important;
+  }
+  .row-btn{ height: 28px; line-height: 28px; font-size: 12px; }
+}
