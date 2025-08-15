@@ -1,0 +1,110 @@
+.lp-card {
+  display: flex;
+  gap: 4px;                    /* 8 → 4 */
+  align-items: stretch;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  max-width: 760px;
+}
+
+/* 이미지 영역 */
+.lp-card__imageWrap {
+  width: 120px;
+  min-width: 120px;
+  height: 90px;
+  background: #f3f3f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.lp-card__image { width: 100%; height: 100%; object-fit: cover; }
+.lp-card__imagePlaceholder { width: 100%; height: 100%; background: #ddd; }
+
+/* 우측 내용 */
+.lp-card__content {
+  flex: 1;
+  padding: 6px 8px 6px 6px;    /* 8px 10px → 6px 8px 6px 6px */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  min-width: 0;
+}
+
+/* 상단 줄: 카테고리 + 메뉴 */
+.lp-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+/* 카테고리 pill */
+.lp-card__category {
+  font-size: 11.5px;
+  color: #666;
+  background: #f0f0f0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+/* 세로 점 버튼 */
+.lp-card__menuBtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  border-radius: 6px;
+  line-height: 1;
+  padding: 0;
+}
+.lp-card__menuBtn:hover { background: #f3f3f3; color: #333; }
+
+/* 팝업(삭제) */
+.lp-card__menuPopup {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+  padding: 6px;
+  z-index: 10;
+}
+.lp-card__deleteBtn {
+  display: block;
+  width: 84px;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lp-card__deleteBtn:hover { background: #d64533; }
+
+/* 제목: 말줄임 */
+.lp-card__title {
+  margin-top: 2px;
+  font-weight: 600;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 주소는 사용 안 함 */
+.lp-card__address { display: none !important; }

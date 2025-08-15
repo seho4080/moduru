@@ -11,7 +11,7 @@ import TripRoomPage from "../pages/tripRoomPage/TripRoomPage";
 import MyPageLayout from "../pages/myPage/MyPageLayout";
 // import MyTravelSpacePage from "../pages/myPage/MyTravelSpacePage";
 import MyTravelSpacePage from "../pages/myTravelSpacePage/MyTravelSpacePage";
-import MyLikePlace from "../pages/myLikePlace/MyLikePlace";
+import MyLikePlace from "../pages/myLikePlacePage/MyLikePlacePage";
 import InvitePage from '../pages/invitePage/InvitePage';
 import MyPageHome from "../pages/myPage/MyPageHome";  
 import MyReviewPage from "../pages/myPage/MyReviewPage";
