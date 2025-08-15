@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "../../../lib/axios";
 
 const LS_KEY_PREFIX = "TRAVEL_ROOMS_CACHE_v1_";
@@ -7,7 +7,7 @@ const LS_KEY_PREFIX = "TRAVEL_ROOMS_CACHE_v1_";
 export async function fetchTravelRoomsApi({
   endpoint = "/users/travel-rooms",
   filter = "none",
-  useToken = false, // 쿠키 세션이면 false
+  useToken = false,
 } = {}) {
   const res = await api.get(endpoint, {
     withCredentials: true,
@@ -27,35 +27,54 @@ export async function fetchTravelRoomsApi({
     status: it.status ?? null,
     canEnter: it.canEnter ?? true,
     canReview: it.canReview ?? false,
+    isOwner: it.isOwner ?? false,
+    canDelete: it.canDelete ?? false,
+    // (선택) isOwner: it.isOwner ?? false,  // 권한 표시 쓰려면
   }));
 }
 
-/* ===== 탈퇴 API: DELETE 고정 ===== */
+/* ===== 탈퇴 API ===== */
 export async function leaveTravelRoomApi(
   roomId,
   { leaveBase = "/rooms", useToken = false } = {}
 ) {
   if (roomId == null) throw new Error("roomId가 필요합니다.");
-  const numericId = Number(roomId);
-  if (!Number.isFinite(numericId)) {
-    throw new Error(`roomId가 숫자가 아닙니다: ${roomId}`);
-  }
-  const url = `${leaveBase}/${encodeURIComponent(numericId)}/leave`;
+  const id = Number(roomId);
+  if (!Number.isFinite(id)) throw new Error(`roomId가 숫자가 아닙니다: ${roomId}`);
+  const url = `${leaveBase}/${encodeURIComponent(id)}/leave`;
 
-  // axios.delete에서 body가 필요하면 config.data에 넣으면 됨.
   const res = await api.delete(url, {
     withCredentials: true,
-    useToken: false,
+    useToken, // ⬅️ 하드코딩 제거
     headers: { Accept: "*/*" },
   });
-  return res?.data ?? { ok: true };
+  return res?.data ?? { ok: true }; // 204 대비
+}
+
+/* ===== 삭제 API ===== */
+export async function deleteTravelRoomApi(
+  roomId,
+  { removeBase = "/rooms", useToken = false } = {}
+) {
+  if (roomId == null) throw new Error("roomId가 필요합니다.");
+  const id = Number(roomId);
+  if (!Number.isFinite(id)) throw new Error(`roomId가 숫자가 아닙니다: ${roomId}`);
+
+  const url = `${removeBase}/${encodeURIComponent(id)}`; // DELETE /rooms/{roomId}
+  const res = await api.delete(url, {
+    withCredentials: true,
+    useToken,
+    headers: { Accept: "*/*" },
+  });
+  return res?.data ?? { ok: true }; // 204 대비
 }
 
 /* ===== 화면용 훅 ===== */
 export default function useTravelRooms(options = {}) {
-  const ENDPOINT   = options.endpoint  ?? "/users/travel-rooms";
-  const LEAVE_BASE = options.leaveBase ?? "/rooms";
-  const USE_TOKEN  = options.useToken  ?? false;
+  const ENDPOINT    = options.endpoint   ?? "/users/travel-rooms";
+  const LEAVE_BASE  = options.leaveBase  ?? "/rooms";
+  const REMOVE_BASE = options.removeBase ?? "/rooms";
+  const USE_TOKEN   = options.useToken   ?? false;
 
   const [filter, setFilter] = useState(options.initialFilter ?? "none");
   const cacheKey = `${LS_KEY_PREFIX}${filter}`;
@@ -68,7 +87,6 @@ export default function useTravelRooms(options = {}) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const firstLoad = useRef(true);
 
   const fetchRooms = useCallback(async () => {
     setLoading(true); setError(null);
@@ -84,12 +102,12 @@ export default function useTravelRooms(options = {}) {
       setError(e);
     } finally {
       setLoading(false);
-      firstLoad.current = false;
     }
   }, [ENDPOINT, USE_TOKEN, filter, cacheKey]);
 
   useEffect(() => { fetchRooms(); }, [fetchRooms]);
 
+  // 필터 바뀔 때 캐시 선반영
   useEffect(() => {
     try {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || "[]");
@@ -97,29 +115,58 @@ export default function useTravelRooms(options = {}) {
     } catch {}
   }, [cacheKey]);
 
+  // 나가기(탈퇴)
   const leaveRoom = useCallback(
     async (roomId, { optimistic = true } = {}) => {
       if (roomId == null) throw new Error("roomId가 필요합니다.");
-      const prev = rooms;
-
+      let snapshot;
       if (optimistic) {
-        const next = rooms.filter((r) => String(r.id) !== String(roomId));
-        setRooms(next);
-        try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch {}
+        setRooms((curr) => {
+          snapshot = curr;
+          const next = curr.filter((r) => String(r.id) !== String(roomId));
+          try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch {}
+          return next;
+        });
       }
-
       try {
         await leaveTravelRoomApi(roomId, { leaveBase: LEAVE_BASE, useToken: USE_TOKEN });
       } catch (e) {
-        if (optimistic) {
-          setRooms(prev);
-          try { localStorage.setItem(cacheKey, JSON.stringify(prev)); } catch {}
+        if (optimistic && snapshot) {
+          setRooms(snapshot);
+          try { localStorage.setItem(cacheKey, JSON.stringify(snapshot)); } catch {}
         }
         throw e;
       }
     },
-    [LEAVE_BASE, USE_TOKEN, rooms, cacheKey]
+    [LEAVE_BASE, USE_TOKEN, cacheKey]
   );
 
-  return { rooms, loading, error, reload: fetchRooms, filter, setFilter, leaveRoom };
+  // 삭제(방 자체 삭제)
+  const removeRoom = useCallback(
+    async (roomId, { optimistic = true } = {}) => {
+      if (roomId == null) throw new Error("roomId가 필요합니다.");
+      let snapshot;
+      if (optimistic) {
+        setRooms((curr) => {
+          snapshot = curr;
+          const next = curr.filter((r) => String(r.id) !== String(roomId));
+          try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch {}
+          return next;
+        });
+      }
+      try {
+        await deleteTravelRoomApi(roomId, { removeBase: REMOVE_BASE, useToken: USE_TOKEN });
+      } catch (e) {
+        if (optimistic && snapshot) {
+          setRooms(snapshot);
+          try { localStorage.setItem(cacheKey, JSON.stringify(snapshot)); } catch {}
+        }
+        throw e;
+      }
+    },
+    [REMOVE_BASE, USE_TOKEN, cacheKey]
+  );
+
+  // ✅ 한 번만 반환
+  return { rooms, loading, error, reload: fetchRooms, filter, setFilter, leaveRoom, removeRoom };
 }
