@@ -10,11 +10,6 @@ import com.B108.tripwish.domain.review.entity.PlaceReviewTag;
 import com.B108.tripwish.domain.review.entity.PlaceReviewTagId;
 
 public interface PlaceReviewTagRepository extends JpaRepository<PlaceReviewTag, PlaceReviewTagId> {
-  // 리뷰 ID로 조인행 전부 조회
-  List<PlaceReviewTag> findById_ReviewId(Long reviewId);
-
-  // 리뷰 ID로 조인행 전부 삭제
-  void deleteById_ReviewId(Long reviewId);
 
   @Query(
       value =

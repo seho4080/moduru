@@ -18,5 +18,5 @@ public interface PlaceReaderService {
   // user 도메인 전용 DTO 반환
   MyPlaceInfoResponse getMyPlaceInfo(Long placeId);
 
-    Place getReference(Long placeId);
+  Place getReference(Long placeId);
 }

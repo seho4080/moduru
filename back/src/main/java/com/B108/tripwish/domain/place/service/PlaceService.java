@@ -4,8 +4,6 @@ import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.place.dto.response.PlaceBucketsResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceDetailResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
-import com.B108.tripwish.global.common.dto.RegionResponseDto;
-
 
 public interface PlaceService {
   PlaceListResponseDto getPlaces(CustomUserDetails user, Long roomId, String category);
@@ -14,5 +12,4 @@ public interface PlaceService {
 
   // 카테고리별 + MyPlaces를 한 번에 반환
   PlaceBucketsResponseDto getPlacesBuckets(CustomUserDetails user, Long roomId);
-
 }

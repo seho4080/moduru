@@ -34,8 +34,7 @@ public class AuthMailService {
 
     // 3. 이메일 발송
     String title = "[MODURU] 회원 가입 인증 이메일입니다.";
-    String content = "[MODURU] 모두루 회원가입을 환영합니다! <br><br> " +
-            "인증 번호는 " + authNumber + "입니다.";
+    String content = "[MODURU] 모두루 회원가입을 환영합니다! <br><br> " + "인증 번호는 " + authNumber + "입니다.";
     sendMailService.sendEmail(email, title, content);
 
     // 4. Redis 저장

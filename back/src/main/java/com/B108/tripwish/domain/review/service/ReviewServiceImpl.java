@@ -45,29 +45,30 @@ public class ReviewServiceImpl implements ReviewService {
   @Transactional
   @Override
   public void createReview(CustomUserDetails currentUser, CreateReviewRequestDto request) {
-
     Long userId = currentUser.getUser().getId();
     Long placeId = request.getPlaceId();
 
     // 엔티티 참조(프록시)만 가져와 FK 세팅 → 불필요한 SELECT 방지
     User userRef = userReaderService.getReference(userId);
     Place placeRef = placeReaderService.getReference(placeId);
-    Review review = reviewRepository.save(Review.builder().user(userRef).place(placeRef).build());
+    Review review = Review.builder().userId(userRef).place(placeRef).build();
 
-    // 2) 태그 연결 (조인 엔티티에 review/tag 모두 세팅 + @MapsId가 ID 채움) ✅
-    for (Long tagId : request.getTagIds()) {
-      ReviewTag tag = reviewTagReaderService.findTagById(tagId);
+    // 태그 저장 및 카운트 증가
+    request
+        .getTagIds()
+        .forEach(
+            tagId -> {
+              ReviewTag tag = reviewTagReaderService.findTagById(tagId);
+              PlaceReviewTag prt =
+                  PlaceReviewTag.builder()
+                      .id(new PlaceReviewTagId(review.getId(), tagId))
+                      .tag(tag)
+                      .build();
 
-      PlaceReviewTag link =
-          PlaceReviewTag.builder()
-              .id(new PlaceReviewTagId(review.getId(), tagId)) // 있어도 되고 없어도 됨(둘 다 세팅하면 @MapsId가 채움)
-              .review(review)
-              .tag(tag)
-              .build();
+              placeReviewTagRepository.save(prt);
+              placeTagCountService.increaseTagCount(placeId, tagId);
+            });
 
-      placeReviewTagRepository.save(link);
-      placeTagCountService.increaseTagCount(placeId, tagId);
-    }
     log.info("리뷰 작성 완료: reviewId={}, userId={}, placeId={}", review.getId(), userId, placeId);
   }
 
@@ -82,9 +83,7 @@ public class ReviewServiceImpl implements ReviewService {
             .findById(reviewId)
             .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
 
-    // 2) 소유자 검증 (403)
-    Long ownerId = review.getUser().getId();
-    if (!ownerId.equals(userId)) {
+    if (!review.getUserId().equals(userId)) {
       throw new RuntimeException("본인 리뷰만 삭제할 수 있습니다.");
     }
 
@@ -96,17 +95,9 @@ public class ReviewServiceImpl implements ReviewService {
 
     Long placeId = review.getPlace().getId();
 
-    // 3) 연결된 태그들 가져와서 카운트 감소
-    List<PlaceReviewTag> links = placeReviewTagRepository.findById_ReviewId(reviewId);
-    for (PlaceReviewTag link : links) {
-      placeTagCountService.decreaseTagCount(placeId, link.getTag().getId());
-    }
-
-    // 4) 조인 테이블 행들 먼저 삭제
-    placeReviewTagRepository.deleteById_ReviewId(reviewId);
-
-    // 5) 리뷰 삭제
-    reviewRepository.deleteById(reviewId);
+    tags.forEach(t -> placeTagCountService.decreaseTagCount(placeId, t.getTag().getId()));
+    tags.forEach(placeReviewTagRepository::delete);
+    reviewRepository.delete(review);
 
     log.info("리뷰 삭제 완료: reviewId={}, userId={}", reviewId, userId);
   }
@@ -117,7 +108,7 @@ public class ReviewServiceImpl implements ReviewService {
   public List<ReviewResponseDto> getMyReviews(CustomUserDetails currentUser) {
     Long userId = currentUser.getUser().getId();
 
-    return reviewRepository.findByUser_Id(userId).stream()
+    return reviewRepository.findByUserId(userId).stream()
         .map(
             r -> {
               Long placeId = r.getPlace().getId();

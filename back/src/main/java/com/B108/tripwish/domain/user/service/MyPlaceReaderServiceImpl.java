@@ -1,13 +1,13 @@
 package com.B108.tripwish.domain.user.service;
 
+import java.util.Collection;
+import java.util.Set;
+
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.user.repository.MyPlaceRepository;
 
 import lombok.RequiredArgsConstructor;
-
-import java.util.Collection;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor

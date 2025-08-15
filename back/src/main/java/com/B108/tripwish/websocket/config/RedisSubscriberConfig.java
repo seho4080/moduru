@@ -23,6 +23,10 @@ public class RedisSubscriberConfig {
   private final VotePlaceSubscriber votePlaceSubscriber;
   private final TravelTimeStatusSubscriber travelTimeStatusSubscriber;
   private final TravelTimeResultSubscriber travelTimeResultSubscriber;
+  private final AiScheduleResultSubscriber aiScheduleResultSubscriber;
+  private final AiScheduleStatusSubscriber aiScheduleStatusSubscriber;
+  private final AiRouteStatusSubscriber aiRouteStatusSubscriber;
+  private final AiRouteResultSubscriber aiRouteResultSubscriber;
 
   @PostConstruct
   public void init() {
@@ -37,5 +41,13 @@ public class RedisSubscriberConfig {
         travelTimeStatusSubscriber, new PatternTopic("travel:status"));
     listenerContainer.addMessageListener(
         travelTimeResultSubscriber, new PatternTopic("travel:result"));
+    listenerContainer.addMessageListener(
+            aiScheduleStatusSubscriber, new PatternTopic("ai-schedule:status"));
+    listenerContainer.addMessageListener(
+            aiScheduleResultSubscriber, new PatternTopic("ai-schedule:result"));
+    listenerContainer.addMessageListener(
+            aiRouteResultSubscriber, new PatternTopic("ai-route:result"));
+    listenerContainer.addMessageListener(
+            aiRouteStatusSubscriber, new PatternTopic("ai-route:status"));
   }
 }

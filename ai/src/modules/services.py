@@ -148,6 +148,16 @@ def recommend_route(data):
         if end == 0:
             formatted_route["route"].append(
                 {
+                    "transport": None,
+                    "id": place_ids[start],
+                    "eventOrder": i + 1,
+                    "nextTravelTime": None,
+                }
+            )
+        elif duration == 0:
+            formatted_route["route"].append(
+                {
+                    "transport": "walking",
                     "id": place_ids[start],
                     "eventOrder": i + 1,
                     "nextTravelTime": None,
@@ -156,6 +166,7 @@ def recommend_route(data):
         else:
             formatted_route["route"].append(
                 {
+                    "transport": "driving",
                     "id": place_ids[start],
                     "eventOrder": i + 1,
                     "nextTravelTime": duration,
