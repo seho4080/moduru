@@ -3,7 +3,6 @@ package com.B108.tripwish.domain.room.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.B108.tripwish.global.common.entity.Region;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +12,7 @@ import com.B108.tripwish.domain.room.entity.TravelRoom;
 import com.B108.tripwish.domain.room.repository.TravelMemberRepository;
 import com.B108.tripwish.domain.room.repository.TravelRoomRepository;
 import com.B108.tripwish.domain.user.entity.User;
+import com.B108.tripwish.global.common.entity.Region;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
 
@@ -48,7 +48,7 @@ public class RoomReaderServiceImpl implements RoomReaderService {
 
                       @Override
                       public String getRegion() {
-                          Region region = room.getRegion();
+                        Region region = room.getRegion();
                         return region != null ? region.getName() : "지역 없음";
                       }
 

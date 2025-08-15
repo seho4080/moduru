@@ -3,6 +3,7 @@ package com.B108.tripwish.domain.auth.service;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -39,7 +40,7 @@ public class AuthServiceImpl implements AuthService {
 
   @Override
   @Transactional
-  public JwtToken login(String email, String password, HttpServletResponse response) {
+  public JwtToken login(String email, String password, HttpServletResponse response, HttpServletRequest request) {
     System.out.println(">>> [DEBUG] login() email    : '" + email + "'");
     System.out.println(">>> [DEBUG] login() rawPass : '" + password + "'");
     // 1. email + password 를 기반으로 Authentication 객체 생성
@@ -74,21 +75,26 @@ public class AuthServiceImpl implements AuthService {
     JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, null);
 
     // 5. 쿠키로 access_token 설정
-    ResponseCookie accessTokenCookie =
-        ResponseCookie.from("access_token", jwtToken.getAccessToken())
+
+    boolean isHttps =
+            "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"))
+                    || request.isSecure();
+    String sameSite = isHttps ? "None" : "Lax";
+
+    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", jwtToken.getAccessToken())
             .httpOnly(true)
-            .secure(true) // 로컬 개발 중이면 false, 배포 시 true
-            .sameSite("None") // Cross-Origin 허용
+            .secure(isHttps)
+            .sameSite(sameSite)
             .path("/")
             .maxAge(Duration.ofHours(1))
             .build();
 
     // 6. 쿠키로 refresh_token 설정
-    ResponseCookie refreshTokenCookie =
-        ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
+
+    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", jwtToken.getRefreshToken())
             .httpOnly(true)
-            .secure(true) // 로컬 개발 중이면 false, 배포 시 true
-            .sameSite("None")
+            .secure(isHttps)
+            .sameSite(sameSite)
             .path("/")
             .maxAge(Duration.ofDays(7))
             .build();
@@ -127,7 +133,7 @@ public class AuthServiceImpl implements AuthService {
   }
 
   @Override
-  public JwtToken reissue(String refreshToken, HttpServletResponse response) {
+  public JwtToken reissue(String refreshToken, HttpServletResponse response, HttpServletRequest request) {
     if (!jwtTokenProvider.validateToken(refreshToken, TokenType.REFRESH)) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
@@ -153,20 +159,24 @@ public class AuthServiceImpl implements AuthService {
     }
 
     // 새 토큰을 쿠키로 응답에 담기
-    ResponseCookie accessTokenCookie =
-        ResponseCookie.from("access_token", newToken.getAccessToken())
+    boolean isHttps =
+            "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"))
+                    || request.isSecure();
+    String sameSite = isHttps ? "None" : "Lax";
+
+    ResponseCookie accessTokenCookie = ResponseCookie.from("access_token", newToken.getAccessToken())
             .httpOnly(true)
-            .secure(false) // HTTPS 환경이면 true
-            .sameSite("None")
+            .secure(isHttps)
+            .sameSite(sameSite)
             .path("/")
             .maxAge(Duration.ofHours(1))
             .build();
 
-    ResponseCookie refreshTokenCookie =
-        ResponseCookie.from("refresh_token", newToken.getRefreshToken())
+
+    ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh_token", newToken.getRefreshToken())
             .httpOnly(true)
-            .secure(false)
-            .sameSite("None")
+            .secure(isHttps)
+            .sameSite(sameSite)
             .path("/")
             .maxAge(Duration.ofDays(7))
             .build();

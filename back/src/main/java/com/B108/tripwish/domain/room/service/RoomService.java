@@ -31,8 +31,6 @@ public interface RoomService {
   // 동행자 강퇴
   void kickMember(CustomUserDetails user, Long roomId, Long targetUserId);
 
-
   // 지역 목록 조회(시·도 or 시·군)
   java.util.List<RegionResponseDto> getRegions(Long parentId);
-
 }

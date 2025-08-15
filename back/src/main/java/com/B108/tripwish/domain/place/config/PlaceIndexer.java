@@ -41,7 +41,8 @@ public class PlaceIndexer implements CommandLineRunner {
         .address(place.getRoadAddressName())
         .lat(place.getLat())
         .lng(place.getLng())
-        .categoryName(place.getCategoryId() != null ? place.getCategoryId().getCategoryName() : null)
+        .categoryName(
+            place.getCategoryId() != null ? place.getCategoryId().getCategoryName() : null)
         .build();
   }
 }

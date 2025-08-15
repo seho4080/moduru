@@ -111,6 +111,14 @@ def get_routes_time(data):
                             "duration": route["summary"]["duration"],
                         }
                     )
+                elif route["result_code"] == 1:
+                    result[-1]["destinations"].append(
+                        {
+                            "destination_id": route["key"],
+                            "distance": 0,
+                            "duration": 0,
+                        }
+                    )
         else:
             print("Kakao API 요청 실패:", response.status_code)
             return None

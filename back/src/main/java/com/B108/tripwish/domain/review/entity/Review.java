@@ -22,7 +22,7 @@ public class Review {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "user_id", nullable = false) // FK 컬럼명
-  private User user;
+  private User userId;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "place_id", nullable = false)
