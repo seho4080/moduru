@@ -1,5 +1,6 @@
 package com.B108.tripwish.domain.place.controller;
 
+import com.B108.tripwish.domain.place.dto.request.AiPlaceRequestDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/places/search")
+@RequestMapping("/places/search/{roomId}")
 public class PlaceSearchController {
 
   private final PlaceSearchService placeSearchService;
@@ -37,12 +38,29 @@ public class PlaceSearchController {
             content = @Content),
         @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = @Content)
       })
-  @PostMapping("/{roomId}")
+  @PostMapping("")
   public ResponseEntity<PlaceListResponseDto> getSearchPlaces(
       @AuthenticationPrincipal CustomUserDetails user,
       @PathVariable Long roomId,
       @RequestBody PlaceSearchRequest request) {
     PlaceListResponseDto response = placeSearchService.searchPlaces(user, roomId, request);
     return ResponseEntity.ok(response);
+  }
+
+  @Operation(
+          summary = "AI 기반 장소 목록 조회",
+          description = "자연어 질의를 받아 roomId의 지역 범위 내에서 AI가 추천한 장소 목록을 반환합니다.",
+          responses = {
+                  @ApiResponse(responseCode = "200"),
+                  @ApiResponse(responseCode = "400", content = @Content),
+                  @ApiResponse(responseCode = "404", content = @Content),
+                  @ApiResponse(responseCode = "500", content = @Content)
+          })
+  @PostMapping("/ai")
+  public ResponseEntity<PlaceListResponseDto> postAiSearch(
+          @AuthenticationPrincipal CustomUserDetails user,
+          @PathVariable Long roomId,
+          @RequestBody AiPlaceRequestDto request) {
+    return ResponseEntity.ok(placeSearchService.searchPlacesByAI(user, roomId, request));
   }
 }
