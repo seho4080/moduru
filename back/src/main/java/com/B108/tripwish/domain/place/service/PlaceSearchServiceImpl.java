@@ -3,6 +3,10 @@ package com.B108.tripwish.domain.place.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.B108.tripwish.domain.place.dto.ai.AiPlaceResult;
+import com.B108.tripwish.domain.place.dto.ai.AiPlaceSpec;
+import com.B108.tripwish.domain.place.dto.request.AiPlaceRequestDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -40,9 +44,8 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
   private final MyPlaceReaderService myPlaceReaderService;
   private final WantPlaceReaderService wantPlaceReaderService;
   private final RoomService roomService;
-
-  @Qualifier("aiWebClient")
-  private final WebClient aiWebClient; // NOTE: WebClient로 주입받기
+  private final PlaceAiGateWay ai;
+  private final ObjectMapper objectMapper;
 
   @Transactional(readOnly = true)
   @Override
@@ -112,57 +115,123 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
   @Override
   @Transactional(readOnly = true)
   public PlaceListResponseDto searchPlacesByAI(
-      CustomUserDetails user, Long roomId, PlaceSearchRequest request) {
+          CustomUserDetails user, Long roomId, AiPlaceRequestDto request) {
+
     Region region = roomService.getRegionByRoomId(roomId);
+    if (region == null || region.getId() == null) {
+      log.warn("[AI place] region missing: roomId={} region={}", roomId, region);
+      throw new CustomException(ErrorCode.REGION_NOT_FOUND);
+    }
+    Long regionId = region.getId();
+    log.info("[AI place] roomId={} regionId={} keyword='{}'",
+            roomId, regionId, request != null ? request.getKeyword() : null);
 
-    AiRecommendResponse aiRes =
-        aiWebClient
-            .post()
-            .uri("/recommend/places")
-            .bodyValue(
-                Map.of(
-                    "region_id", region.getId(),
-                    "query", request.getKeyword()))
-            .retrieve()
-            .onStatus(
-                HttpStatusCode::is4xxClientError,
-                r ->
-                    r.bodyToMono(String.class)
-                        .then(Mono.error(new CustomException(ErrorCode.BAD_REQUEST))))
-            .onStatus(
-                HttpStatusCode::is5xxServerError,
-                r ->
-                    r.bodyToMono(String.class)
-                        .then(Mono.error(new CustomException(ErrorCode.AI_SERVER_ERROR))))
-            .bodyToMono(AiRecommendResponse.class)
-            .block();
 
-    List<Long> ids = (aiRes == null || aiRes.result() == null) ? List.of() : aiRes.result();
-    if (ids.isEmpty()) return new PlaceListResponseDto(List.of());
+    // 1) AI 호출 사양
+    AiPlaceSpec spec = AiPlaceSpec.builder()
+            .regionId(regionId)
+            .query(request.getKeyword().trim())
+            .build();
 
-    Map<Long, Integer> order = new HashMap<>();
-    for (int i = 0; i < ids.size(); i++) order.put(ids.get(i), i);
+    try {
+      String reqJson = objectMapper.writeValueAsString(spec);
+      log.info("[AI req] {}", reqJson);
+    } catch (Exception e) {
+      log.warn("[AI req] JSON 직렬화 실패", e);
+    }
 
-    List<Place> places =
-        placeRepository.findAllById(ids).stream()
-            .filter(p -> Objects.equals(p.getRegionId().getId(), region.getId()))
-            .sorted(Comparator.comparingInt(p -> order.getOrDefault(p.getId(), Integer.MAX_VALUE)))
+    // 2) AI 호출 + 결과 정규화
+    AiPlaceResult result = ai.recommendPlace(spec);
+    if (result == null || result.getResult() == null || result.getResult().isEmpty()) {
+      log.warn("[AI place] result is null");
+      throw new CustomException(ErrorCode.AI_BAD_RESPONSE);
+    }
+
+    try {
+      log.info("[AI parsed] {}", objectMapper.writeValueAsString(result));
+    } catch (Exception ignore) {
+      log.info("[AI parsed] result.result={}", result.getResult());
+    }
+
+    // 문자열/리스트 모두 수용
+    List<Long> aiIds = normalizeIds(result.getResult());
+    if (aiIds.isEmpty()) {
+      throw new CustomException(ErrorCode.AI_BAD_RESPONSE);
+    }
+
+    // 3) DB 조회 (N+1 방지: 이미지 + 카테고리 fetch-join)
+    // 3-1. ID 수가 많을 수 있으면 청크 처리(선택)
+    List<Place> found = new ArrayList<>();
+    final int CHUNK = 800; // 드라이버/DB 환경에 맞게 조절
+    for (int i = 0; i < aiIds.size(); i += CHUNK) {
+      List<Long> sub = aiIds.subList(i, Math.min(i + CHUNK, aiIds.size()));
+      found.addAll(placeRepository.findAllWithImagesAndCategoryByIdIn(sub));
+    }
+
+    // 3-2. id -> Place 맵 구성
+    Map<Long, Place> byId = found.stream()
+            .collect(Collectors.toMap(Place::getId, p -> p, (a, b) -> a));
+
+    // 4) AI 순서 유지 + 중복 제거 + 존재하는 것만 필터
+    List<Long> orderedExistingIds = new LinkedHashSet<>(aiIds).stream()
+            .filter(byId::containsKey)
             .toList();
 
-    Long userId = user.getUser().getId();
-    List<Long> placeIds = places.stream().map(Place::getId).toList();
+    if (orderedExistingIds.isEmpty()) {
+      throw new CustomException(ErrorCode.PLACE_NOT_FOUND);
+    }
 
-    Set<Long> liked = myPlaceReaderService.getMyPlaceIds(userId, placeIds);
-    Set<Long> wanted = wantPlaceReaderService.getWantPlaceIds(roomId, placeIds, PlaceType.PLACE);
+    // 5) liked/wanted 배치 조회
+    Set<Long> likedPlaceIds  = myPlaceReaderService.getMyPlaceIds(user.getUser().getId(), orderedExistingIds);
+    Set<Long> wantedPlaceIds = wantPlaceReaderService.getWantPlaceIds(roomId, orderedExistingIds, PlaceType.PLACE);
 
-    var dtoList =
-        places.stream()
-            .map(
-                p ->
-                    PlaceResponseDto.fromEntity(
-                        p, liked.contains(p.getId()), wanted.contains(p.getId())))
-            .toList();
+    // 6) DTO 매핑 (fromEntity 사용 → 이미지/카테고리 접근 안전)
+    List<PlaceResponseDto> places = new ArrayList<>(orderedExistingIds.size());
+    for (Long id : orderedExistingIds) {
+      Place p = byId.get(id);
+      places.add(PlaceResponseDto.fromEntity(
+              p,
+              likedPlaceIds.contains(id),
+              wantedPlaceIds.contains(id)
+      ));
+    }
 
-    return new PlaceListResponseDto(dtoList);
+    return new PlaceListResponseDto(places);
   }
+
+  /** "result"가 List<Long>이든 "[1,2,3]" 문자열이든 Long 리스트로 정규화 */
+  private List<Long> normalizeIds(Object raw) {
+    if (raw instanceof List<?> list) {
+      return list.stream()
+              .map(o -> {
+                if (o == null) return null;
+                if (o instanceof Number n) return n.longValue();
+                try { return Long.parseLong(o.toString().trim()); } catch (Exception e) { return null; }
+              })
+              .filter(Objects::nonNull)
+              .collect(Collectors.toCollection(LinkedHashSet::new)) // 순서 유지 + 중복 제거
+              .stream().toList();
+    }
+
+    String s = String.valueOf(raw);
+    if (s == null || s.isBlank()) return List.of();
+    s = s.trim();
+    if (s.startsWith("[") && s.endsWith("]")) s = s.substring(1, s.length() - 1);
+    if (s.isBlank()) return List.of();
+
+    String[] tokens = s.split(",");
+    List<Long> out = new ArrayList<>(tokens.length);
+    Set<Long> seen = new HashSet<>();
+    for (String t : tokens) {
+      String token = t.trim();
+      if (token.isEmpty()) continue;
+      try {
+        Long id = Long.parseLong(token);
+        if (seen.add(id)) out.add(id);
+      } catch (NumberFormatException ignore) {}
+    }
+    return out;
+  }
+
+
 }

@@ -65,8 +65,10 @@ def k_means_clustering(data, days):
 def recommend_places(region_id, query):
     if not query:
         return {"error": "Query cannot be empty."}
-    if not region_id:
-        return {"error": "Region ID cannot be empty."}
+    try:
+        region_id = int(region_id)   # "0" -> 0, " 12 " -> 12
+    except (TypeError, ValueError):
+        return {"error": "Region ID must be an integer."}
     if region_id < 0 or region_id > 167:
         return {"error": "Invalid Region ID."}
 
@@ -148,16 +150,6 @@ def recommend_route(data):
         if end == 0:
             formatted_route["route"].append(
                 {
-                    "transport": None,
-                    "id": place_ids[start],
-                    "eventOrder": i + 1,
-                    "nextTravelTime": None,
-                }
-            )
-        elif duration == 0:
-            formatted_route["route"].append(
-                {
-                    "transport": "walking",
                     "id": place_ids[start],
                     "eventOrder": i + 1,
                     "nextTravelTime": None,
@@ -166,7 +158,6 @@ def recommend_route(data):
         else:
             formatted_route["route"].append(
                 {
-                    "transport": "driving",
                     "id": place_ids[start],
                     "eventOrder": i + 1,
                     "nextTravelTime": duration,
