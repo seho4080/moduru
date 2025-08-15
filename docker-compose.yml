@@ -84,7 +84,7 @@ services:
       - SPRING_MAIL_HOST=smtp.gmail.com
       - SPRING_MAIL_PORT=587
       - SPRING_MAIL_USERNAME=${EMAIL_ID}
-      - SPRING_MAIL_PASSWORD="${EMAIL_PASSWORD}"# 앱 비밀번호. 반드시 따옴표
+      - SPRING_MAIL_PASSWORD=${EMAIL_PASSWORD}
       - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
       - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
     depends_on:
@@ -201,7 +201,9 @@ services:
   ai-server:  
     build:
       context: ./ai
+
       dockerfile: Dockerfile
+    command: --host 0.0.0.0 --port 8000 --proxy-headers --log-level info
     container_name: ai-server
     ports:
       - "8000:8000"

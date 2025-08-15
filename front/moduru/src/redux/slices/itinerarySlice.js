@@ -2,7 +2,7 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
 
 const initialState = {
-  // days['YYYY-MM-DD'] = [{ entryId, wantId?, placeId, placeName, category, startTime?, endTime?, eventOrder? }, ...]
+  // days['YYYY-MM-DD'] = [{ entryId, wantId?, placeId, placeName, category, startTime?, endTime?, eventOrder(0-based) }, ...]
   days: {},
 };
 
@@ -11,6 +11,18 @@ const toNum = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
+
+/** 일자 배열 0-based로 재번호 부여 */
+const renumberDay = (arr = []) => {
+  arr.forEach((it, idx) => {
+    it.eventOrder = idx; // ✅ 0-based
+  });
+  return arr;
+};
+
+/** wantId 배열을 숫자배열로 정규화 */
+const normalizeWantOrder = (arr) =>
+  (Array.isArray(arr) ? arr : []).map((v) => toNum(v)).filter((v) => v != null);
 
 const itinerarySlice = createSlice({
   name: "itinerary",
@@ -27,23 +39,26 @@ const itinerarySlice = createSlice({
             ? index
             : arr.length;
         arr.splice(insertAt, 0, place);
+        renumberDay(arr); // ✅ 0-based 재부여
       },
       prepare({ date, place, index }) {
         const placeId =
           place.placeId ?? place.id ?? String(place.name ?? place.title ?? "");
         const placeName =
           place.placeName ?? place.name ?? place.title ?? "이름 없음";
-        const wantIdNum = toNum(place.wantId ?? place.id);
+        const wantIdNum = toNum(place.wantId ?? place.id ?? place.placeId);
         return {
           payload: {
             dateKey: date,
             index,
             place: {
-              entryId: nanoid(), // 항상 고유 키 생성
+              entryId: nanoid(),
               wantId: wantIdNum,
               placeId,
               placeName,
               category: place.category ?? place.type ?? "",
+              startTime: place.startTime ?? null,
+              endTime: place.endTime ?? null,
               ...place,
             },
           },
@@ -51,7 +66,7 @@ const itinerarySlice = createSlice({
       },
     },
 
-    // 같은 날짜 내 순서 변경 (보정 포함)
+    // 같은 날짜 내 순서 변경
     moveItemWithin(state, action) {
       const { dateKey, fromIdx, toIdx } = action.payload;
       const arr = state.days[dateKey];
@@ -64,11 +79,12 @@ const itinerarySlice = createSlice({
       if (target > arr.length - 1) target = arr.length - 1;
 
       const [moved] = arr.splice(fromIdx, 1);
-      const insertAt = fromIdx < target ? target - 1 : target; // 보정
+      const insertAt = fromIdx < target ? target : target; // 0-based라 보정 단순
       arr.splice(insertAt, 0, moved);
+      renumberDay(arr); // ✅
     },
 
-    // 다른 날짜로 이동: toIdx 위치로 삽입
+    // 다른 날짜로 이동
     moveItemAcross(state, action) {
       const { fromDate, toDate, fromIdx, toIdx } = action.payload;
       if (!fromDate || !toDate) return;
@@ -78,6 +94,8 @@ const itinerarySlice = createSlice({
       if (!fromArr || fromIdx < 0 || fromIdx >= fromArr.length) return;
 
       const [moved] = fromArr.splice(fromIdx, 1);
+      renumberDay(fromArr); // ✅ from 정리
+
       if (!state.days[toDate]) state.days[toDate] = [];
       const toArr = state.days[toDate];
 
@@ -85,8 +103,8 @@ const itinerarySlice = createSlice({
         typeof toIdx === "number" && toIdx >= 0 && toIdx <= toArr.length
           ? toIdx
           : toArr.length;
-
       toArr.splice(insertAt, 0, moved);
+      renumberDay(toArr); // ✅ to 정리
     },
 
     // 시간 설정 (wantId 우선 매칭)
@@ -107,6 +125,7 @@ const itinerarySlice = createSlice({
       if (!t) return;
       t.startTime = startTime ?? null;
       t.endTime = endTime ?? null;
+      // 순서는 유지 (renumber 불필요)
     },
 
     // 삭제
@@ -115,9 +134,10 @@ const itinerarySlice = createSlice({
       const list = state.days[dateKey];
       if (!list) return;
       state.days[dateKey] = list.filter((p) => p.entryId !== entryId);
+      renumberDay(state.days[dateKey]); // ✅
     },
 
-    // ✅ 서버 일정으로 해당 날짜 전체 교체 (커밋 성공/충돌 동기화)
+    // 서버 이벤트로 해당 날짜 전체 교체 (eventOrder 0-based)
     replaceDayFromServer(state, action) {
       const { dateKey, events } = action.payload || {};
       if (!dateKey || !Array.isArray(events)) return;
@@ -125,21 +145,44 @@ const itinerarySlice = createSlice({
       state.days[dateKey] = events
         .slice()
         .sort((a, b) => (toNum(a.eventOrder) ?? 0) - (toNum(b.eventOrder) ?? 0))
-        .map((ev) => {
-          const wantIdNum = toNum(ev.wantId);
+        .map((ev, idx) => {
+          const wantIdNum = toNum(ev.wantId ?? ev.id);
           return {
-            entryId: `${ev.wantId ?? "tmp"}:${
-              ev.eventOrder ?? idx
-            }:${nanoid()}`, // idx는 map 콜백의 index
+            entryId: `${ev.wantId ?? "ev"}:${ev.eventOrder ?? idx}:${nanoid()}`,
             wantId: wantIdNum,
-            placeId: ev.wantId ?? ev.placeId ?? String(ev.placeName ?? ""),
+            placeId:
+              ev.wantId ?? ev.placeId ?? ev.id ?? String(ev.placeName ?? ""),
             placeName: ev.placeName ?? "이름 없음",
             category: ev.category ?? "",
             startTime: ev.startTime ?? null,
             endTime: ev.endTime ?? null,
-            eventOrder: toNum(ev.eventOrder),
+            lat: ev.lat,
+            lng: ev.lng,
+            imgUrl: ev.placeImg ?? ev.imgUrl,
+            eventOrder: toNum(ev.eventOrder) ?? idx, // ✅ 0-based
           };
         });
+    },
+
+    // AI/수신 순서 적용 (wantId 배열)
+    setOrderForDate(state, action) {
+      const { dateKey, wantOrderIds } = action.payload || {};
+      const list = state.days[dateKey];
+      if (!dateKey || !Array.isArray(list)) return;
+
+      const order = normalizeWantOrder(wantOrderIds);
+      const rank = new Map();
+      order.forEach((id, i) => rank.set(id, i));
+
+      const decorated = list.map((item, i) => {
+        const wid = toNum(item.wantId);
+        const r = rank.has(wid) ? rank.get(wid) : Number.POSITIVE_INFINITY;
+        return { item, i, r };
+      });
+
+      decorated.sort((a, b) => a.r - b.r || a.i - b.i);
+      state.days[dateKey] = decorated.map((d) => d.item);
+      renumberDay(state.days[dateKey]); // ✅ 0-based
     },
   },
 });
@@ -151,6 +194,7 @@ export const {
   setTimes,
   removeItem,
   replaceDayFromServer,
+  setOrderForDate,
 } = itinerarySlice.actions;
 
 export default itinerarySlice.reducer;
