@@ -18,15 +18,16 @@ function fmt(dateStr) {
  * - rooms: 배열
  * - onEnter?: (room) => void
  * - onViewSchedule?: (room) => void
- * - onDelete?: (room) => Promise<void> | void   // 외부에서 API 호출(leaveRoom/Thunk) 수행
+ * - onDelete?: (room) => Promise<void> | void   // 나가기(탈퇴)
+ * - onRemove?: (room) => Promise<void> | void   // 🔥 삭제(방 자체 삭제)
  */
 export default function TravelRoomsTable({
   rooms = [],
   onEnter,
   onViewSchedule,
   onDelete,
+  onRemove, // 🔥 추가
 }) {
-  // 외부 상태 표시용(옵티미스틱 X): props 변화만 반영
   const [localRooms, setLocalRooms] = useState(rooms);
   useEffect(() => setLocalRooms(rooms), [rooms]);
 
@@ -67,9 +68,10 @@ export default function TravelRoomsTable({
   );
 
   const handleEnter = (room) => (onEnter ? onEnter(room) : undefined);
-  const handleView = (room) => (onViewSchedule ? onViewSchedule(room) : undefined);
+  const handleView = (room) =>
+    onViewSchedule ? onViewSchedule(room) : undefined;
 
-  // 삭제(탈퇴): 외부 onDelete에 위임
+  // 나가기(탈퇴)
   const handleLeave = async (room) => {
     setOpenMenuKey(null);
     if (!onDelete) return;
@@ -80,6 +82,20 @@ export default function TravelRoomsTable({
       const msg = e?.response?.data?.message || e?.message || "요청 실패";
       console.error("[TravelRoomsTable] leave error:", status, e?.response?.data || e);
       alert(`나가기에 실패했어요. (status: ${status ?? "?"}) ${msg}`);
+    }
+  };
+
+  // 🔥 삭제(방 자체 삭제)
+  const handleRemove = async (room) => {
+    setOpenMenuKey(null);
+    if (!onRemove) return;
+    try {
+      await onRemove(room);
+    } catch (e) {
+      const status = e?.response?.status;
+      const msg = e?.response?.data?.message || e?.message || "요청 실패";
+      console.error("[TravelRoomsTable] remove error:", status, e?.response?.data || e);
+      alert(`삭제에 실패했어요. (status: ${status ?? "?"}) ${msg}`);
     }
   };
 
@@ -124,6 +140,9 @@ export default function TravelRoomsTable({
                     type="button"
                     className="row-btn btn-schedule"
                     onClick={canView ? () => handleView(row.raw) : undefined}
+                    disabled={!canView}
+                    aria-disabled={!canView}
+                    title={canView ? "일정 조회" : "일정 조회 기능이 제공되지 않습니다"}
                   >
                     일정 조회
                   </button>
@@ -155,6 +174,18 @@ export default function TravelRoomsTable({
                       >
                         나가기
                       </button>
+
+                      {/* 🔥 onRemove 가 제공될 때만 삭제 버튼 노출 */}
+                      {onRemove && (
+                      <button
+                        role="menuitem"
+                        type="button"
+                        className="more-item more-item--delete"
+                        onClick={() => handleRemove(row.raw)}
+                      >
+                        삭제하기
+                      </button>
+                      )}
                     </div>
                   )}
                 </div>
