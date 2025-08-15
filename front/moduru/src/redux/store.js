@@ -1,6 +1,7 @@
 // src/redux/store.js
 import { configureStore } from "@reduxjs/toolkit";
 
+// reducers
 import likedPlaceReducer from "./slices/likedPlaceSlice";
 import wishPlaceReducer from "./slices/wishPlaceSlice";
 import tripMemberReducer from "./slices/tripMemberSlice";
@@ -13,13 +14,15 @@ import userReducer from "./slices/userSlice";
 import itineraryReducer from "./slices/itinerarySlice";
 import etaReducer from "./slices/etaSlice";
 import scheduleDraftReducer from "./slices/scheduleDraftSlice";
+import myTravelSpceReducer from "./slices/myTravelSpceSlice";
 import aiScheduleReducer from "./slices/aiScheduleSlice";
 import aiRouteReducer from "./slices/aiRouteSlice";
 
+// middlewares
 import { schedulePublishMiddleware } from "../features/travelSchedule/lib/schedulePublishMiddleware";
 import { itineraryLocalDraftMiddleware } from "@/features/tripPlan/lib/itineraryLocalDraftMiddleware";
 
-// trip 멤버 API (thunk extraArgument 주입용)
+// thunk extraArgument용 API
 import {
   getTripMembers,
   addFriend,
@@ -40,13 +43,14 @@ const store = configureStore({
     itinerary: itineraryReducer,
     eta: etaReducer,
     scheduleDraft: scheduleDraftReducer,
+    myTravelSpce: myTravelSpceReducer,
     aiSchedule: aiScheduleReducer,
     aiRoute: aiRouteReducer,
   },
   middleware: (getDefault) =>
     getDefault({
       thunk: {
-        // thunk의 3번째 인자로 주입됨
+        // thunk의 3번째 인자로 주입
         extraArgument: { getTripMembers, addFriend, removeFriend },
       },
     })
