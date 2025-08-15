@@ -2,15 +2,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  // 기존
+  // 경로 최적화 모달
   isRouteModalOpen: false,
+
+  // 일정표(일차 카드) 패널/모달 공용 플래그
   isItineraryModalOpen: false,
+
+  // TripCreateForm(여행 설정/날짜 변경)
   isTripFormOpen: false,
 
   // 초대 팝오버
   isInviteOpen: false,
 
-  // 리뷰 작성(여행 경험 공유하기) 모달
+  // 리뷰 작성 모달
   isReviewWriteOpen: false,
 };
 
@@ -18,32 +22,38 @@ const uiSlice = createSlice({
   name: "ui",
   initialState,
   reducers: {
-    // NOTE: 경로/일정/여행 폼
+    // 경로 모달
     openRouteModal: (s) => { s.isRouteModalOpen = true; },
     closeRouteModal: (s) => { s.isRouteModalOpen = false; },
 
+    // 일정 모달(기존)
     openItineraryModal: (s) => { s.isItineraryModalOpen = true; },
     closeItineraryModal: (s) => { s.isItineraryModalOpen = false; },
 
+    // 일정 패널 alias (같은 플래그 재사용)
+    openItineraryPanel: (s) => { s.isItineraryModalOpen = true; },
+    closeItineraryPanel: (s) => { s.isItineraryModalOpen = false; },
+
+    // TripCreateForm
     openTripForm: (s) => { s.isTripFormOpen = true; },
     closeTripForm: (s) => { s.isTripFormOpen = false; },
 
-    // NOTE: 초대 팝오버
+    // 초대 팝오버
     openInvite: (s) => { s.isInviteOpen = true; },
     closeInvite: (s) => { s.isInviteOpen = false; },
     toggleInvite: (s) => { s.isInviteOpen = !s.isInviteOpen; },
 
-    // NOTE: 리뷰 작성 모달
+    // 리뷰 작성 모달
     openReviewWrite: (s) => { s.isReviewWriteOpen = true; },
     closeReviewWrite: (s) => { s.isReviewWriteOpen = false; },
     toggleReviewWrite: (s) => { s.isReviewWriteOpen = !s.isReviewWriteOpen; },
-
   },
 });
 
 export const {
   openRouteModal, closeRouteModal,
   openItineraryModal, closeItineraryModal,
+  openItineraryPanel, closeItineraryPanel,
   openTripForm, closeTripForm,
   openInvite, closeInvite, toggleInvite,
   openReviewWrite, closeReviewWrite, toggleReviewWrite,
@@ -51,6 +61,9 @@ export const {
 
 export default uiSlice.reducer;
 
-// NOTE: 셀렉터
-export const selectIsReviewWriteOpen = (state) => state.ui.isReviewWriteOpen;
-
+// 셀렉터
+export const selectIsRouteOpen = (s) => s.ui.isRouteModalOpen;
+export const selectIsItineraryOpen = (s) => s.ui.isItineraryModalOpen;
+export const selectIsTripFormOpen = (s) => s.ui.isTripFormOpen;
+export const selectIsInviteOpen = (s) => s.ui.isInviteOpen;
+export const selectIsReviewWriteOpen = (s) => s.ui.isReviewWriteOpen;

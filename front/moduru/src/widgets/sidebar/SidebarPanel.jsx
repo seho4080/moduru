@@ -1,176 +1,205 @@
-// src/widgets/sidebar/SidebarPanel.jsx
+import React, { useRef, useState } from "react";
+import { BiChevronLeft } from "react-icons/bi";
+import { useDispatch, useSelector } from "react-redux";
 
-import React, { useRef, useEffect, useState } from "react";
 import PlaceSearchPanel from "../../features/placeSearch/ui/PlaceSearchPanel";
 import SharedPlacePanel from "../../features/sharedPlace/ui/SharedPlacePanel";
 import SchedulePanel from "../../features/travelSchedule/ui/SchedulePanel";
+import ItineraryInlinePanel from "../../features/tripPlan/ui/ItineraryInlinePanel";
 
-export default function SidebarPanel({
-  activeTab,
-  isOpen,
-  onClosePanel,
-  onOpenPanel,
-  setHoveredCoords,
-  roomId,
+import {
+  closeItineraryPanel,
+  selectIsItineraryOpen,
+} from "../../redux/slices/uiSlice";
+
+/** 리사이즈 가능한 개별 패널 */
+function ResizablePanel({
+  children,
+  defaultWidth = 320,
+  minWidth = 240,
+  maxWidth = 640,
 }) {
   const panelRef = useRef(null);
-  const [width, setWidth] = useState(450);
+  const [width, setWidth] = useState(defaultWidth);
   const isResizing = useRef(false);
 
-  const handleMouseDownResize = () => {
+  const handleMouseDown = () => {
     isResizing.current = true;
-    document.addEventListener("mousemove", handleMouseMoveResize);
-    document.addEventListener("mouseup", handleMouseUpResize);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleMouseMoveResize = (e) => {
+  const handleMouseMove = (e) => {
     if (!isResizing.current) return;
-    const newWidth = e.clientX - panelRef.current.getBoundingClientRect().left;
-    setWidth(Math.max(280, Math.min(720, newWidth)));
+    const left = panelRef.current.getBoundingClientRect().left;
+    const newWidth = e.clientX - left;
+    setWidth(Math.max(minWidth, Math.min(maxWidth, newWidth)));
   };
 
-  const handleMouseUpResize = () => {
+  const handleMouseUp = () => {
     isResizing.current = false;
-    document.removeEventListener("mousemove", handleMouseMoveResize);
-    document.removeEventListener("mouseup", handleMouseUpResize);
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
   };
-
-  useEffect(() => {
-    document.body.style.cursor = isResizing.current ? "col-resize" : "default";
-    return () => {
-      document.body.style.cursor = "default";
-    };
-  }, [isResizing.current]);
-
-  const isPanelVisible =
-    isOpen && ["place", "schedule", "shared"].includes(activeTab);
-
-  if (!isPanelVisible) {
-    return (
-      <div
-        style={{
-          width: "40px",
-          height: "100vh",
-          backgroundColor: "#f5f5f5",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          boxShadow: "4px 0 10px rgba(0,0,0,0.08)",
-        }}
-        onClick={onOpenPanel}
-      >
-        <button
-          style={{
-            background: "#fff",
-            border: "none",
-            borderRadius: "50%",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-            width: "32px",
-            height: "32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "background 0.2s",
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.background = "#e6f0ff")}
-          onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M7 5l6 5-6 5"
-              stroke="#007aff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div
       ref={panelRef}
       style={{
         width: `${width}px`,
-        height: "100vh",
+        height: "100%",
         backgroundColor: "white",
-        boxShadow: "4px 0 10px rgba(0, 0, 0, 0.1)",
+        boxShadow: "4px 0 8px rgba(0,0,0,0.08)",
         display: "flex",
+        flexDirection: "column",
         position: "relative",
         overflow: "hidden",
-        userSelect: isResizing.current ? "none" : "auto",
       }}
     >
+      <div style={{ flex: 1, overflow: "auto" }}>{children}</div>
+      {/* 리사이저 */}
       <div
+        onMouseDown={handleMouseDown}
         style={{
-          flex: 1,
-          padding: "20px",
-          overflowY: "auto",
-          overflowX: "hidden",
+          width: "6px",
+          cursor: "col-resize",
+          backgroundColor: "#ddd",
+          position: "absolute",
+          right: 0,
+          top: 0,
+          bottom: 0,
         }}
-      >
-        {activeTab === "place" && (
+      />
+    </div>
+  );
+}
+
+export default function SidebarPanel({
+  activeTab,
+  isOpen,
+  onClosePanel,
+  setActiveTab, // 버튼 active 유지 제어
+  setHoveredCoords,
+  roomId,
+}) {
+  const dispatch = useDispatch();
+  const isItineraryOpen = useSelector(selectIsItineraryOpen);
+
+  const isPanelVisible =
+    isOpen && ["place", "schedule", "shared"].includes(activeTab);
+
+  if (!isPanelVisible) return null;
+
+  const handleClosePanel = () => {
+    onClosePanel();
+    setActiveTab?.(null); // 패널 닫힐 때 active 해제
+  };
+
+  // 공유장소 탭
+  if (activeTab === "shared") {
+    return (
+      <div style={{ display: "flex", height: "100vh", position: "relative" }}>
+        {/* 왼쪽: 공유장소 패널 — 항상 고정폭 280px */}
+        <div
+          style={{
+            width: "280px",
+            height: "100%",
+            backgroundColor: "white",
+            boxShadow: "4px 0 8px rgba(0,0,0,0.08)",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <SharedPlacePanel roomId={roomId} />
+        </div>
+
+        {/* 오른쪽: 일정 패널 — 열려 있을 때만 표시 + 리사이즈 가능 */}
+        {isItineraryOpen && (
+          <ResizablePanel defaultWidth={380} minWidth={300} maxWidth={720}>
+            <ItineraryInlinePanel
+              onClose={() => dispatch(closeItineraryPanel())}
+            />
+          </ResizablePanel>
+        )}
+
+        {/* 닫기 버튼 */}
+        <CloseButton
+          onClick={() => {
+            if (isItineraryOpen) {
+              dispatch(closeItineraryPanel());
+            } else {
+              handleClosePanel();
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
+  // 장소검색 탭
+  if (activeTab === "place") {
+    return (
+      <div style={{ display: "flex", height: "100vh", position: "relative" }}>
+        <ResizablePanel defaultWidth={420} minWidth={320} maxWidth={800}>
           <PlaceSearchPanel
             roomId={roomId}
             setHoveredCoords={setHoveredCoords}
           />
-        )}
+        </ResizablePanel>
 
-        {activeTab === "shared" && <SharedPlacePanel roomId={roomId} />}
-
-        {activeTab === "schedule" && <SchedulePanel />}
+        <CloseButton onClick={handleClosePanel} />
       </div>
+    );
+  }
 
-      <div
-        style={{
-          width: "40px",
-          backgroundColor: "#eee",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-        }}
-        onClick={onClosePanel}
-      >
-        <button
-          style={{
-            background: "#fff",
-            border: "none",
-            borderRadius: "50%",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-            width: "32px",
-            height: "32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "background 0.2s",
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.background = "#e6f0ff")}
-          onMouseOut={(e) => (e.currentTarget.style.background = "#fff")}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M13 5l-6 5 6 5"
-              stroke="#007aff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+  // 일정편집 탭
+  if (activeTab === "schedule") {
+    return (
+      <div style={{ display: "flex", height: "100vh", position: "relative" }}>
+        <ResizablePanel defaultWidth={480} minWidth={360} maxWidth={820}>
+          <SchedulePanel />
+        </ResizablePanel>
+
+        <CloseButton onClick={handleClosePanel} />
       </div>
+    );
+  }
 
-      <div
-        onMouseDown={handleMouseDownResize}
-        style={{
-          width: "6px",
-          cursor: "col-resize",
-          backgroundColor: "#ccc",
-        }}
-      />
-    </div>
+  return null;
+}
+
+/** 패널 오른쪽 끝 닫기 버튼 */
+function CloseButton({ onClick }) {
+  const [hovered, setHovered] = React.useState(false);
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "absolute",
+        top: "50%",
+        right: "0",
+        transform: "translate(100%, -50%)",
+        width: "28px",
+        height: "28px",
+        borderRadius: "4px",
+        backgroundColor: hovered ? "#eee" : "transparent",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: hovered ? "pointer" : "default",
+        opacity: hovered ? 1 : 0.4,
+        boxShadow: hovered ? "0 1px 4px rgba(0,0,0,0.2)" : "none",
+        border: "none",
+        zIndex: 1000,
+        transition: "all 0.2s ease",
+      }}
+      aria-label="패널 닫기"
+      title="패널 닫기"
+    >
+      <BiChevronLeft size={20} />
+    </button>
   );
 }

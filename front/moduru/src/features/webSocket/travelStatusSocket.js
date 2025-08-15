@@ -1,4 +1,3 @@
-// src/features/webSocket/travelStatusSocket.js
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
@@ -110,25 +109,24 @@ export function subscribeTravelStatus(roomId, onMessage, opts = {}) {
     console.log("⏳ [travel-status] 연결 대기 → 연결 후 4개 토픽 구독");
   }
 
+  // 실제 리스너 해제 + 필요 시 구독 해제
   return () => {
-    /** 
-    listeners.delete(key);
-    if (listeners.size === 0) {
-      try {
+    try {
+      listeners.delete(key);
+      if (listeners.size === 0) {
         for (const s of subs.values()) s?.unsubscribe();
-      } catch {}
-      subs.clear();
-      // ❗️ 문제의 원인이었던 다음 줄을 삭제 또는 주석 처리합니다.
-      // currentRoomId = null; 
-      console.log("🛑 [travel-status] 모든 구독 해제");
-    } else {
-      console.log(
-        "↺ [travel-status] listener만 제거 (남은:",
-        listeners.size,
-        ")"
-      );
-    }*/
-   console.log("↺ [travel-status] listener만 제거 (남은:", listeners.size, ")");
+        subs.clear();
+        console.log("🛑 [travel-status] 모든 구독 해제");
+      } else {
+        console.log(
+          "↺ [travel-status] listener만 제거 (남은:",
+          listeners.size,
+          ")"
+        );
+      }
+    } catch (e) {
+      console.warn("⚠️ [travel-status] off() 중 오류:", e);
+    }
   };
 }
 

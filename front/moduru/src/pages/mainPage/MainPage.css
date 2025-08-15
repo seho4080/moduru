@@ -1,0 +1,97 @@
+/* NOTE: 배경 */
+.main-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #6d87db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+}
+
+/* NOTE: 가운데 카드 */
+.main-card {
+  /* 조절 파라미터 */
+  --edge-gap: 8px;        /* 좌우 끝 여백 (작게) */
+  --join-overlap: 160px;  /* 중앙 겹침(단일 이미지에선 미사용) */
+  --inward-shift: 40px;   /* 중앙으로 더 당김 정도(미사용) */
+
+  width: 75%;
+  height: 80vh;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  padding: 32px 28px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 상단 바 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 20px;
+  color: #1b1b1b;
+  margin-bottom: 40px;
+}
+.logo-text { font-size: 22px; font-weight: 700; color: #6d87db; }
+.profile-circle { width: 40px; height: 40px; border-radius: 50%; background: #ddd; }
+
+/* 버튼 영역 */
+.card-inner {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+.main-btn { padding: 14px 24px; font-size: 16px; border-radius: 8px; border: none; cursor: pointer; transition: background .2s ease; }
+.primary-btn { background: #6d87db; color: #fff; }
+.primary-btn:hover { background: #5c75c4; }
+.secondary-btn { background: #f3f3f3; color: #333; }
+.secondary-btn:hover { background: #e5e5e5; }
+
+/* NOTE: 하단 라인 아트 - 단일 이미지 버전 */
+.art-row {
+  position: absolute;
+  left: 32px;
+  right: 32px;
+  bottom: 0;
+  height: 70%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 공통 */
+.art {
+  height: 100%;
+  background-color: #6d87db;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* 한 장으로 카드 가로폭에 맞게 채우기 */
+.art-single {
+  width: 100%;
+  -webkit-mask-size: contain;   /* 가로를 카드 폭에 맞추고 비율 유지 */
+  mask-size: contain;
+  -webkit-mask-position: center bottom;
+  mask-position: center bottom;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .main-card {
+    --edge-gap: 12px;
+    --join-overlap: 90px;
+    --inward-shift: 22px;
+  }
+  .art-row { height: clamp(26%, 34vh, 48%); }
+}
