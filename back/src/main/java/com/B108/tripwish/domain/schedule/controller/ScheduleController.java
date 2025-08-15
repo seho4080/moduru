@@ -91,27 +91,24 @@ public class ScheduleController {
   @PostMapping("/schedules/commit")
   public ResponseEntity<?> commit(
       @PathVariable Long roomId, @RequestBody ScheduleCommitRequestDto request) {
-      try {
-          // 정상 커밋 시: 200 OK (원하면 최신 확정 일정 반환)
-          scheduleService.commitSchedule(roomId, request);
-          List<ScheduleListResponseDto> saved = scheduleService.getSchedules(roomId);
-          return ResponseEntity.ok(saved);
+    try {
+      // 정상 커밋 시: 200 OK (원하면 최신 확정 일정 반환)
+      scheduleService.commitSchedule(roomId, request);
+      List<ScheduleListResponseDto> saved = scheduleService.getSchedules(roomId);
+      return ResponseEntity.ok(saved);
 
-      } catch (CustomException e) {
-          // 409: 버전 충돌 → 서버 최신 데이터와 버전 함께 내려줌
-          if (e.getErrorCode() == ErrorCode.SCHEDULE_VERSION_CONFLICT) {
-              ScheduleConflictResponseDto payload = scheduleService.handleVersionConflict(roomId);
-              return ResponseEntity.status(HttpStatus.CONFLICT).body(payload);
-          }
-          // 그 외 에러 매핑
-          return ResponseEntity.status(e.getErrorCode().getStatus())
-                  .body(
-                          Map.of(
-                                  "error", e.getErrorCode().name(),
-                                  "message", e.getMessage()));
+    } catch (CustomException e) {
+      // 409: 버전 충돌 → 서버 최신 데이터와 버전 함께 내려줌
+      if (e.getErrorCode() == ErrorCode.SCHEDULE_VERSION_CONFLICT) {
+        ScheduleConflictResponseDto payload = scheduleService.handleVersionConflict(roomId);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(payload);
       }
-
+      // 그 외 에러 매핑
+      return ResponseEntity.status(e.getErrorCode().getStatus())
+          .body(
+              Map.of(
+                  "error", e.getErrorCode().name(),
+                  "message", e.getMessage()));
+    }
   }
-
-
 }

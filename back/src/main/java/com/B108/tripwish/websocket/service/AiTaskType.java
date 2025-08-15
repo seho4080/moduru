@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public enum AiTaskType {
-    SCHEDULE("schedule"),
-    ROUTE("route");
+  SCHEDULE("schedule"),
+  ROUTE("route");
 
-    private final String code;
+  private final String code;
 }
