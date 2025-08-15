@@ -1,13 +1,13 @@
 package com.B108.tripwish.domain.room.service;
 
+import java.util.Collection;
+import java.util.Set;
+
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.room.dto.response.PlaceWantListResponseDto;
 import com.B108.tripwish.domain.room.entity.CustomPlace;
 import com.B108.tripwish.domain.room.entity.WantPlace;
 import com.B108.tripwish.global.common.enums.PlaceType;
-
-import java.util.Collection;
-import java.util.Set;
 
 public interface WantPlaceReaderService {
 

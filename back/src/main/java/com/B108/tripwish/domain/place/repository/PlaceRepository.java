@@ -22,7 +22,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
   @Query("SELECT DISTINCT p FROM Place p LEFT JOIN FETCH p.images")
   List<Place> findAllWithImages();
 
-  @Query("""
+  @Query(
+      """
     SELECT p FROM Place p
     LEFT JOIN FETCH p.images
     LEFT JOIN FETCH p.categoryId
@@ -30,7 +31,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
   """)
   Optional<Place> findWithImagesAndCategoryById(@Param("id") Long id);
 
-  @Query("""
+  @Query(
+      """
     SELECT DISTINCT p FROM Place p
     LEFT JOIN FETCH p.images
     LEFT JOIN FETCH p.categoryId
@@ -38,14 +40,15 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
   """)
   List<Place> findAllByRegionIdWithImagesAndCategory(@Param("regionId") Long regionId);
 
-  @Query("""
+  @Query(
+      """
     SELECT DISTINCT p FROM Place p
     LEFT JOIN FETCH p.images
     LEFT JOIN FETCH p.categoryId
     WHERE p.regionId.id = :regionId AND p.categoryId = :category
   """)
-  List<Place> findAllByRegionIdAndCategoryWithImagesAndCategory(@Param("regionId") Long regionId,
-                                                                @Param("category") Category category);
+  List<Place> findAllByRegionIdAndCategoryWithImagesAndCategory(
+      @Param("regionId") Long regionId, @Param("category") Category category);
 
   @Query("SELECT DISTINCT p FROM Place p LEFT JOIN FETCH p.images WHERE p.id IN :ids")
   List<Place> findAllWithImagesByIdIn(@Param("ids") Set<Long> ids);

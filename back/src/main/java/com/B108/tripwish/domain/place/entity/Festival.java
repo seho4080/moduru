@@ -19,7 +19,6 @@ public class Festival {
   @JoinColumn(name = "place_id", nullable = false, unique = true)
   private Place placeId;
 
-
   @Column(columnDefinition = "TEXT")
   private String description;
 

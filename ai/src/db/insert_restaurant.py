@@ -16,13 +16,13 @@ conn = psycopg2.connect(
 cur = conn.cursor()
 
 REGION_MAPPING = {
-    "서울특별시": 0,
-    "부산광역시": 1,
-    "대구광역시": 2,
-    "인천광역시": 3,
-    "광주광역시": 4,
-    "대전광역시": 5,
-    "울산광역시": 6,
+    "서울": 0,
+    "부산": 1,
+    "대구": 2,
+    "인천": 3,
+    "광주": 4,
+    "대전": 5,
+    "울산": 6,
     "세종특별자치시": 7,
     "제주특별자치도": 16,
     "수원시": 17,
@@ -212,7 +212,7 @@ for item in data:
     place_url = kakao.get("place_url")
     lng = float(kakao.get("x")) if kakao.get("x") else None
     lat = float(kakao.get("y")) if kakao.get("y") else None
-    address_name = item.get("address") or ""
+    address_name = kakao.get("address_name") or ""
     road_address_name = kakao.get("road_address_name") or ""
 
     region_id = extract_region_id(address_name)
