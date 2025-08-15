@@ -1,7 +1,5 @@
 package com.B108.tripwish.domain.place.service;
 
-import static java.util.stream.Collectors.groupingBy;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

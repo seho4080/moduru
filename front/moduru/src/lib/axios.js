@@ -16,7 +16,7 @@ import axios from "axios";
  *  - 둘 다 : api.post('/both', data, { withCredentials: true, useToken: true })
  */
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:8080',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true, // ✅ 전역 쿠키 전송 (쿠키 인증 기본값)
 });

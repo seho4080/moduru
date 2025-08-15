@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { updateTripRoomRegion } from "../lib/tripRoomApi";
 import { fetchTopRegions, fetchChildRegions } from "../lib/regionApi";
-import "./regionSelectDropdown.css";
+import "./regionOnlyModal.css";
 
 function formatDate(date) {
   return date.toISOString().slice(0, 10);

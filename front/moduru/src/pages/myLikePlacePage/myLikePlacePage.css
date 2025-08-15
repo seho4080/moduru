@@ -184,3 +184,73 @@
   .like-content { flex-direction: column; max-width: 100%; }
   .side-menu-box, .map-card { width: 100%; height: auto; position: static; }
 }
+
+/* MyLikedPlaceList.css */
+.mlp-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* 리스트 + 페이지네이션 영역을 세로 배치 */
+.side-menu-box__section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 리스트 */
+.mlp-list { 
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* 빈 상태 */
+.mlp-empty {
+  padding: 16px 8px;
+  font-size: 14px;
+  color: #9aa0a6;
+  text-align: center;
+}
+
+/* 하단 중앙 페이지네이션 */
+.side-pagination {
+  margin-top: auto;             /* 항상 하단 고정 느낌 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 2px;
+}
+
+.pg-btn {
+  min-width: 28px;
+  height: 28px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+.pg-btn:hover { background: #f7f7f7; }
+.pg-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pg-btn.is-active {
+  background: #ff6f3c;          /* 포인트 컬러 */
+  color: #fff;
+  border-color: #ff6f3c;
+}
+
+.pg-ellipsis {
+  color: #9aa0a6;
+  user-select: none;
+}
+

@@ -14,7 +14,7 @@ const APP = (roomId) => `/app/room/${roomId}/travel/calc`;
 function ensureClient() {
   if (statusStomp) return statusStomp;
 
-  const socket = new SockJS("/api/ws-stomp", null, {
+  const socket = new SockJS("http://localhost:8080/ws-stomp", null, {
     withCredentials: true,
   });
 
