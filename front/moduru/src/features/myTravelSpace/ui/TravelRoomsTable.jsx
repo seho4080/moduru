@@ -1,5 +1,7 @@
 // src/features/myTravelSpace/ui/TravelRoomsTable.jsx
 import React, { useMemo, useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { openReviewWrite, setReviewWriteTarget } from "../../../redux/slices/uiSlice";
 import durumiImg from "../../../assets/durumi.png";
 import "./myTravelSpace.css";
 
@@ -13,21 +15,42 @@ function fmt(dateStr) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// YYYY-MM-DD 또는 ISO 앞부분만 파싱(로컬 00:00)
+const parseYMD = (s) => {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+};
+// 종료일 < 오늘(00:00) → 종료
+const isEnded = (endDate) => {
+  if (!endDate) return false;
+  const end = parseYMD(endDate) ?? new Date(endDate);
+  if (Number.isNaN(end?.getTime?.())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return end < today;
+};
+
 /**
  * props:
  * - rooms: 배열
  * - onEnter?: (room) => void
  * - onViewSchedule?: (room) => void
  * - onDelete?: (room) => Promise<void> | void   // 나가기(탈퇴)
- * - onRemove?: (room) => Promise<void> | void   // 🔥 삭제(방 자체 삭제)
+ * - onRemove?: (room) => Promise<void> | void   // 삭제(방 자체 삭제)
+ * - onWriteReview?: (room) => void              // 있으면 우선 사용
  */
 export default function TravelRoomsTable({
   rooms = [],
   onEnter,
   onViewSchedule,
   onDelete,
-  onRemove, // 🔥 추가
+  onRemove,
+  onWriteReview,
 }) {
+  const dispatch = useDispatch();
+
   const [localRooms, setLocalRooms] = useState(rooms);
   useEffect(() => setLocalRooms(rooms), [rooms]);
 
@@ -68,8 +91,27 @@ export default function TravelRoomsTable({
   );
 
   const handleEnter = (room) => (onEnter ? onEnter(room) : undefined);
-  const handleView = (room) =>
-    onViewSchedule ? onViewSchedule(room) : undefined;
+  const handleView = (room) => (onViewSchedule ? onViewSchedule(room) : undefined);
+
+  // ✅ 리뷰 모달 오픈 (prop 있으면 그걸 쓰고, 없으면 전역 디스패치)
+  const handleReview = (room) => {
+    if (onWriteReview) return onWriteReview(room);
+    const id = room?.travelRoomId ?? room?.id ?? room?.roomId;
+    if (!id) return;
+    const period =
+      room?.startDate && room?.endDate
+        ? `${fmt(room.startDate)} ~ ${fmt(room.endDate)}`
+        : null;
+
+    dispatch(setReviewWriteTarget({
+      roomId: id,
+      title: room?.title ?? "",
+      startDate: room?.startDate ?? null,
+      endDate: room?.endDate ?? null,
+      period,
+    }));
+    dispatch(openReviewWrite());
+  };
 
   // 나가기(탈퇴)
   const handleLeave = async (room) => {
@@ -85,7 +127,7 @@ export default function TravelRoomsTable({
     }
   };
 
-  // 🔥 삭제(방 자체 삭제)
+  // 삭제(방 자체 삭제)
   const handleRemove = async (room) => {
     setOpenMenuKey(null);
     if (!onRemove) return;
@@ -120,78 +162,93 @@ export default function TravelRoomsTable({
 
       <ul className="travel-table-body">
         {hasData ? (
-          rows.map((row) => (
-            <li className="travel-row" key={row.key}>
-              <div className="col col-title">{row.title}</div>
-              <div className="col col-region">{row.region}</div>
-              <div className="col col-period">{row.period}</div>
-              <div className="col col-status">{row.memberCount}</div>
+          rows.map((row) => {
+            const ended = isEnded(row.raw?.endDate);
+            return (
+              <li className="travel-row" key={row.key}>
+                <div className="col col-title">{row.title}</div>
+                <div className="col col-region">{row.region}</div>
+                <div className="col col-period">{row.period}</div>
+                <div className="col col-status">{row.memberCount}</div>
 
-              <div className="col col-actions" onClick={(e) => e.stopPropagation()}>
-                <div className="action-group">
-                  <button
-                    type="button"
-                    className="row-btn btn-enter"
-                    onClick={() => handleEnter(row.raw)}
-                  >
-                    입장하기
-                  </button>
-                  <button
-                    type="button"
-                    className="row-btn btn-schedule"
-                    onClick={canView ? () => handleView(row.raw) : undefined}
-                    disabled={!canView}
-                    aria-disabled={!canView}
-                    title={canView ? "일정 조회" : "일정 조회 기능이 제공되지 않습니다"}
-                  >
-                    일정 조회
-                  </button>
-                </div>
-
-                <div className="more-wrap">
-                  <button
-                    type="button"
-                    className="row-more"
-                    aria-haspopup="menu"
-                    aria-expanded={openMenuKey === row.key}
-                    onClick={(e) => toggleMenu(e, row.key)}
-                    title="더보기"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle cx="5" cy="12" r="2" />
-                      <circle cx="12" cy="12" r="2" />
-                      <circle cx="19" cy="12" r="2" />
-                    </svg>
-                  </button>
-
-                  {openMenuKey === row.key && (
-                    <div role="menu" className="more-menu more-menu--dark">
+                <div className="col col-actions" onClick={(e) => e.stopPropagation()}>
+                  <div className="action-group">
+                    {ended ? (
                       <button
-                        role="menuitem"
                         type="button"
-                        className="more-item more-item--leave"
-                        onClick={() => handleLeave(row.raw)}
+                        className="row-btn btn-enter"
+                        onClick={() => handleReview(row.raw)}
+                        title="리뷰쓰기"
                       >
-                        나가기
+                        리뷰쓰기
                       </button>
-
-                      {/* 🔥 onRemove 가 제공될 때만 삭제 버튼 노출 */}
-                      {onRemove && (
+                    ) : (
                       <button
-                        role="menuitem"
                         type="button"
-                        className="more-item more-item--delete"
-                        onClick={() => handleRemove(row.raw)}
+                        className="row-btn btn-enter"
+                        onClick={() => handleEnter(row.raw)}
+                        title="입장하기"
                       >
-                        삭제하기
+                        입장하기
                       </button>
-                      )}
-                    </div>
-                  )}
+                    )}
+
+                    <button
+                      type="button"
+                      className="row-btn btn-schedule"
+                      onClick={canView ? () => handleView(row.raw) : undefined}
+                      disabled={!canView}
+                      aria-disabled={!canView}
+                      title={canView ? "일정 조회" : "일정 조회 기능이 제공되지 않습니다"}
+                    >
+                      일정 조회
+                    </button>
+                  </div>
+
+                  <div className="more-wrap">
+                    <button
+                      type="button"
+                      className="row-more"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuKey === row.key}
+                      onClick={(e) => toggleMenu(e, row.key)}
+                      title="더보기"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="5" cy="12" r="2" />
+                        <circle cx="12" cy="12" r="2" />
+                        <circle cx="19" cy="12" r="2" />
+                      </svg>
+                    </button>
+
+                    {openMenuKey === row.key && (
+                      <div role="menu" className="more-menu more-menu--dark">
+                        <button
+                          role="menuitem"
+                          type="button"
+                          className="more-item more-item--leave"
+                          onClick={() => handleLeave(row.raw)}
+                        >
+                          나가기
+                        </button>
+
+                        {onRemove && (
+                          <button
+                            role="menuitem"
+                            type="button"
+                            className="more-item more-item--delete"
+                            onClick={() => handleRemove(row.raw)}
+                          >
+                            삭제하기
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </li>
-          ))
+              </li>
+            );
+          })
         ) : (
           <li className="travel-empty">
             <img
