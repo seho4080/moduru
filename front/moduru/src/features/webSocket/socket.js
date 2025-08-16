@@ -10,7 +10,7 @@ let stompClient = null;
  * @param {Array<{ handler: string, action: "add" | "remove", callback: function }>} subscriptions
  */
 export const connectWebSocket = (roomId, subscriptions = []) => {
-  const socket = new SockJS("/api/ws-stomp", null, {
+  const socket = new SockJS("http://localhost:8080/ws-stomp", null, {
     withCredentials: true,
   });
 
