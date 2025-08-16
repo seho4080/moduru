@@ -2,13 +2,12 @@ package com.B108.tripwish.domain.user.controller;
 
 import java.util.List;
 
-import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.domain.user.dto.response.MyPlaceInfoResponse;
+import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.user.service.MyPlaceService;
 import com.B108.tripwish.global.common.dto.CommonResponse;
 

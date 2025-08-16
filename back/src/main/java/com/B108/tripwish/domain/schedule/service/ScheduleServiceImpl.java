@@ -4,7 +4,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.B108.tripwish.domain.schedule.dto.response.SchedulePlaceResponseDto;
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.room.entity.WantPlace;
@@ -13,6 +12,7 @@ import com.B108.tripwish.domain.schedule.dto.request.ScheduleCommitRequestDto;
 import com.B108.tripwish.domain.schedule.dto.response.ScheduleConflictResponseDto;
 import com.B108.tripwish.domain.schedule.dto.response.ScheduleEventResponseDto;
 import com.B108.tripwish.domain.schedule.dto.response.ScheduleListResponseDto;
+import com.B108.tripwish.domain.schedule.dto.response.SchedulePlaceResponseDto;
 import com.B108.tripwish.domain.schedule.entity.Schedule;
 import com.B108.tripwish.domain.schedule.entity.ScheduleEvent;
 import com.B108.tripwish.domain.schedule.repository.ScheduleEventRepository;
@@ -257,16 +257,15 @@ public class ScheduleServiceImpl implements ScheduleService {
         .build();
   }
 
-    @Override
-    public List<SchedulePlaceResponseDto> getPlaceListBySchedule(Long roomId) {
-        return scheduleRepository.findPlaceNameAddrByRoomId(roomId)
-                .stream()
-                .map(row -> SchedulePlaceResponseDto.builder()
-                        .placeName((String) row[0])
-                        .address((String) row[1])
-                        .build())
-                .toList();
-    }
-
-
+  @Override
+  public List<SchedulePlaceResponseDto> getPlaceListBySchedule(Long roomId) {
+    return scheduleRepository.findPlaceNameAddrByRoomId(roomId).stream()
+        .map(
+            row ->
+                SchedulePlaceResponseDto.builder()
+                    .placeName((String) row[0])
+                    .address((String) row[1])
+                    .build())
+        .toList();
+  }
 }
