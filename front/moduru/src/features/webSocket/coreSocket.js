@@ -14,7 +14,7 @@ const handlers = new Map(); // Map<string, { dest, cb }>
 // ✅ 연결 전/재연결 중 발행을 보관할 큐
 const pendingPublishes = []; // [{ destination, payload }]
 
-const WS_URL = "/api/ws-stomp";
+const WS_URL = "http://localhost:8080/ws-stomp";
 
 // action이 없으면 생략된 경로를 반환
 const topic = (roomId, handler, action) =>
@@ -27,6 +27,15 @@ const appDest = (roomId, handler, action) =>
     ? `/app/room/${roomId}/${handler}/${action}`
     : `/app/room/${roomId}/${handler}`;
 
+// ✅ JSON 파싱 안전화(문자열이면 그대로 전달)
+function safeParse(body) {
+  try {
+    return JSON.parse(body);
+  } catch {
+    return body;
+  }
+}
+
 function subscribeOne(key) {
   if (!stompClient?.connected) return;
   if (subs.has(key)) return;
@@ -35,29 +44,39 @@ function subscribeOne(key) {
   if (!reg) return;
 
   const sub = stompClient.subscribe(reg.dest, (message) => {
+    const body = safeParse(message.body);
+    // 통일된 수신 로그
+    console.log("📥 [WS recv]", reg.dest, body);
     try {
-      const body = JSON.parse(message.body);
-      console.log(`📥 [WS 수신] ${reg.dest}`, body);
       reg.cb(body);
     } catch (err) {
-      console.error("❌ 메시지 파싱 오류:", err);
+      console.error("❌ [WS handler error]", err);
     }
   });
 
   subs.set(key, sub);
 }
 
+// ✅ 재연결 시 강제 재구독(예전 subs 무효화)
 function resubscribeAll() {
   if (!stompClient?.connected) return;
+  // 예전 구독 모두 해제/삭제
+  for (const [key, s] of subs.entries()) {
+    try {
+      s?.unsubscribe();
+    } catch {}
+    subs.delete(key);
+  }
+  // handlers 기준으로 재구독
   for (const key of handlers.keys()) {
     subscribeOne(key);
   }
 }
 
 function unsubscribeAll() {
-  for (const sub of subs.values()) {
+  for (const s of subs.values()) {
     try {
-      sub?.unsubscribe();
+      s?.unsubscribe();
     } catch {}
   }
   subs.clear();
@@ -70,7 +89,7 @@ function flushPendingPublishes() {
       destination,
       body: JSON.stringify(payload ?? {}),
     });
-    console.log("📤 [WS 발행:큐플러시]", destination, payload);
+    console.log("📤 [WS send:flush]", destination, payload);
   }
 }
 
@@ -83,13 +102,17 @@ function ensureClient() {
     reconnectDelay: 5000,
     debug: () => {},
     onConnect: () => {
-      console.log("✅ STOMP 연결 성공");
-      resubscribeAll();
-      flushPendingPublishes(); // ✅ 연결되면 대기 큐 플러시
+      console.log("✅ WS connected");
+      resubscribeAll(); // ✅ 강제 재구독
+      flushPendingPublishes();
     },
-    onStompError: (frame) => console.error("❌ STOMP 오류:", frame),
-    onWebSocketError: (err) => console.error("❌ WebSocket 오류:", err),
-    onDisconnect: (frame) => console.warn("⚠️ STOMP 연결 종료:", frame),
+    onStompError: (frame) => console.error("❌ STOMP error:", frame),
+    onWebSocketError: (err) => console.error("❌ WS error:", err),
+    onDisconnect: () => {
+      console.warn("⚠️ WS disconnected");
+      // ✅ 끊길 때 예전 구독 레지스트리만 정리(handlers는 유지 → 재연결 시 재구독)
+      subs.clear();
+    },
   });
 
   stompClient.activate();
@@ -124,6 +147,7 @@ export function connectWebSocket(roomId, subscriptions = []) {
     const mapKey = key ?? `${roomId}|${dest}`; // dest 자체로 유니크 보장
 
     handlers.set(mapKey, { dest, cb: callback });
+    // 연결되어 있으면 즉시 구독, 아니면 onConnect에서 재구독됨
     if (!subs.has(mapKey)) subscribeOne(mapKey);
   });
 }
@@ -137,15 +161,14 @@ export function publishMessage(roomId, handler, action, payload) {
   }
   const destination = appDest(roomId, handler, action);
 
-  // ✅ 미연결이면 큐에 저장하고, 연결되면 onConnect에서 자동 발행
   if (!client.connected) {
     pendingPublishes.push({ destination, payload });
-    console.warn("⏳ STOMP 연결 전 → 큐 대기:", destination, payload);
+    console.warn("⏳ WS not connected → queued:", destination, payload);
     return;
   }
 
   client.publish({ destination, body: JSON.stringify(payload ?? {}) });
-  console.log("📤 [WS 발행]", destination, payload);
+  console.log("📤 [WS send]", destination, payload);
 }
 
 /** (선택) 예전 API 호환용 래퍼 */
@@ -176,4 +199,16 @@ export function disconnectWebSocket() {
     } catch {}
     stompClient = null;
   }
+  console.log("🛑 WS deactivated");
+}
+
+// ✅ 디버깅용 상태 노출(선택)
+export function _debugWs() {
+  return {
+    connected: !!stompClient?.connected,
+    roomId: currentRoomId,
+    subs: Array.from(subs.keys()),
+    handlers: Array.from(handlers.keys()),
+    pendingCount: pendingPublishes.length,
+  };
 }

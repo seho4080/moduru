@@ -1,5 +1,5 @@
 // src/features/itinerary/ui/ItineraryBoard.jsx
-import React, { useMemo, useState, useEffect, useRef, forwardRef } from "react";
+import React, { useMemo, useState, useEffect, forwardRef } from "react";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import {
   addPlaceToDay,
@@ -29,21 +29,30 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-// 웹소켓: 스케줄(공통) 동기화
+// 코어 소켓: 공통 구독/발행 어댑터
 import { connectWebSocket, unsubscribeKeys } from "../../webSocket/coreSocket";
-// 웹소켓: 소요시간 계산 발행/결과 구독
-import { publishTravel } from "../../webSocket/travelSocket";
-// ❗️프로젝트 경로 기준으로 맞춰주세요 (travel 또는 travelTime)
-import useTravelResultSocket from "../../travelTime/ui/useTravelResultSocket";
-// 상태 스트림(STARTED/DONE 등) 직접 구독해서 '일자별' 로딩 제어
-import { subscribeTravelStatus } from "../../webSocket/travelStatusSocket";
 
-// ETA 셀렉터
-import { selectLegEta, selectDayTotals } from "../../../redux/slices/etaSlice";
+// 경로 계산: 발행/결과 구독
+import {
+  publishTravel,
+  subscribeTravel,
+  getLastRequestedTransport,
+} from "../../webSocket/travelSocket";
+
+// ETA 셀렉터/업서트
+import {
+  selectLegEta,
+  selectDayTotals,
+  upsertDayEtas,
+  upsertDayTotals,
+} from "../../../redux/slices/etaSlice";
+
+// 계산 상태/타임아웃/문구 관리 훅(내부에서 travel/status 구독)
+import useCalcStatusByDate from "./useCalcStatusByDate";
 
 /* ---------------- constants / helpers ---------------- */
-const CARD_WIDTH = 240; // 일정 카드 폭 (공유장소와 동일)
-const BOARD_COL_WIDTH = 280; // 컬럼 폭(카드 + 여백)
+const CARD_WIDTH = 240;
+const BOARD_COL_WIDTH = 280;
 
 const SCHEDULE_HANDLER = "schedule";
 const EMPTY_OBJ = Object.freeze({});
@@ -80,54 +89,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
   const roomId = useSelector((s) => s.tripRoom?.id ?? s.tripRoom?.roomId);
   const daysMap = useSelector((s) => s.itinerary?.days) || EMPTY_OBJ;
 
-  // 결과 채널 구독 → etaSlice에 반영
-  useTravelResultSocket(roomId);
-
-  /* ---------- 서버→클라: 시간/버전 동기화 구독 ---------- */
-  useEffect(() => {
-    if (!roomId) return;
-    const key = `itinerary-board|${roomId}|${SCHEDULE_HANDLER}`;
-
-    connectWebSocket(roomId, [
-      {
-        handler: SCHEDULE_HANDLER,
-        key,
-        callback: (msg) => {
-          const { day, date, events, draftVersion } = msg || {};
-
-          const dayNum = Number(day);
-          const verNum = Number(draftVersion);
-          if (Number.isFinite(dayNum) && Number.isFinite(verNum)) {
-            dispatch({
-              type: setDraftVersion.type,
-              payload: { day: dayNum, draftVersion: verNum },
-              meta: { fromWs: true },
-            });
-          }
-
-          if (date && Array.isArray(events)) {
-            events.forEach((ev) => {
-              if (!ev?.wantId) return;
-              dispatch({
-                type: setTimes.type,
-                payload: {
-                  dateKey: date,
-                  wantId: ev.wantId,
-                  startTime: ev.startTime ?? "",
-                  endTime: ev.endTime ?? "",
-                },
-                meta: { fromWs: true },
-              });
-            });
-          }
-        },
-      },
-    ]);
-
-    return () => unsubscribeKeys([key]);
-  }, [roomId, dispatch]);
-
-  /* ---------- 날짜 배열: start/end 있으면 사용, 없으면 daysMap 키 폴백 ---------- */
+  /* ---------- 날짜 배열 ---------- */
   const dates = useMemo(() => {
     const out = [];
     if (startDate) {
@@ -158,7 +120,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     for (const dateKey of dates) {
       const items = (daysMap[dateKey] || EMPTY_ARR).map((it) => ({
         ...it,
-        _id: String(it.entryId), // dnd-kit key
+        _id: String(it.entryId),
       }));
       byDate[dateKey] = items;
       items.forEach((it, idx) => {
@@ -168,7 +130,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     return { byDate, idToMeta };
   }, [dates, daysMap]);
 
-  /* ---------- dnd handlers ---------- */
   const [activeId, setActiveId] = useState(null);
   const handleDragStart = (event) => setActiveId(String(event.active.id));
 
@@ -293,14 +254,8 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     );
   };
 
-  const activeItem = activeId ? board.idToMeta.get(activeId)?.item : null;
-
-  /* ---------- 일자별 교통수단/로딩/에러 ---------- */
+  /* ---------- 일자별 교통수단 ---------- */
   const [transportByDate, setTransportByDate] = useState({});
-  const [loadingByDate, setLoadingByDate] = useState({});
-  const [errorByDate, setErrorByDate] = useState({});
-
-  // 날짜 변경 시 기본값 보정
   useEffect(() => {
     setTransportByDate((prev) => {
       const next = { ...prev };
@@ -312,119 +267,124 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       });
       return next;
     });
-    setLoadingByDate((prev) => {
-      const next = { ...prev };
-      dates.forEach((dk) => {
-        if (next[dk] == null) next[dk] = false;
-      });
-      Object.keys(next).forEach((k) => {
-        if (!dates.includes(k)) delete next[k];
-      });
-      return next;
-    });
-    setErrorByDate((prev) => {
-      const next = { ...prev };
-      dates.forEach((dk) => {
-        if (next[dk] == null) next[dk] = null;
-      });
-      Object.keys(next).forEach((k) => {
-        if (!dates.includes(k)) delete next[k];
-      });
-      return next;
-    });
   }, [dates, transport]);
 
-  /* ---------- ⏱️ 30초 타임아웃 관리 ---------- */
-  const calcTimersRef = useRef({}); // { [dateKey]: timeoutId }
+  /* ---------- 계산 상태/에러/타임아웃 (status 구독은 이 훅이 담당) ---------- */
+  const {
+    loadingByDate,
+    errorByDate,
+    markOwnRequestAndStart,
+    markResolvedFromResult, // ✅ DONE 누락 대비
+  } = useCalcStatusByDate(roomId, dates, { notify });
 
-  const startCalcTimeout = (dateKey, ms = 30000) => {
-    const prev = calcTimersRef.current[dateKey];
-    if (prev) {
-      clearTimeout(prev);
-      delete calcTimersRef.current[dateKey];
-    }
-    calcTimersRef.current[dateKey] = setTimeout(() => {
-      setLoadingByDate((p) => ({ ...p, [dateKey]: false }));
-      if (window?.toast?.warning) window.toast.warning("계산 시간 초과입니다.");
-      else if (window?.toast) window.toast("계산 시간 초과입니다.");
-      else console.warn("계산 시간 초과입니다.");
-      delete calcTimersRef.current[dateKey];
-    }, ms);
-  };
-
-  const clearCalcTimeout = (dateKey) => {
-    const t = calcTimersRef.current[dateKey];
-    if (t) {
-      clearTimeout(t);
-      delete calcTimersRef.current[dateKey];
-    }
-  };
-
-  const clearAllCalcTimeouts = () => {
-    Object.values(calcTimersRef.current).forEach((t) => clearTimeout(t));
-    calcTimersRef.current = {};
-  };
-
-  useEffect(() => () => clearAllCalcTimeouts(), []);
-  useEffect(() => {
-    const live = new Set(dates);
-    Object.keys(calcTimersRef.current).forEach((dk) => {
-      if (!live.has(dk)) clearCalcTimeout(dk);
-    });
-  }, [dates]);
-
-  /* ---------- 상태 스트림 구독: STARTED/ALREADY_RUNNING/DONE/FAILED ---------- */
+  /* ---------- schedule/result 구독 (status는 위 훅이 먼저 구독됨) ---------- */
   useEffect(() => {
     if (!roomId) return;
 
-    const off = subscribeTravelStatus(roomId, ({ status, body }) => {
-      const dayNum = Number(body?.day);
-      const dk =
-        Number.isFinite(dayNum) && dayNum > 0 ? dates[dayNum - 1] : null;
+    // 1) travel/result → etaSlice 반영
+    const offResult = subscribeTravel(
+      roomId,
+      (body) => {
+        if (!body) return;
 
-      switch (status) {
-        case "STARTED":
-          if (dk) {
-            setLoadingByDate((p) => ({ ...p, [dk]: true }));
-            setErrorByDate((p) => ({ ...p, [dk]: null }));
-            startCalcTimeout(dk); // ⏱️
+        const {
+          day,
+          transport,
+          totalDistanceMeters,
+          totalDurationMinutes,
+          legs,
+          updatedAt,
+        } = body;
+
+        const dayNum = Number(day);
+        if (!Number.isFinite(dayNum)) return;
+
+        // transport: 응답값 → 마지막 요청 모드 → transit
+        let t =
+          (typeof transport === "string" && transport) ||
+          getLastRequestedTransport(roomId, dayNum) ||
+          "transit";
+        t = String(t).toLowerCase();
+        if (t === "driver") t = "driving";
+
+        // legs 반영
+        if (Array.isArray(legs) && legs.length > 0) {
+          const items = legs.map((l) => ({
+            fromWantId: Number(l.fromWantId ?? l.fromId),
+            toWantId: Number(l.toWantId ?? l.toId),
+            distanceMeters: Number(l.distanceMeters ?? l.distance ?? 0),
+            durationMinutes: Number(l.durationMinutes ?? l.duration ?? 0),
+            updatedAt: l.updatedAt ?? updatedAt,
+          }));
+          dispatch(upsertDayEtas({ day: dayNum, transport: t, items }));
+        }
+
+        // totals만 와도 반영
+        if (
+          typeof totalDistanceMeters === "number" &&
+          typeof totalDurationMinutes === "number"
+        ) {
+          dispatch(
+            upsertDayTotals({
+              day: dayNum,
+              transport: t,
+              totalDistanceMeters,
+              totalDurationMinutes,
+              updatedAt,
+            })
+          );
+        }
+
+        // ✅ DONE 누락 대비: result 수신만으로도 로딩 해제
+        markResolvedFromResult(body);
+      },
+      { key: "travel-result/board" }
+    );
+
+    // 2) schedule 동기화
+    const scheduleKey = `itinerary-board|${roomId}|${SCHEDULE_HANDLER}`;
+    connectWebSocket(roomId, [
+      {
+        handler: SCHEDULE_HANDLER,
+        key: scheduleKey,
+        callback: (msg) => {
+          const { day, date, events, draftVersion } = msg || {};
+
+          const dayNum = Number(day);
+          const verNum = Number(draftVersion);
+          if (Number.isFinite(dayNum) && Number.isFinite(verNum)) {
+            dispatch({
+              type: setDraftVersion.type,
+              payload: { day: dayNum, draftVersion: verNum },
+              meta: { fromWs: true },
+            });
           }
-          break;
 
-        case "ALREADY_RUNNING":
-          notify("info", "이미 계산 중입니다.");
-          if (dk) {
-            setLoadingByDate((p) => ({ ...p, [dk]: true }));
-            startCalcTimeout(dk); // ⏱️ 갱신
+          if (date && Array.isArray(events)) {
+            events.forEach((ev) => {
+              if (!ev?.wantId) return;
+              dispatch({
+                type: setTimes.type,
+                payload: {
+                  dateKey: date,
+                  wantId: ev.wantId,
+                  startTime: ev.startTime ?? "",
+                  endTime: ev.endTime ?? "",
+                },
+                meta: { fromWs: true },
+              });
+            });
           }
-          break;
+        },
+      },
+    ]);
 
-        case "DONE":
-          if (dk) {
-            setLoadingByDate((p) => ({ ...p, [dk]: false }));
-            setErrorByDate((p) => ({ ...p, [dk]: null }));
-            clearCalcTimeout(dk); // ⏱️
-          }
-          break;
-
-        case "FAILED":
-          if (dk) {
-            setLoadingByDate((p) => ({ ...p, [dk]: false }));
-            setErrorByDate((p) => ({
-              ...p,
-              [dk]: body?.message || "소요시간 계산 실패",
-            }));
-            clearCalcTimeout(dk); // ⏱️
-          }
-          break;
-
-        default:
-          break;
-      }
-    });
-
-    return off;
-  }, [roomId, dates]);
+    // cleanup: 컴포넌트 언마운트/roomId 변경 시
+    return () => {
+      offResult();
+      unsubscribeKeys([scheduleKey]);
+    };
+  }, [roomId, dispatch, markResolvedFromResult]);
 
   /* ---------- 네이티브 드롭 파싱 ---------- */
   function parseDropData(e) {
@@ -459,17 +419,20 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       endTime: it.endTime || undefined,
     }));
 
-    setLoadingByDate((p) => ({ ...p, [dateKey]: true }));
-    startCalcTimeout(dateKey); // STARTED가 늦어질 수 있으니 낙관적 시작
+    // 내 요청 표시 + 낙관적 로딩 + 타임아웃 시작
+    markOwnRequestAndStart(dateKey);
 
+    // 발행
     publishTravel({
       roomId,
       day,
       date: dateKey,
-      transpot: t, // 서버 호환: transpot
+      transpot: t, // 서버 레거시 호환 키
       events,
     });
   };
+
+  const activeItem = activeId ? board.idToMeta.get(activeId)?.item : null;
 
   /* ---------- render ---------- */
   return (
@@ -497,7 +460,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
               style={{ width: BOARD_COL_WIDTH }}
               aria-label={`Day ${idx + 1} ${dateKey}`}
               onDragOver={(e) => {
-                // SharedPlaceCard 외부 드롭 허용
                 e.preventDefault();
                 try {
                   const json = e.dataTransfer?.getData("application/json");
@@ -523,7 +485,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                 }
               }}
             >
-              {/* 컬럼 헤더: 일자 + 교통수단 선택 + 소요시간 계산 버튼 */}
+              {/* 헤더 */}
               <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -595,7 +557,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                           }
                         />
 
-                        {/* 카드 사이 ETA (컬럼별 선택 교통수단 기준) */}
+                        {/* 카드 사이 ETA */}
                         {showEta && items[itemIdx + 1] && (
                           <LegETA
                             day={idx + 1}
@@ -612,7 +574,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                     ))}
                   </SortableContext>
 
-                  {/* 합계(해당 일자에 2개 이상 장소 있을 때만) */}
+                  {/* 일차 합계 */}
                   {showEta &&
                     items.filter((x) =>
                       Number.isFinite(Number(x.wantId ?? x.placeId ?? x.id))
@@ -709,9 +671,9 @@ function SortableItineraryCard({ item, dateKey, onRemove, onConfirmTimes }) {
 
 /**
  * 구간 ETA 렌더러:
- * - 사용자가 선택한 transport 최우선
- * - 서버가 transit 대신 walking으로 응답하는 경우 안전 Fallback
- * - 마지막엔 driving도 시도
+ * - 요청 모드 최우선
+ * - transit 응답이 walking으로 올 수 있어 안전 Fallback
+ * - 마지막엔 driving 폴백
  */
 function LegETA({
   day,
@@ -726,7 +688,6 @@ function LegETA({
   const data = useSelector((s) => {
     const tryPick = (t) =>
       selectLegEta(s, { day, transport: t, fromWantId, toWantId });
-    // 우선순위: 요청 모드 → (transit이면 walking) → driving
     let hit = tryPick(requestedTransport);
     if (!hit && requestedTransport === "transit") hit = tryPick("walking");
     if (!hit) hit = tryPick("driving");
@@ -771,15 +732,14 @@ function LegETA({
 
 /**
  * 일차 합계:
- * - totals 존재 시 그대로 사용
- * - totals 없으면 해당 모드의 leg 합산으로 폴백
- * - transit 요청인데 walking/driving 값이 오면 그것도 반영
+ * - totals 우선
+ * - 없으면 해당 모드 legs 합산
+ * - transit 요청인데 walking/driving만 와도 반영
  */
 function DayTotals({ day, requestedTransport, cardWidth = CARD_WIDTH }) {
   const data = useSelector((s) => {
     const tryTotals = (t) => selectDayTotals(s, { day, transport: t });
 
-    // 1) 요청 모드 totals
     let t = tryTotals(requestedTransport);
     if (t) {
       return {
@@ -790,7 +750,6 @@ function DayTotals({ day, requestedTransport, cardWidth = CARD_WIDTH }) {
       };
     }
 
-    // 2) transit 요청인데 walking totals가 있을 수 있음
     if (requestedTransport === "transit") {
       t = tryTotals("walking");
       if (t) {
@@ -803,7 +762,6 @@ function DayTotals({ day, requestedTransport, cardWidth = CARD_WIDTH }) {
       }
     }
 
-    // 3) driving totals 폴백
     t = tryTotals("driving");
     if (t) {
       return {
@@ -814,7 +772,6 @@ function DayTotals({ day, requestedTransport, cardWidth = CARD_WIDTH }) {
       };
     }
 
-    // 4) totals가 전혀 없을 때 leg 합산 폴백
     const modesToTry =
       requestedTransport === "transit"
         ? ["transit", "walking", "driving"]

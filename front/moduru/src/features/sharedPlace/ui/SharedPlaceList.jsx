@@ -1,6 +1,6 @@
 // src/features/sharedPlace/ui/SharedPlaceList.jsx
 import { useSelector } from "react-redux";
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import SharedPlaceCard from "./SharedPlaceCard";
 
 const PANEL_WIDTH = 280;
@@ -35,7 +35,51 @@ export default function SharedPlaceList({
     [selectedWantIds]
   );
 
-  // 토글 헬퍼
+  // 리스트에 표시 중인 wantId 목록(숫자형, 유효값만)
+  const listIds = useMemo(() => {
+    const arr = [];
+    for (const p of sharedPlaces) {
+      const id = Number(p?.wantId ?? p?.id ?? p?.placeId);
+      if (Number.isFinite(id)) arr.push(id);
+    }
+    return arr;
+  }, [sharedPlaces]);
+
+  // 모두선택 체크 상태 계산
+  const selectedCountInList = useMemo(
+    () => listIds.filter((id) => selectedSet.has(id)).length,
+    [listIds, selectedSet]
+  );
+  const allSelected =
+    listIds.length > 0 && selectedCountInList === listIds.length;
+  const someSelected =
+    listIds.length > 0 &&
+    selectedCountInList > 0 &&
+    selectedCountInList < listIds.length;
+
+  // 모두선택 토글
+  const onToggleAll = () => {
+    if (!onChangeSelected) return;
+    const next = new Set(selectedSet);
+    if (allSelected) {
+      // 리스트에 있는 것들만 해제
+      listIds.forEach((id) => next.delete(id));
+    } else {
+      // 리스트에 있는 것들 모두 추가
+      listIds.forEach((id) => next.add(id));
+    }
+    onChangeSelected(Array.from(next));
+  };
+
+  // indeterminate 표시
+  const selectAllRef = useRef(null);
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
+
+  // 단일 토글
   const toggle = (wantId) => {
     if (!onChangeSelected) return;
     const id = Number(wantId);
@@ -56,6 +100,34 @@ export default function SharedPlaceList({
 
   return (
     <div className="w-full" style={{ maxWidth: PANEL_WIDTH }}>
+      {/* ✅ 모두 선택 바 (선택 모드에서만 노출) */}
+      {selectMode && (
+        <div
+          className="w-full mt-2 flex justify-center"
+          style={{ paddingLeft: 4, paddingRight: 4 }}
+        >
+          <div
+            className="flex items-center justify-between text-[12px] text-slate-700"
+            style={{ width: rowWidth }}
+          >
+            <label className="inline-flex items-center gap-2 select-none">
+              <input
+                ref={selectAllRef}
+                type="checkbox"
+                checked={allSelected}
+                onChange={onToggleAll}
+                title="모두 선택"
+                data-nodrag
+              />
+              <span>모두 선택</span>
+            </label>
+            <span className="text-slate-500">
+              {selectedCountInList}/{listIds.length}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="w-full mt-2 flex flex-col items-center gap-3">
         {sharedPlaces.map((place) => {
           const key =
