@@ -1,6 +1,8 @@
 // src/features/sharedPlace/ui/SharedPlaceCard.jsx
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { FaHeart, FaRegHeart, FaCheckCircle } from "react-icons/fa";
+/** NEW: 이미지 폴백 로고 */
+import fallbackLogo from "../../../assets/images/moduru-logo.png";
 
 export default function SharedPlaceCard({
   place,
@@ -39,6 +41,9 @@ export default function SharedPlaceCard({
     const s = String(imgUrl).trim();
     return s.length ? s : null;
   }, [imgUrl]);
+
+  /** NEW: 실제로 표시할 이미지 소스(원본 실패/없음 → 로고) */
+  const displaySrc = imgError || !validImgSrc ? fallbackLogo : validImgSrc;
 
   // 시간 팝오버 상태(보드에서만 사용)
   const [openTime, setOpenTime] = useState(false);
@@ -84,7 +89,7 @@ export default function SharedPlaceCard({
     e.dataTransfer.setData("text/plain", body);
     e.dataTransfer.effectAllowed = "copy";
 
-    if (dragPreviewRef.current && validImgSrc) {
+    if (dragPreviewRef.current && displaySrc) {
       const ghost = dragPreviewRef.current;
       e.dataTransfer.setDragImage(ghost, ghost.width / 2, ghost.height / 2);
     }
@@ -110,7 +115,9 @@ export default function SharedPlaceCard({
   return (
     <div
       className={`relative mb-3 flex h-[82px] items-center gap-3 rounded-xl border-[1.5px] bg-white p-2 ${usedClasses}
-        ${isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
+        ${
+          isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"
+        }`}
       style={{ width: cardWidth ? `${cardWidth}px` : undefined }}
       {...dragProps}
       title={
@@ -122,11 +129,11 @@ export default function SharedPlaceCard({
       }
       aria-label={usedInItinerary ? "일정 포함됨" : undefined}
     >
-      {/* 드래그 프리뷰용 투명 이미지 */}
-      {isDraggable && validImgSrc && (
+      {/* 드래그 프리뷰용 투명 이미지 (원본 없으면 로고 사용) */}
+      {isDraggable && (
         <img
           ref={dragPreviewRef}
-          src={validImgSrc}
+          src={displaySrc}
           alt=""
           className="pointer-events-none absolute opacity-0"
           width={80}
@@ -170,21 +177,15 @@ export default function SharedPlaceCard({
         </button>
       )}
 
-      {/* 썸네일 */}
+      {/* 썸네일 (없으면 자동으로 로고 표시) */}
       <div className="relative flex-shrink-0">
-        {imgError || !validImgSrc ? (
-          <div className="flex aspect-[4/3] w-[88px] items-center justify-center rounded-md bg-slate-100 text-[11px] text-slate-500">
-            이미지 없음
-          </div>
-        ) : (
-          <img
-            src={validImgSrc}
-            alt={placeName ? `${placeName} 이미지` : "장소 이미지"}
-            className="aspect-[4/3] w-[88px] rounded-md object-cover"
-            onError={() => setImgError(true)}
-            draggable={false}
-          />
-        )}
+        <img
+          src={displaySrc}
+          alt={placeName ? `${placeName} 이미지` : "장소 이미지"}
+          className="aspect-[4/3] w-[88px] rounded-md object-cover"
+          onError={() => setImgError(true)}
+          draggable={false}
+        />
 
         {/* 삭제 */}
         <button
