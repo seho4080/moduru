@@ -1,9 +1,8 @@
-// src/pages/mainPage/MainPage.jsx
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTripRoom, getTripRoomInfo } from "../../features/tripCreate/lib/tripRoomApi";
 import { useAuth } from "../../shared/model/useAuth";
-import { logout as apiLogout } from "../../features/auth/lib/authApi"; 
+import { logout as apiLogout } from "../../features/auth/lib/authApi";
 import LoginForm from "../../features/auth/ui/LoginForm";
 import TravelRoomsModal from "./ui/TravelRoomsModal";
 import "./css/MainPage.css";
@@ -11,7 +10,6 @@ import mainArt1 from "../../assets/mainPage.png";
 
 export default function MainPage() {
   const navigate = useNavigate();
-  // ⬇️ useAuth에서 내려오는 logout이 없을 수 있으니 별도 이름으로 받기
   const { isLoggedIn, logout: logoutFromHook } = useAuth();
   const startGuardRef = useRef(false);
 
@@ -43,18 +41,17 @@ export default function MainPage() {
     navigate("/my-page");
   };
 
-  // ✅ 로그아웃: useAuth.logout 있으면 그것 사용, 없으면 authApi.logout 사용
   const handleLogout = async () => {
     try {
       if (typeof logoutFromHook === "function") {
         await logoutFromHook();
       } else {
-        await apiLogout();                  // 서버 세션/쿠키 정리
-        localStorage.removeItem("accessToken"); // 혼용 중이면 토큰도 정리
+        await apiLogout();
+        localStorage.removeItem("accessToken");
       }
     } finally {
       setIsProfileDropdownOpen(false);
-      navigate(0); // 상태 최신화(선택)
+      navigate(0);
     }
   };
 
