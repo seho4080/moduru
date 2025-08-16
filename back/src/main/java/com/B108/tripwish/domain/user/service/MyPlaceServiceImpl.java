@@ -1,17 +1,15 @@
 package com.B108.tripwish.domain.user.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
-import com.B108.tripwish.domain.place.entity.Place;
-import com.B108.tripwish.domain.place.repository.PlaceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
+import com.B108.tripwish.domain.place.entity.Place;
+import com.B108.tripwish.domain.place.repository.PlaceRepository;
 import com.B108.tripwish.domain.place.service.PlaceReaderService;
-import com.B108.tripwish.domain.user.dto.response.MyPlaceInfoResponse;
 import com.B108.tripwish.domain.user.entity.MyPlace;
 import com.B108.tripwish.domain.user.entity.MyPlaceId;
 import com.B108.tripwish.domain.user.entity.User;
@@ -60,8 +58,6 @@ public class MyPlaceServiceImpl implements MyPlaceService {
     }
 
     // 좋아요 목록이므로 isLiked=true, isWanted는 필요 없으면 false
-    return places.stream()
-            .map(p -> PlaceResponseDto.fromEntity(p, true, false))
-            .toList();
+    return places.stream().map(p -> PlaceResponseDto.fromEntity(p, true, false)).toList();
   }
 }
