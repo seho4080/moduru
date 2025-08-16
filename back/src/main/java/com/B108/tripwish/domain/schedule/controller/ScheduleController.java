@@ -3,6 +3,7 @@ package com.B108.tripwish.domain.schedule.controller;
 import java.util.List;
 import java.util.Map;
 
+import com.B108.tripwish.domain.schedule.dto.response.SchedulePlaceResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -110,5 +111,12 @@ public class ScheduleController {
                   "error", e.getErrorCode().name(),
                   "message", e.getMessage()));
     }
+  }
+
+  @GetMapping("/schedules/places")
+  public ResponseEntity<List<SchedulePlaceResponseDto>> getSchedulePlace(@AuthenticationPrincipal CustomUserDetails user,
+                                                                         @PathVariable Long roomId){
+      List<SchedulePlaceResponseDto> response = scheduleService.getPlaceListBySchedule(roomId);
+      return ResponseEntity.ok(response);
   }
 }
