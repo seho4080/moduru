@@ -30,7 +30,8 @@ export default function ReviewWrite({
   const [submitting, setSubmitting] = useState(false);
 
   const overlayRef = useRef(null);
-
+  // 토글 막는 코드
+  const isTripLocked = !!initialTrip?.id;
   // ====== 초기 프리셀렉트 처리 ======
   useEffect(() => {
     if (!open) return;
@@ -64,6 +65,7 @@ export default function ReviewWrite({
 
   // step 토글 시 데이터 로딩
   const toggleOpen = async (step) => {
+    if (step === 1 && isTripLocked) return; // step1 잠금
     const willOpen = activeTab !== step ? step : 0;
     setActiveTab(willOpen);
 
@@ -149,42 +151,61 @@ export default function ReviewWrite({
         {/* 본문 */}
         <div className="max-h-[72vh] overflow-y-auto px-6 py-6">
           {/* step1 */}
-          <section className="mb-8">
-            <StepTitle title="step1. 여행지" />
-            <SelectBox
-              id="step1"
-              isOpen={activeTab === 1}
-              disabled={false}
-              label={selectedTrip ? selectedTrip.title : "여행을 선택하세요"}
-              description={selectedTrip?.period}
-              onClick={() => toggleOpen(1)}
-            />
-            {activeTab === 1 && (
-              <DropdownPanel loading={loading} error={error} emptyMessage="여행 기록이 없습니다.">
-                <ul className="divide-y">
-                  {trips.map((t) => (
-                    <li key={t.id}>
-                      <button
-                        className="rw-item flex w-full items-center justify-between px-3 py-3 text-left hover:bg-gray-50"
-                        onClick={() => {
-                          setSelectedTrip(t);
-                          setSelectedPlace(null);
-                          setSelectedKeywords([]); // 여행 변경 시 태그 초기화
-                          setPlaces([]);
-                          setActiveTab(0);
-                        }}
-                      >
-                        <div>
-                          <div className="rw-item-title">{t.title}</div>
-                          {t.period && <div className="rw-meta">{t.period}</div>}
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </DropdownPanel>
-            )}
-          </section>
+<section className="mb-8">
+  <StepTitle title="step1. 여행지" />
+  {isTripLocked ? (
+    // 🔒 잠금 모드: 정적 표시만 (클릭/토글 없음)
+    <div
+      className="rw-item flex w-full items-center justify-between rounded-lg border px-3 py-3 bg-gray-50 cursor-default select-none"
+      aria-disabled="true"
+    >
+      <div>
+        <div className="rw-item-title">
+          {selectedTrip?.title ?? initialTrip?.title ?? "여행"}
+        </div>
+        {(selectedTrip?.period ?? initialTrip?.period) && (
+          <div className="rw-meta">{selectedTrip?.period ?? initialTrip?.period}</div>
+        )}
+      </div>
+    </div>
+  ) : (
+    <>
+      <SelectBox
+        id="step1"
+        isOpen={activeTab === 1}
+        disabled={false}
+        label={selectedTrip ? selectedTrip.title : "여행을 선택하세요"}
+        description={selectedTrip?.period}
+        onClick={() => toggleOpen(1)}
+      />
+      {activeTab === 1 && (
+        <DropdownPanel loading={loading} error={error} emptyMessage="여행 기록이 없습니다.">
+          <ul className="divide-y">
+            {trips.map((t) => (
+              <li key={t.id}>
+                <button
+                  className="rw-item flex w-full items-center justify-between px-3 py-3 text-left hover:bg-gray-50"
+                  onClick={() => {
+                    setSelectedTrip(t);
+                    setSelectedPlace(null);
+                    setSelectedKeywords([]);
+                    setPlaces([]);
+                    setActiveTab(0);
+                  }}
+                >
+                  <div>
+                    <div className="rw-item-title">{t.title}</div>
+                    {t.period && <div className="rw-meta">{t.period}</div>}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </DropdownPanel>
+      )}
+    </>
+  )}
+</section>
 
           {/* step2 */}
           <section className="mb-8">
