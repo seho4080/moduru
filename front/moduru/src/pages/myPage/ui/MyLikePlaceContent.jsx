@@ -1,11 +1,12 @@
 // src/pages/myLikePlacePage/MyLikeSpace.jsx
+// src/pages/myPage/ui/MyLikePlaceContent.jsx
 import React, { useRef, useState } from "react";
-import SideMenuBox from "./SideMenuBox";
-import Map from "./Map";
-import "./myLikePlacePage.css";
+import SideMenuBox from "../../../features/myLikedPlace/ui/SideMenuBox"; 
+import Map from "../../../features/myLikedPlace/ui/Map";           
+import "../../../pages/myPage/css/myLikePlaceContent.css";              
 
 // 추가: 지도에 핀 꽂기 전용 컴포넌트
-import MyLikedPlaceMarkers from "../../features/myLikedPlace/ui/MyLikedPlaceMarkers";
+import MyLikedPlaceMarkers from "../../../features/myLikedPlace/ui/MyLikedPlaceMarkers";
 
 export default function MyLikeSpace() {
   const mapRef = useRef(null);

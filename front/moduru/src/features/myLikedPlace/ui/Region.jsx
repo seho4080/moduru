@@ -1,7 +1,7 @@
 // src/features/myLikedPlace/ui/Region.jsx
 import { useEffect, useRef, useState, useMemo } from "react";
 import { fetchTopRegions, fetchChildRegions } from "../../tripCreate/lib/regionApi";
-import "./region.css";
+import "../css/region.css";
 
 const CASCADE_FROM_ID = 8;
 const ALL_ID = "__ALL__";

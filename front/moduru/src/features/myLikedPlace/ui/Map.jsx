@@ -7,11 +7,11 @@ import React, {
 } from "react";
 
 // 핀 아이콘(프로젝트 구조 기준)
-import pinRed from "../../assets/pins/pin_red.png";
-import pinGreen from "../../assets/pins/pin_green.png";
-import pinNavy from "../../assets/pins/pin_navy.png";
+import pinRed from "../../../assets/pins/pin_red.png";
+import pinGreen from "../../../assets/pins/pin_green.png";
+import pinNavy from "../../../assets/pins/pin_navy.png";
 // 필요 시 예비 색상
-import pinBlue from "../../assets/pins/pin_blue.png";
+import pinBlue from "../../../assets/pins/pin_blue.png"; 
 
 const KOREA_BOUNDS_COORDS = {
   sw: { lat: 33.0, lng: 124.6 },

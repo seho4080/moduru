@@ -5,13 +5,14 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // internal
-import MainPageLayout from "../pages/mainPage/MainPageLayout";
-// import MainPageLayout from "../pages/mainPage/MainPage";
+// import MainPageLayout from "../pages/mainPage/MainPageLayout";
+import MainPageLayout from "../pages/mainPage/MainPage";
 import TripRoomPage from "../pages/tripRoomPage/TripRoomPage";
-import MyPageLayout from "../pages/myPage/MyPageLayout";
+// import MyPageLayout from "../pages/myPage/MyPageLayout";
+import MyPageLayout from "../pages/myPage/MyPage";
 // import MyTravelSpacePage from "../pages/myPage/MyTravelSpacePage";
 import MyTravelSpacePage from "../pages/myTravelSpacePage/MyTravelSpacePage";
-import MyLikePlace from "../pages/myLikePlacePage/MyLikePlacePage";
+// import MyLikePlace from "../pages/myLikePlacePage/MyLikePlacePage";
 import InvitePage from '../pages/invitePage/InvitePage';
 import MyPageHome from "../pages/myPage/MyPageHome";  
 import MyReviewPage from "../pages/myPage/MyReviewPage";
@@ -32,10 +33,10 @@ const RouterComponent = () => {
           path="/my-page/my-travel-space"
           element={<MyTravelSpacePage />}
         />
-        <Route
+        {/* <Route
           path="/my-page/my-places"
           element={<MyLikePlace />}
-        />
+        /> */}
         <Route path="/trip-room/:id" element={<TripRoomPage />} />
         <Route path="/invite/:inviteToken" element={<InvitePage />} />
       </Routes>

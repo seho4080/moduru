@@ -1,109 +1,278 @@
-/* 컨테이너/카드 기본은 유지 */
+/* src/features/myReview/ui/myReviewsList.css */
+@font-face {
+  font-family: 'Ownglyph_meetme-Rg';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/Ownglyph_meetme-Rg.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .myreviews-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1.5rem;
+  padding: 2rem;
+  font-family: 'Ownglyph_meetme-Rg', sans-serif;
 }
 
 .myreviews-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(109, 135, 219, 0.1);
+  transition: all 0.3s ease;
+}
+
+.myreviews-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(109, 135, 219, 0.15);
+}
+
+/* 카드 헤더 */
+.card-header {
   display: flex;
-  background: #fff;
-  border-radius: 12px;             
-  padding: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06); 
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
 }
 
-/* 썸네일 */
-.myreviews-image img {
-  width: 120px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: 8px;
+.region-badge {
+  background: #6d87db;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-/* 정보 영역 */
-.myreviews-info {
+.place-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
   flex: 1;
-  margin-left: 14px;
-  min-width: 0;
-  font-family: 'Noto Sans KR', 'Pretendard', Arial, sans-serif;
 }
 
-/* 장소명: 두께 줄이고 선명도만 살림 */
-.myreviews-place-name {
-  font-size: 1rem;         
-  font-weight: 500;                
-  color: #1f2937;                  
-  letter-spacing: -0.2px;
-  margin: 2px 0 6px 0;
-  line-height: 1.35;
+.review-date {
+  font-size: 0.875rem;
+  color: #64748b;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.delete-btn {
+  background: #ef4444;
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.delete-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 태그 컨테이너 */
+.tags-container {
+  width: 100%;
+  position: relative;
+}
+
+.tags-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.tags-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 80px;
+}
+
+.myreviews-tag {
+  background: #f3f4f6;
+  color: #222;
+  padding: 0.6rem 1.2rem;
+  border-radius: 22px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* 태그 영역 */
-.myreviews-tags {
+  box-shadow: none;
+  border: none;
+  transition: background .18s, color .18s;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;                        
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.2px;
 }
 
-/* 태그: pill + 아웃라인, 톤다운 */
-.myreviews-tag {
-  background: #fff;               
-  border: 1px solid #e5e7eb;      
-  color: #374151;                  
-  padding: 4px 10px;
-  border-radius: 999px;            
-  font-size: 12.5px;
-  font-weight: 400;              
-  line-height: 1.2;
-  letter-spacing: -0.2px;
-  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
-}
 .myreviews-tag:hover {
-  background: #f8fafc;
-  border-color: #d1d5db;
+  background: #e5e7eb;
+  color: #1763a6;
+}
+
+/* 태그 페이지네이션 */
+.tags-pagination {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 2; /* 태그 위에 보이게 */
+  gap: 0;
+}
+
+.pagination-btn {
+  background: none;           /* 배경색 없음 */
+  border: none;               /* 테두리 없음 */
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  color: #6d87db;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  box-shadow: none;
+  font-size: 1.3rem;
+  z-index: 2;
+  transition: color .18s, transform .12s;
+}
+
+.pagination-btn:hover {
+  color: #1763a6;
+  transform: scale(1.12);
+}
+
+/* 화살표 SVG만 보이게 */
+.pagination-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  background: none;
+  transition: stroke .18s;
 }
 
 /* 빈 상태/로딩 */
-.myreviews-empty,
 .myreviews-loading,
 .no-review-msg {
   text-align: center;
-  padding: 40px;
-  color: #6b7280;                  
-  font-family: 'Noto Sans KR', 'Pretendard', Arial, sans-serif;
+  padding: 4rem 2rem;
+  color: #6b7280;
+  font-family: 'Ownglyph_meetme-Rg', sans-serif;
   display: flex;
-  align-items: flex-end;      
+  align-items: center;
   justify-content: center;
-  min-height: 260px;     
-  padding-bottom: 14px;  
+  min-height: 300px;
 }
 
 .no-review-title {
-  font-size: 15px;
-  font-weight: 400;                
-  color: #4b5563;                  
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #4b5563;
   margin: 0;
 }
 
-
-@media (max-width: 420px) {
-  .myreviews-image img {
-    width: 96px;
-    height: 72px;
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .myreviews-container {
+    padding: 1rem;
+    gap: 1rem;
   }
-  .myreviews-info { margin-left: 10px; }
+  
+  .myreviews-card {
+    padding: 1.5rem;
+  }
+  
+  .card-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .review-date {
+    margin-left: 0;
+    order: 3;
+  }
+  
+  .delete-btn {
+    order: 4;
+    margin-left: 0;
+  }
+  
+  .tags-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .myreviews-tag {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
 }
 
-.myreviews-card {
-  display: flex;
-  gap: 12px;
-  position: relative; /* 휴지통 위치 고정을 위해 필요 */
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+@media (max-width: 480px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .place-name {
+    font-size: 1.125rem;
+  }
+  
+  .tags-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    min-height: 120px;
+  }
+  
+  .tags-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .tags-pagination {
+    position: static;
+    transform: none;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .prev-btn,
+  .next-btn {
+    align-self: center;
+  }
 }
