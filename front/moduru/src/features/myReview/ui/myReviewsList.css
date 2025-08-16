@@ -196,9 +196,9 @@
 }
 .rv-pg-btn:hover { color: #1f3c88; border-color: #d9e2f2; transform: translateY(-1px); }
 .rv-pg-btn.is-active {
-  background: #ff8b5b;
+  background: #6d87db;
   color: #fff;
-  border-color: #ff8b5b;
+  border-color: #6d87db;
   transform: none;
   font-weight: 500;
 }

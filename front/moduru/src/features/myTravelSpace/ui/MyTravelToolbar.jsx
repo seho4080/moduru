@@ -17,7 +17,6 @@ export default function MyTravelToolbar({
           type="text"
           value={q}
           onChange={(e) => onChangeQ(e.target.value)}
-          placeholder="여행 방 제목"
           aria-label="여행 검색"
         />
       </div>
