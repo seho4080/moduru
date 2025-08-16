@@ -7,7 +7,7 @@ import { openTripForm } from "../../../redux/slices/uiSlice";
 
 import ScheduleSaveButton from "./ScheduleSaveButton";
 import useAiRoute from "../../aiRoute/model/useAiRoute";
-import { setOrderForDate } from "../../../redux/slices/itinerarySlice";
+import { setOrderForDate, setDays } from "../../../redux/slices/itinerarySlice"; // ← setDays 리듀서 필요
 // alias(@) 미사용: 상대경로로 안전하게
 import { publishSchedule } from "../../webSocket/scheduleSocket";
 
@@ -83,9 +83,14 @@ export default function ItineraryEditorView({
   const [selectedDay, setSelectedDay] = useState(() =>
     dayOptions.length ? dayOptions[0].day : 1
   );
+
+  // ✅ 배열 자체 의존: 기존 선택 유지/없으면 첫째날
   useEffect(() => {
-    if (dayOptions.length) setSelectedDay(dayOptions[0].day);
-  }, [dayOptions.length]);
+    if (!dayOptions.length) return;
+    setSelectedDay((prev) =>
+      dayOptions.some((d) => d.day === prev) ? prev : dayOptions[0].day
+    );
+  }, [dayOptions]);
 
   const currentDate = useMemo(
     () => dayOptions.find((d) => d.day === selectedDay)?.date,
@@ -96,12 +101,61 @@ export default function ItineraryEditorView({
     [dayOptions, selectedDay]
   );
 
-  // 저장 안 한 변경 내역 경고(배너는 제거, 가드만 유지)
-  const hasAnyItinerary = useMemo(
-    () => Object.values(daysMap).some((arr) => (arr?.length || 0) > 0),
-    [daysMap]
-  );
-  useUnsavedGuard(hasAnyItinerary);
+  /* ===================== 변경 감지(dirty) & 저장 반영 ===================== */
+  const lastSavedSig = useRef("");
+  const [dirty, setDirty] = useState(false);
+
+  // 날짜/순서만 추린 시그니처 (저장 비교용)
+  const makeSig = useCallback((m) => {
+    return JSON.stringify(
+      Object.entries(m)
+        .sort(([a], [b]) => String(a).localeCompare(String(b)))
+        .map(([date, events]) => [
+          date,
+          (events ?? []).map((e) => Number(e.wantId ?? e.id ?? -1)),
+        ])
+    );
+  }, []);
+
+  // 최초 로드 시 baseline 잡기 (초기 더티 방지)
+  useEffect(() => {
+    if (lastSavedSig.current === "") {
+      lastSavedSig.current = makeSig(daysMap);
+    }
+  }, [daysMap, makeSig]);
+
+  // daysMap이 바뀌면 dirty 판정 + 내보내기 비무장
+  useEffect(() => {
+    const now = makeSig(daysMap);
+    const changed = now !== lastSavedSig.current;
+    setDirty(changed);
+  }, [daysMap, makeSig]);
+
+  // 저장/더티 커스텀 이벤트 수신
+  useEffect(() => {
+    const onSaved = (e) => {
+      if (!roomId || e?.detail?.roomId === roomId) {
+        lastSavedSig.current = makeSig(daysMap);
+        setDirty(false);
+        setExportArmed(true);
+      }
+    };
+    const onDirty = (e) => {
+      if (!roomId || e?.detail?.roomId === roomId) {
+        setDirty(true);
+        setExportArmed(false);
+      }
+    };
+    window.addEventListener("schedule:commit:ok", onSaved);
+    window.addEventListener("schedule:dirty", onDirty);
+    return () => {
+      window.removeEventListener("schedule:commit:ok", onSaved);
+      window.removeEventListener("schedule:dirty", onDirty);
+    };
+  }, [roomId, daysMap, makeSig]);
+
+  // 페이지 이탈/닫기 가드
+  useUnsavedGuard(dirty);
 
   /* ===================== AI 경로 추천 ===================== */
   const { runAiRoute } = useAiRoute(roomId);
@@ -119,7 +173,8 @@ export default function ItineraryEditorView({
   );
 
   const [asking, setAsking] = useState(false);
-  const routeBusy = asking || aiStatus === "STARTED" || aiStatus === "PROGRESS";
+  const routeBusy =
+    asking || aiStatus === "STARTED" || aiStatus === "PROGRESS";
 
   const onRunAiRoute = useCallback(async () => {
     if (!roomId) return;
@@ -164,7 +219,39 @@ export default function ItineraryEditorView({
       dateKey: currentDate,
       wantOrderIds: orderWantIds,
     });
+
+    // 변경 발생 → dirty 알림
+    window.dispatchEvent(
+      new CustomEvent("schedule:dirty", { detail: { roomId } })
+    );
   }, [legsForSelectedDay, currentDate, roomId, dispatch]);
+
+  /* ===================== 날짜 저장 후 재매핑 ===================== */
+  const remapDaysByNewDates = useCallback((oldMap, newDates) => {
+    const sortedOld = Object.entries(oldMap)
+      .sort(([a], [b]) => String(a).localeCompare(String(b)))
+      .map(([, ev]) => ev ?? []);
+    const next = {};
+    newDates.forEach((d, i) => {
+      next[d] = sortedOld[i] ?? [];
+    });
+    return next;
+  }, []);
+
+  useEffect(() => {
+    const onDatesChanged = (e) => {
+      if (e?.detail?.roomId !== roomId) return;
+      const { newDates, ok } = e.detail || {};
+      if (!ok || !Array.isArray(newDates) || !newDates.length) return;
+      const next = remapDaysByNewDates(daysMap, newDates);
+      dispatch(setDays(next));
+      setSelectedDay(1);
+      // 저장으로 취급 → baseline 갱신은 commit:ok 이벤트에서 처리됨
+    };
+    window.addEventListener("trip:dates:changed", onDatesChanged);
+    return () =>
+      window.removeEventListener("trip:dates:changed", onDatesChanged);
+  }, [roomId, daysMap, dispatch, remapDaysByNewDates]);
 
   /* ===================== 이미지 내보내기 ===================== */
   // 보드 DOM 참조 (래퍼에 부착해서 스케일 포함 영역을 캡처)
@@ -177,23 +264,8 @@ export default function ItineraryEditorView({
 
   // ScheduleSaveButton이 onSaved 콜백을 지원할 경우
   const handleSavedOk = useCallback(() => {
+    // 서버 커밋 성공 시 별도 이벤트도 오지만, 버튼 자체 콜백이 있으면 바로 무장
     setExportArmed(true);
-  }, []);
-
-  // 콜백이 없다면, 저장 로직에서 window 이벤트를 쏘도록 하고 여기서 수신
-  useEffect(() => {
-    const onCommitOk = (e) => {
-      if (!roomId || e?.detail?.roomId === roomId) setExportArmed(true);
-    };
-    window.addEventListener("schedule:commit:ok", onCommitOk);
-    return () => window.removeEventListener("schedule:commit:ok", onCommitOk);
-  }, [roomId]);
-
-  // 화면상 배율(줌): 2개 보드가 보이도록 기본 80%
-  const [boardScale, setBoardScale] = useState(0.8);
-  const changeScale = useCallback((next) => {
-    const v = Math.min(1, Math.max(0.5, Number(next) || 1));
-    setBoardScale(v);
   }, []);
 
   // 실제 내보내기: 캡처 전에 100%로 복원 → 캡처 후 배율 되돌림
@@ -204,6 +276,7 @@ export default function ItineraryEditorView({
       return;
     }
     const allDates = Object.keys(daysMap).sort();
+    // ⬇️ 여기서 날짜 문자열의 '-' 를 제거해서 파일명에 YYYYMMDD로 사용(“날짜 자르는 부분”)
     const a = (allDates[0] || "start").split("-").join("");
     const b = (allDates[allDates.length - 1] || "end").split("-").join("");
     const filename = `schedule_${roomId || "room"}_${a}-${b}.png`;
@@ -350,7 +423,8 @@ export default function ItineraryEditorView({
             </div>
           </div>
 
-          {/* 보기 배율(줌) */}
+          {/* 보기 배율(줌) — 주석 처리 */}
+          {/*
           <div
             style={{
               display: "inline-flex",
@@ -374,6 +448,7 @@ export default function ItineraryEditorView({
               <option value="100">100%</option>
             </select>
           </div>
+          */}
         </div>
 
         {/* 오른쪽: 날짜 변경 / 닫기 */}
@@ -403,14 +478,13 @@ export default function ItineraryEditorView({
       </div>
 
       <div className="itin-body">
-        {/* 보드 래퍼: 배율 적용(두 개 보드가 보이도록 기본 80%) */}
+        {/* 보드 래퍼 */}
         <div
           ref={boardRef}
           style={{
-            transform: `scale(${boardScale})`,
-            transformOrigin: "top left",
-            // 스케일에 따라 실제 렌더 폭이 줄어들어 빈 공간이 생기지 않게 보정
-            width: `${100 / boardScale}%`,
+            // transform: `scale(${boardScale})`,
+            // transformOrigin: "top left",
+            // width: `${100 / boardScale}%`,
           }}
         >
           {/* 내부 보드 ref가 필요한 경우 대비 */}
