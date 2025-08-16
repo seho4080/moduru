@@ -6,136 +6,141 @@
   font-style: normal;
 }
 
+/* ===== 컨테이너 ===== */
 .myreviews-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 2rem;
+  gap: 1rem;
+  padding: 1.25rem;
   font-family: 'Ownglyph_meetme-Rg', sans-serif;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
+/* ===== 카드 ===== */
 .myreviews-card {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(109, 135, 219, 0.1);
-  transition: all 0.3s ease;
+  padding: 1.25rem;
+  box-shadow: 0 4px 16px rgba(109, 135, 219, 0.08);
+  transition: all 0.2s ease;
+  max-width: 100%;
+  box-sizing: border-box;
 }
-
 .myreviews-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(109, 135, 219, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(109, 135, 219, 0.12);
 }
 
-/* 카드 헤더 */
+/* ===== 헤더 ===== */
 .card-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e2e8f0;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9eef5;
   position: relative;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .region-badge {
   background: #6d87db;
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 18px;
+  font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .place-name {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 500;
   color: #1e293b;
   margin: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .review-date {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: #64748b;
   white-space: nowrap;
-  margin-left: auto;
+  font-weight: 400;
+  flex-shrink: 0;
 }
 
 .delete-btn {
   background: #ef4444;
   border: none;
   border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  margin-left: 0.5rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.delete-btn:hover { background: #dc2626; transform: scale(1.05); }
+.delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== 태그 컨테이너 ===== */
+.tags-container { 
+  width: 100%; 
+  position: relative; 
+  box-sizing: border-box;
 }
 
-.delete-btn:hover {
-  background: #dc2626;
-  transform: scale(1.05);
-}
-
-.delete-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* 태그 컨테이너 */
-.tags-container {
-  width: 100%;
-  position: relative;
-}
-
-.tags-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+.tags-content { 
+  display: flex; 
+  align-items: flex-start; 
+  position: relative; 
+  min-height: 60px;
+  box-sizing: border-box;
 }
 
 .tags-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 0.75rem;
-  flex: 1;
-  min-height: 80px;
+  gap: 0.4rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 2rem;
 }
 
 .myreviews-tag {
   background: #f3f4f6;
   color: #222;
-  padding: 0.6rem 1.2rem;
-  border-radius: 22px;
-  font-size: 1rem;
-  font-weight: 500;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: none;
-  border: none;
-  transition: background .18s, color .18s;
+  padding: 0.3rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background .18s, color .18s;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.myreviews-tag:hover { 
+  background: #e5e7eb; 
+  color: #1763a6; 
 }
 
-.myreviews-tag:hover {
-  background: #e5e7eb;
-  color: #1763a6;
-}
-
-/* 태그 페이지네이션 */
+/* ===== 태그 화살표 ===== */
 .tags-pagination {
   position: absolute;
   left: 0;
@@ -145,134 +150,161 @@
   display: flex;
   justify-content: space-between;
   pointer-events: none;
-  z-index: 2; /* 태그 위에 보이게 */
-  gap: 0;
+  z-index: 2;
 }
 
 .pagination-btn {
-  background: none;           /* 배경색 없음 */
-  border: none;               /* 테두리 없음 */
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  color: #6d87db;
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  color: #000;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: auto;
-  box-shadow: none;
-  font-size: 1.3rem;
-  z-index: 2;
-  transition: color .18s, transform .12s;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all .18s;
+  user-select: none;
+}
+.pagination-btn:hover { 
+  color: #6d87db; 
+  transform: scale(1.1); 
 }
 
-.pagination-btn:hover {
-  color: #1763a6;
-  transform: scale(1.12);
+/* ===== 리뷰 페이지네이션 ===== */
+.reviews-pagination {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.75rem;
 }
-
-/* 화살표 SVG만 보이게 */
-.pagination-btn svg {
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
-  stroke-width: 3px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  background: none;
-  transition: stroke .18s;
+.rv-pg-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #e6ebf2;
+  background: #fff;
+  color: #64748b;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all .16s ease;
 }
+.rv-pg-btn:hover { color: #1f3c88; border-color: #d9e2f2; transform: translateY(-1px); }
+.rv-pg-btn.is-active {
+  background: #ff8b5b;
+  color: #fff;
+  border-color: #ff8b5b;
+  transform: none;
+  font-weight: 500;
+}
+.rv-pg-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-/* 빈 상태/로딩 */
+/* ===== 빈 상태/로딩 ===== */
 .myreviews-loading,
 .no-review-msg {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 1.5rem;
   color: #6b7280;
   font-family: 'Ownglyph_meetme-Rg', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
+  min-height: 220px;
+  font-weight: 400;
 }
+.no-review-title { font-size: 1.05rem; font-weight: 400; color: #4b5563; margin: 0; }
 
-.no-review-title {
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: #4b5563;
-  margin: 0;
-}
-
-/* 반응형 디자인 */
+/* ===== 반응형 ===== */
 @media (max-width: 768px) {
-  .myreviews-container {
-    padding: 1rem;
-    gap: 1rem;
+  .myreviews-container { 
+    padding: 1rem; 
+    gap: 0.75rem; 
   }
-  
-  .myreviews-card {
-    padding: 1.5rem;
+  .myreviews-card { 
+    padding: 1rem; 
   }
-  
-  .card-header {
-    flex-wrap: wrap;
-    gap: 0.75rem;
+  .card-header { 
+    flex-wrap: wrap; 
+    gap: 0.6rem; 
   }
-  
-  .review-date {
-    margin-left: 0;
-    order: 3;
+  .review-date { 
+    order: 3; 
   }
-  
-  .delete-btn {
-    order: 4;
-    margin-left: 0;
+  .delete-btn { 
+    order: 4; 
   }
-  
-  .tags-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
+
+  .tags-grid { 
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.3rem;
+    padding: 0 1.5rem;
   }
-  
-  .myreviews-tag {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.75rem;
+  .myreviews-tag { 
+    font-size: 0.75rem; 
+    padding: 0.25rem 0.5rem; 
+  }
+
+  .pagination-btn { 
+    width: 20px; 
+    height: 20px; 
+    font-size: 14px;
+  }
+
+  .reviews-pagination { 
+    gap: 0.3rem; 
+  }
+  .rv-pg-btn { 
+    min-width: 30px; 
+    height: 30px; 
+    padding: 0 8px; 
+    border-radius: 8px; 
   }
 }
 
 @media (max-width: 480px) {
-  .card-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .card-header { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 0.5rem;
   }
-  
-  .place-name {
-    font-size: 1.125rem;
+  .place-name { 
+    font-size: 1rem; 
+    font-weight: 500; 
+    order: 1;
   }
-  
-  .tags-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .region-badge {
+    order: 2;
+  }
+  .review-date {
+    order: 3;
+    align-self: flex-end;
+  }
+  .delete-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    order: 4;
+  }
+
+  .tags-grid { 
+    grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(4, 1fr);
-    min-height: 120px;
+    gap: 0.25rem;
+    padding: 0 1rem;
   }
-  
+
   .tags-content {
-    flex-direction: column;
-    gap: 1rem;
+    min-height: 80px;
   }
-  
-  .tags-pagination {
-    position: static;
-    transform: none;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  
-  .prev-btn,
-  .next-btn {
-    align-self: center;
+
+  .pagination-btn {
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
   }
 }
