@@ -16,6 +16,7 @@ const initialState = {
 
   // 리뷰 작성 모달
   isReviewWriteOpen: false,
+  reviewWriteTarget: null, // ✅ 리뷰 작성 대상(방) 정보
 };
 
 const uiSlice = createSlice({
@@ -45,8 +46,12 @@ const uiSlice = createSlice({
 
     // 리뷰 작성 모달
     openReviewWrite: (s) => { s.isReviewWriteOpen = true; },
-    closeReviewWrite: (s) => { s.isReviewWriteOpen = false; },
+    closeReviewWrite: (s) => { s.isReviewWriteOpen = false; s.reviewWriteTarget = null; },
     toggleReviewWrite: (s) => { s.isReviewWriteOpen = !s.isReviewWriteOpen; },
+
+    // ✅ 리뷰 모달 대상
+    setReviewWriteTarget: (s, { payload }) => { s.reviewWriteTarget = payload ?? null; },
+    clearReviewWriteTarget: (s) => { s.reviewWriteTarget = null; },
   },
 });
 
@@ -57,6 +62,7 @@ export const {
   openTripForm, closeTripForm,
   openInvite, closeInvite, toggleInvite,
   openReviewWrite, closeReviewWrite, toggleReviewWrite,
+  setReviewWriteTarget, clearReviewWriteTarget,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;
@@ -67,3 +73,4 @@ export const selectIsItineraryOpen = (s) => s.ui.isItineraryModalOpen;
 export const selectIsTripFormOpen = (s) => s.ui.isTripFormOpen;
 export const selectIsInviteOpen = (s) => s.ui.isInviteOpen;
 export const selectIsReviewWriteOpen = (s) => s.ui.isReviewWriteOpen;
+export const selectReviewWriteTarget = (s) => s.ui.reviewWriteTarget;
