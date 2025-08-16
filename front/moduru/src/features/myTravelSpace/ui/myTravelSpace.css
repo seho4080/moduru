@@ -198,20 +198,25 @@
 
 /* ===== 툴바 ===== */
 .travel-toolbar {
-  width: calc(100% - 80px);
-  margin: 0 auto 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr auto; 
+  display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between; /* 양 끝 정렬 */
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 40px;
+  margin: 0 auto 12px;
   box-sizing: border-box;
-
-  width: 100% !important;
-  max-width: 1400px !important;
-  padding: 0 40px !important;
-  margin: 0 auto 12px !important;
-  box-sizing: border-box !important;
 }
+
+.travel-toolbar .search-box {
+  flex: 1; /* 검색창을 남는 공간 채우게 */
+  margin-right: 16px; /* 정렬 버튼과 간격 */
+}
+
+.travel-toolbar .filter-select {
+  flex-shrink: 0; /* 오른쪽 버튼 크기 고정 */
+}
+
 @media (min-width: 1536px){
   .travel-toolbar{ width: calc(100% - 88px); padding: 0 44px !important; }
 }
@@ -244,11 +249,17 @@
 }
 
 .toolbar-left {
-  justify-self: center;
-  width: 100%;
+  flex: 1 1 0;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start; /* 왼쪽 끝으로 */
 }
+
+.toolbar-right {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: flex-end;   /* 오른쪽 끝으로 */
+}
+
 .toolbar-search {
   width: clamp(260px, 36vw, 520px);
   height: 38px;
@@ -417,17 +428,16 @@
   gap: 8px;
   margin-right: auto;
 }
-.row-more{
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  display: inline-flex;
+.row-more {
+  background: none;     /* 흰색 배경 제거 */
+  border: none;         /* 테두리 제거 */
+  padding: 0;           /* 여백 제거 */
+  margin: 0;
+  cursor: pointer;
+  line-height: 1;       /* 점 3개가 딱 붙어 나오도록 */
+  display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background .15s, box-shadow .15s, border-color .15s;
 }
 .row-more:hover{ background:#f9fafb; box-shadow:0 1px 3px rgba(0,0,0,.06); }
 .row-more svg{ fill:#6b7280; }
@@ -567,4 +577,38 @@
 .more-item--leave:hover {
   background: #fef2f2;
   color: #b91c1c;
+}
+
+/* 글씨체 Ownglyph_meetme-Rg로 전체 변경, 굵기는 평범하게 */
+.travel-card,
+.travel-card-title,
+.travel-table-head,
+.travel-row,
+.col,
+.col-title,
+.col-region,
+.col-period,
+.col-status,
+.travel-empty,
+.empty-text,
+.travel-start-msg,
+.toolbar-title,
+.toolbar-search,
+.toolbar-select,
+.more-menu,
+.more-item,
+.row-btn,
+.btn-schedule {
+  font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', Arial, sans-serif !important;
+  font-weight: 300 !important; /* 평범한 두께로 변경 */
+  font-size: 1.18rem;
+}
+.col-title,
+.col-region,
+.col-period,
+.col-status {
+  font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', Arial, sans-serif !important;
+  font-weight: 5 !important; /* 얇게 */
+  font-size: 1.18rem;
+  color: #444 !important;      /* 더 연한 회색으로 */
 }
