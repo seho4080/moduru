@@ -16,8 +16,8 @@ import axios from "axios";
  *  - 둘 다 : api.post('/both', data, { withCredentials: true, useToken: true })
  */
 const api = axios.create({
-  baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
+  baseURL: "http://localhost:8080/",
+  headers: { "Content-Type": "application/json" },
   withCredentials: true, // ✅ 전역 쿠키 전송 (쿠키 인증 기본값)
 });
 
@@ -50,21 +50,25 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-
-
 const refreshClient = axios.create({
-  baseURL: '/api',
+  baseURL: "http://localhost:8080/",
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 
 async function reissueToken() {
-  console.log('[REISSUE] /auth/reissue call');
-  const res = await refreshClient.post('/auth/reissue', null, { withCredentials: true });
+  console.log("[REISSUE] /auth/reissue call");
+  const res = await refreshClient.post("/auth/reissue", null, {
+    withCredentials: true,
+  });
   // 바디에 accessToken이 오면 필요할 때만 저장(혼용 전략일 때)
-  if (res?.data?.accessToken) localStorage.setItem('accessToken', res.data.accessToken);
-  console.log('토큰 재발급 응답:', res.status, res.data);
-  return { success: res.status >= 200 && res.status < 300 ,accessToken: res?.data?.accessToken,};
+  if (res?.data?.accessToken)
+    localStorage.setItem("accessToken", res.data.accessToken);
+  console.log("토큰 재발급 응답:", res.status, res.data);
+  return {
+    success: res.status >= 200 && res.status < 300,
+    accessToken: res?.data?.accessToken,
+  };
 }
 /**
  * 응답 인터셉터
@@ -84,12 +88,18 @@ async function reissueToken() {
 api.interceptors.response.use(
   // 📌 정상 응답은 그대로 반환
   (res) => res,
-  
+
   // 📌 에러 응답 처리
   async (error) => {
     const { response, config } = error;
     const status = response?.status || 0;
-    console.warn('[AXIOS-INT]', error.config?.method?.toUpperCase(), error.config?.url, '→', error.response?.status);
+    console.warn(
+      "[AXIOS-INT]",
+      error.config?.method?.toUpperCase(),
+      error.config?.url,
+      "→",
+      error.response?.status
+    );
     /**
      * 🔒 재시도 불가 조건
      *
@@ -97,7 +107,7 @@ api.interceptors.response.use(
      * 2) 이미 _retry 플래그가 true면 (무한루프 방지)
      * 3) 요청 URL이 /auth/reissue면 (재발급 호출 자체에서 또 재발급 안 함)
      */
-    const isReissueCall = (config?.url || '').includes('/auth/reissue');
+    const isReissueCall = (config?.url || "").includes("/auth/reissue");
     if (!config || config._retry || isReissueCall) {
       return Promise.reject(error);
     }
@@ -131,7 +141,8 @@ api.interceptors.response.use(
           //    (HttpOnly 쿠키는 자동으로 요청에 포함됨)
           //    만약 Bearer 토큰 방식이면 여기서 config.headers.Authorization 갱신 필요
           config.withCredentials = true;
-          if (config.headers?.Authorization) { // 혹시 이전에 붙인 게 있으면 제거
+          if (config.headers?.Authorization) {
+            // 혹시 이전에 붙인 게 있으면 제거
             delete config.headers.Authorization;
           }
           // 원래 요청을 재시도

@@ -1,7 +1,5 @@
 // 결과 구독: /topic/room/{roomId}/travel/result
 // 발행:     /app/room/{roomId}/travel/calc
-// (coreSocket 어댑터 사용)
-
 import {
   connectWebSocket,
   unsubscribeKeys,
@@ -10,25 +8,19 @@ import {
 
 const HANDLER = "travel";
 
-// 마지막 요청 모드 저장: `${roomId}|${day}` -> "driving" | "transit"
+// 최근 요청 모드 캐시: `${roomId}|${day}` -> "driving" | "transit"
 const _lastRequested = new Map();
 const keyOf = (roomId, day) => `${roomId}|${day}`;
-
 export function getLastRequestedTransport(roomId, day) {
   return _lastRequested.get(keyOf(roomId, day)) || null;
 }
 
-/**
- * /topic/room/{roomId}/travel/result 구독
- * @param {number|string} roomId
- * @param {(body:any)=>void} onMessage - 결과 payload만 전달
- * @param {{key?:string}} opts
- * @returns {()=>void} off
- */
+/** 결과 구독 */
 export function subscribeTravel(roomId, onMessage, opts = {}) {
   if (!roomId || typeof onMessage !== "function") return () => {};
-  const key = opts.key || `travel|${roomId}|${Date.now()}`;
+  const key = opts.key || `travel|${roomId}|result|${Date.now()}`;
 
+  // coreSocket가 JSON 파싱/로그를 이미 해주므로 바로 연결
   connectWebSocket(roomId, [
     { handler: HANDLER, action: "result", callback: onMessage, key },
   ]);
@@ -36,10 +28,7 @@ export function subscribeTravel(roomId, onMessage, opts = {}) {
   return () => unsubscribeKeys([key]);
 }
 
-/**
- * /app/room/{roomId}/travel/calc 발행
- * 서버 호환을 위해 payload에 옛키 `transpot`(소문자)도 포함
- */
+/** 경로 계산 발행 */
 export function publishTravel(
   { roomId, nameId, day, date, transport, transpot, events = [] },
   extra = {}
@@ -49,13 +38,13 @@ export function publishTravel(
     return;
   }
 
-  const raw = transport ?? transpot;
+  // driving/transit만 허용 (driver -> driving은 수신측에서도 폴백 처리)
+  const raw = (transport ?? transpot ?? "transit").toString().toLowerCase();
   const clientTransport =
-    String(raw || "transit").toLowerCase() === "driving"
-      ? "driving"
-      : "transit";
+    raw === "driving" || raw === "driver" ? "driving" : "transit";
   const transportEnum = clientTransport.toUpperCase(); // "DRIVING" | "TRANSIT"
 
+  // 최근 요청 모드 저장(서버가 transport를 비워 보낼 때 폴백용)
   _lastRequested.set(keyOf(roomId, day), clientTransport);
 
   const payload = {
@@ -63,9 +52,8 @@ export function publishTravel(
     nameId,
     day,
     date,
-    // 서버 호환: 구(old) + 신(new)
-    transpot: clientTransport, // 과거 키(소문자)
-    transport: transportEnum, // 신규 키(대문자 enum)
+    transpot: clientTransport, // 레거시 호환(소문자)
+    transport: transportEnum, // 신규(대문자 enum)
     events: events.map((e, i) => ({
       wantId: e.wantId,
       eventOrder: e.eventOrder ?? i + 1,
@@ -75,6 +63,5 @@ export function publishTravel(
     ...extra,
   };
 
-  // /app/room/{roomId}/travel/calc
   publishMessage(roomId, HANDLER, "calc", payload);
 }
