@@ -1,11 +1,14 @@
 // src/features/sharedPlace/ui/SharedPlacePanel.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SharedPlaceList from "./SharedPlaceList";
 import { useRemoveSharedPlace } from "../model/useRemoveSharedPlace";
 
-// 일정표 패널 열기 → Sidebar가 2-칼럼로 렌더
-import { openItineraryModal } from "../../../redux/slices/uiSlice";
+// 일정표/여행정보 모달
+import {
+  openItineraryModal,
+  openTripForm,
+} from "../../../redux/slices/uiSlice";
 
 // ✅ AI 일정 추천
 import {
@@ -20,6 +23,9 @@ import useAiSchedule from "@/features/aiSchedule/model/useAiSchedule";
 // ✅ 항상 마운트
 import AiScheduleModal from "@/features/aiSchedule/ui/AiScheduleModal";
 
+// ✅ 여행방 API (내 여행방 목록 조회)
+import { getUserTravelRooms } from "../../travelSpace/lib/roomApi";
+
 const PANEL_WIDTH = 280; // SidebarPanel의 공유 패널 고정폭과 일치
 
 export default function SharedPlacePanel({ roomId }) {
@@ -32,8 +38,21 @@ export default function SharedPlacePanel({ roomId }) {
   // 제목에 총 개수 표시용
   const sharedPlaces = useSelector((s) => s.sharedPlace.sharedPlaces) || [];
 
-  // 여행 시작/종료일 (여행일수 계산용)
+  // 여행방(스토어)
   const trip = useSelector((s) => s.tripRoom);
+
+  // 스토어 기준 날짜 유무
+  const hasDatesInStore = !!(trip?.startDate && trip?.endDate);
+
+  // 로컬에서도 캐싱(서버 조회 후 true로 전환 가능)
+  const [hasDates, setHasDates] = useState(hasDatesInStore);
+  const [checkingDates, setCheckingDates] = useState(false);
+
+  useEffect(() => {
+    setHasDates(hasDatesInStore);
+  }, [hasDatesInStore]);
+
+  // 여행일수 계산
   const travelDays = useMemo(() => {
     if (!trip?.startDate || !trip?.endDate) return 1;
     const s = new Date(trip.startDate);
@@ -57,6 +76,58 @@ export default function SharedPlacePanel({ roomId }) {
   const handleRemove = (place) => {
     if (!place?.wantId) return;
     removeSharedPlace(roomId, place.wantId);
+  };
+
+  /**
+   * 날짜가 없으면 서버에서 최신 방 정보를 조회해 있는지 확인.
+   * 여전히 없으면 여행정보 설정 폼을 열고 false 반환.
+   * 날짜가 확보되면 true 반환.
+   */
+  const ensureTripDates = async () => {
+    // 스토어에 이미 있으면 패스
+    if (hasDates) return true;
+
+    // roomId가 없으면 더 진행 불가
+    if (!roomId) return false;
+
+    setCheckingDates(true);
+    try {
+      const rooms = await getUserTravelRooms();
+      const current =
+        rooms?.find(
+          (r) =>
+            String(r?.id) === String(roomId) ||
+            String(r?.roomId) === String(roomId)
+        ) || null;
+
+      const start = current?.startDate;
+      const end = current?.endDate;
+
+      if (start && end) {
+        // 서버에 있으면 로컬 플래그 true로 전환(스토어 동기화는 별도 흐름에서 처리)
+        setHasDates(true);
+        return true;
+      }
+
+      // 서버에도 없으면 날짜 설정 폼 오픈
+      dispatch(openTripForm());
+      return false;
+    } catch (e) {
+      // API 실패 시에도 폼 열어 사용자에게 설정 기회 제공
+      dispatch(openTripForm());
+      return false;
+    } finally {
+      setCheckingDates(false);
+    }
+  };
+
+  // 일정표 담기 버튼 클릭
+  const handleOpenItinerary = async () => {
+    // 날짜 확보 시에만 일정표 오픈
+    const ok = await ensureTripDates();
+    if (ok) {
+      dispatch(openItineraryModal());
+    }
   };
 
   const handleRunAi = async () => {
@@ -159,11 +230,21 @@ export default function SharedPlacePanel({ roomId }) {
             selectMode ? "grid grid-cols-3" : "grid grid-cols-2"
           } gap-2`}
         >
-          {/* 일정표 담기 (상시 노출) */}
+          {/* 일정표 담기 (상시 노출)
+              - 날짜 없으면 서버 확인 → 없으면 여행정보 폼 오픈
+              - 날짜 있으면 일정표 모달 오픈 */}
           <button
             type="button"
-            onClick={() => dispatch(openItineraryModal())}
-            className="rounded-lg bg-[#4169e1] px-2 py-2 text-xs font-semibold text-white hover:brightness-95 active:brightness-90"
+            onClick={handleOpenItinerary}
+            disabled={!roomId || checkingDates}
+            className="rounded-lg bg-[#4169e1] px-2 py-2 text-xs font-semibold text-white hover:brightness-95 active:brightness-90 disabled:opacity-50"
+            title={
+              !roomId
+                ? "여행방 정보가 없습니다"
+                : !hasDates
+                ? "여행 날짜 미설정 시 설정 화면이 열립니다"
+                : undefined
+            }
           >
             <span className="flex flex-col items-center leading-tight">
               <span>일정표</span>

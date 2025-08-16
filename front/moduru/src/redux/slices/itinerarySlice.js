@@ -1,4 +1,3 @@
-// src/redux/slices/itinerarySlice.js
 import { createSlice, nanoid } from "@reduxjs/toolkit";
 
 const initialState = {
@@ -6,13 +5,11 @@ const initialState = {
   days: {},
 };
 
-/** 안전 숫자 변환 */
 const toNum = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
 
-/** 일자 배열 0-based로 재번호 부여 */
 const renumberDay = (arr = []) => {
   arr.forEach((it, idx) => {
     it.eventOrder = idx; // ✅ 0-based
@@ -20,7 +17,6 @@ const renumberDay = (arr = []) => {
   return arr;
 };
 
-/** wantId 배열을 숫자배열로 정규화 */
 const normalizeWantOrder = (arr) =>
   (Array.isArray(arr) ? arr : []).map((v) => toNum(v)).filter((v) => v != null);
 
@@ -39,7 +35,7 @@ const itinerarySlice = createSlice({
             ? index
             : arr.length;
         arr.splice(insertAt, 0, place);
-        renumberDay(arr); // ✅ 0-based 재부여
+        renumberDay(arr);
       },
       prepare({ date, place, index }) {
         const placeId =
@@ -74,14 +70,19 @@ const itinerarySlice = createSlice({
       if (fromIdx === toIdx) return;
       if (fromIdx < 0 || fromIdx >= arr.length) return;
 
-      let target = toIdx;
+      // 목표 인덱스 경계 보정 (배열 길이까지 허용 → 맨끝 삽입)
+      let target = typeof toIdx === "number" ? toIdx : arr.length - 1;
       if (target < 0) target = 0;
-      if (target > arr.length - 1) target = arr.length - 1;
+      if (target > arr.length) target = arr.length;
 
       const [moved] = arr.splice(fromIdx, 1);
-      const insertAt = fromIdx < target ? target : target; // 0-based라 보정 단순
-      arr.splice(insertAt, 0, moved);
-      renumberDay(arr); // ✅
+      // from < target 였다면, 제거로 인해 실제 삽입 위치 한 칸 앞으로 당겨짐
+      if (fromIdx < target) target -= 1;
+      if (target < 0) target = 0;
+      if (target > arr.length) target = arr.length;
+
+      arr.splice(target, 0, moved);
+      renumberDay(arr);
     },
 
     // 다른 날짜로 이동
@@ -94,7 +95,7 @@ const itinerarySlice = createSlice({
       if (!fromArr || fromIdx < 0 || fromIdx >= fromArr.length) return;
 
       const [moved] = fromArr.splice(fromIdx, 1);
-      renumberDay(fromArr); // ✅ from 정리
+      renumberDay(fromArr);
 
       if (!state.days[toDate]) state.days[toDate] = [];
       const toArr = state.days[toDate];
@@ -104,7 +105,7 @@ const itinerarySlice = createSlice({
           ? toIdx
           : toArr.length;
       toArr.splice(insertAt, 0, moved);
-      renumberDay(toArr); // ✅ to 정리
+      renumberDay(toArr);
     },
 
     // 시간 설정 (wantId 우선 매칭)
@@ -125,7 +126,6 @@ const itinerarySlice = createSlice({
       if (!t) return;
       t.startTime = startTime ?? null;
       t.endTime = endTime ?? null;
-      // 순서는 유지 (renumber 불필요)
     },
 
     // 삭제
@@ -134,7 +134,7 @@ const itinerarySlice = createSlice({
       const list = state.days[dateKey];
       if (!list) return;
       state.days[dateKey] = list.filter((p) => p.entryId !== entryId);
-      renumberDay(state.days[dateKey]); // ✅
+      renumberDay(state.days[dateKey]);
     },
 
     // 서버 이벤트로 해당 날짜 전체 교체 (eventOrder 0-based)
@@ -182,7 +182,7 @@ const itinerarySlice = createSlice({
 
       decorated.sort((a, b) => a.r - b.r || a.i - b.i);
       state.days[dateKey] = decorated.map((d) => d.item);
-      renumberDay(state.days[dateKey]); // ✅ 0-based
+      renumberDay(state.days[dateKey]);
     },
   },
 });
