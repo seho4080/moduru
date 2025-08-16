@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.B108.tripwish.domain.schedule.dto.response.SchedulePlaceResponseDto;
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.room.entity.WantPlace;
@@ -255,4 +256,17 @@ public class ScheduleServiceImpl implements ScheduleService {
         .latestSchedules(latestSchedules)
         .build();
   }
+
+    @Override
+    public List<SchedulePlaceResponseDto> getPlaceListBySchedule(Long roomId) {
+        return scheduleRepository.findPlaceNameAddrByRoomId(roomId)
+                .stream()
+                .map(row -> SchedulePlaceResponseDto.builder()
+                        .placeName((String) row[0])
+                        .address((String) row[1])
+                        .build())
+                .toList();
+    }
+
+
 }
