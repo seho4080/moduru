@@ -1,6 +1,6 @@
 import React from "react";
 import LikedPlaceCard from "./MyLikedPlaceCard";
-import "./myLikedPlaceCard.css";
+import "../css/myLikedPlaceCard.css";
 
 export default function MyLikedPlaceList({ items = [] }) {
   if (!items.length) {

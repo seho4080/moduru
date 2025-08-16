@@ -1,9 +1,9 @@
 // src/pages/myLikePlacePage/SideMenuBox.jsx
 import React, { useState } from "react";
-import "./myLikePlacePage.css";
-import Region from "../../features/myLikedPlace/ui/Region";
-import { fetchMyLikedPlacesApi } from "../../features/myLikedPlace/lib/likedPlaceApi";
-import MyLikedPlaceList from "../../features/myLikedPlace/ui/MyLikedPlaceList";
+import "../css/myLikedPlaceCard.css";
+import Region from "./Region";
+import { fetchMyLikedPlacesApi } from "../lib/likedPlaceApi";
+import MyLikedPlaceList from "./MyLikedPlaceList";
 
 const PAGE_SIZE = 7;
 

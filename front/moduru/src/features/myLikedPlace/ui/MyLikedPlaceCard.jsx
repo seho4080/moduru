@@ -1,6 +1,6 @@
 // src/features/myLikedPlace/ui/MyLikedPlaceCard.jsx
 import React, { useEffect, useRef, useState } from 'react';
-import './myLikedPlaceCard.css';
+import "../css/myLikedPlaceCard.css";
 
 import { useDispatch } from 'react-redux';
 import { toggleLike } from '../../../redux/slices/likedPlaceSlice';

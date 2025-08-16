@@ -1,0 +1,248 @@
+/* ===== 폰트 임포트 ===== */
+@font-face {
+  font-family: 'Ownglyph_StudyHard-Rg';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_StudyHard-Rg.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Ownglyph_ryurue-Rg';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2405-2@1.0/Ownglyph_ryurue-Rg.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Ownglyph_meetme-Rg';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/Ownglyph_meetme-Rg.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* ===== 페이지 배경 ===== */
+.main-page {
+  min-height: 100vh;
+  width: 100vw;
+  background: #6d87db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+}
+
+/* ===== 가운데 카드 (정중앙 배치) ===== */
+.main-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  --edge-gap: 8px;
+  --join-overlap: 160px;
+  --inward-shift: 40px;
+
+  width: 75%;
+  height: 80vh;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  padding: 32px 28px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 상단 바 ===== */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 20px;
+  color: #1b1b1b;
+  margin-bottom: 24px;
+  position: relative;   /* 헤더를 항상 맨 위로 */
+  z-index: 5;
+}
+
+/* 좌상단 로고 텍스트 */
+.logo-text {
+  font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', Arial, sans-serif;
+  font-size: 2.1rem;
+  font-weight: normal;
+  color: #6d87db;
+  letter-spacing: 0.5px;
+  margin: 0;
+  padding-left: 2px;
+}
+
+/* ===== 우상단 로그인 아이콘 (PNG를 단색으로 덮기) ===== */
+.login-icon {
+  width: 400px;               /* 훨씬 더 크게! */
+  height: 400px;
+  background-color: #6d87db; /* 아이콘 컬러 */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.06));
+  transition: transform .12s ease, filter .12s ease;
+}
+.login-icon:hover {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.12));
+}
+
+/* (레거시) 기존 원형 플레이스홀더가 남아있다면 */
+.profile-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f2f5ff;
+  border: 2px solid #6d87db;
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+
+/* ===== 가운데 콘텐츠 ===== */
+.card-inner {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18px;
+  text-align: center;
+  padding-top: 0;
+}
+
+/* 제목(메인 카피) */
+.hero-title {
+  font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  font-size: clamp(38px, 6vw, 64px);
+  letter-spacing: 0.5px;
+  color: #1b1b1b;
+  line-height: 1.08;
+  text-rendering: optimizeLegibility;
+  max-width: 900px;
+  width: 96%;
+  margin: 0 auto;
+  word-break: keep-all;
+  font-weight: 400;
+}
+.hero-title .hero-en { color: #ff6f3c; }
+.hero-title .hero-ko { color: #333; }
+
+/* 서브 카피 */
+.hero-sub {
+  font-family: 'Ownglyph_StudyHard-Rg', 'Ownglyph_meetme-Rg', 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+  font-weight: 300;
+  font-size: clamp(24px, 3vw, 38px);
+  line-height: 1.35;
+  letter-spacing: 0.2px;
+  color: #4a5568;
+  margin: 10px auto 0;
+  max-width: 980px;
+  width: 96%;
+  word-break: keep-all;
+  opacity: 0.95;
+}
+
+/* 버튼 스택(세로) */
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: center;
+  margin-top: 36px;
+}
+.main-btn {
+  width: min(420px, 96%);
+  padding: 14px 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background .2s ease, transform .06s ease, color .18s ease, box-shadow .18s ease;
+  white-space: nowrap;
+  font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', Arial, sans-serif;
+  font-size: 1.35rem;
+  font-weight: normal;
+  color: #333;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.main-btn:active { transform: translateY(1px); }
+
+.primary-btn { background: #6d87db; color: #fff; }
+.primary-btn:hover { background: #5c75c4; }
+
+.secondary-btn { background: #e5e5e5; color: #222; }
+.secondary-btn:hover { background: #cccccc; color: #111; }
+
+/* ===== 하단 라인 아트 (항상 뒤로) ===== */
+.art-row {
+  position: absolute;
+  left: 32px;
+  right: 32px;
+  bottom: 0;
+  height: 70%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+.art {
+  height: 100%;
+  background-color: #6d87db; /* 마스크로 보이는 색 */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.art-single {
+  width: 100%;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center bottom;
+  mask-position: center bottom;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .main-card {
+    --edge-gap: 12px;
+    --join-overlap: 90px;
+    --inward-shift: 22px;
+  }
+  .art-row { height: clamp(26%, 34vh, 48%); }
+}
+
+
+/* 프로필 컨테이너/드롭다운 */
+.profile-container { position: relative; }
+
+.profile-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #f2f5ff; border: 2px solid #6d87db;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.profile-circle:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+
+.profile-dropdown {
+  position: absolute; right: 0; top: calc(100% + 8px);
+  width: 160px; padding: 8px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.14); z-index: 10;
+}
+.dropdown-item {
+  width: 100%; padding: 10px 12px; text-align: left;
+  background: transparent; border: 0; border-radius: 8px;
+  color: #1f2937; font-size: 14px; cursor: pointer;
+}
+.dropdown-item:hover { background: #f4f6ff; }
