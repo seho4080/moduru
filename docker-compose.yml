@@ -87,6 +87,7 @@ services:
       - SPRING_MAIL_PASSWORD=${EMAIL_PASSWORD}
       - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
       - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
+      - AI_BASE_URL=http://ai-server:8000
     depends_on:
       redis:
         condition: service_healthy
@@ -202,6 +203,8 @@ services:
     build:
       context: ./ai
       dockerfile: Dockerfile
+    env_file:
+      - ./ai/.env
     container_name: ai-server
     ports:
       - "8000:8000"
