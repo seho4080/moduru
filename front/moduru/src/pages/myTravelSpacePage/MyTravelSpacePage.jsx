@@ -1,4 +1,3 @@
-// src/pages/myTravelSpacePage/MyTravelSpacePage.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./myTravelSpacePage.css";
@@ -6,32 +5,32 @@ import "./myTravelSpacePage.css";
 import TravelRoomsTable from "../../features/myTravelSpace/ui/TravelRoomsTable";
 import useTravelRooms from "../../features/myTravelSpace/model/useTravelRooms";
 import MyTravelToolbar from "../../features/myTravelSpace/ui/MyTravelToolbar";
+import SchedulePreview from "../../features/itinerary/ui/SchedulePreview"; // ✅ 추가
 
 export default function MyTravelSpacePage({ items = [] }) {
   const navigate = useNavigate();
+  const [viewTarget, setViewTarget] = useState(null); // ✅ 일정 모달 대상
+
   const toLocalDate = (s) => {
     if (!s) return null;
-    // 'YYYY-MM-DD'를 로컬 00:00으로 안전 파싱
     const [y, m, d] = String(s).split("-").map(Number);
     if (!y || !m || !d) return null;
     return new Date(y, m - 1, d, 0, 0, 0, 0);
   };
 
   const statusOf = (it) => {
-    // 1) 서버가 한글 상태를 준다면 매핑
     const s = (it?.status || "").trim();
     if (s === "진행중") return "ongoing";
     if (s === "완료") return "done";
 
-    // 2) 없으면 날짜로 판정
-    const today = new Date();             // 지금
-    const end = toLocalDate(it?.endDate); // 여행 종료일 00:00
+    const today = new Date();
+    const end = toLocalDate(it?.endDate);
     if (end && end < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
       return "done";
     }
-    return "ongoing"; // 종료일 없거나 아직 안 지났으면 진행중 취급
-   };
-  // ✅ removeRoom 같이 꺼내기
+    return "ongoing";
+  };
+
   const { rooms, loading, error, reload, leaveRoom, removeRoom } = useTravelRooms({
     endpoint: "/users/travel-rooms",
     useToken: false,
@@ -48,19 +47,14 @@ export default function MyTravelSpacePage({ items = [] }) {
   useEffect(() => { setPage(1); }, [q, status]);
 
   const filtered = useMemo(() => {
-    // const byStatus = (it) =>
-    //   status === "all" ? true :
-    //   status === "ongoing" ? it.status === "진행중" :
-    //   it.status === "완료";
     const byQuery = (it) => {
       if (!q.trim()) return true;
       const key = `${it.title ?? ""} ${it.region ?? ""}`.toLowerCase();
       return key.includes(q.trim().toLowerCase());
     };
-
-    // return (source || []).filter((it) => byStatus(it) && byQuery(it));
-  // }, [source, q, status]);
-  return (source || []).filter((it) => (status === "all" || statusOf(it) === status) && byQuery(it));
+    return (source || []).filter(
+      (it) => (status === "all" || statusOf(it) === status) && byQuery(it)
+    );
   }, [source, q, status]);
 
   const total = filtered.length;
@@ -79,7 +73,6 @@ export default function MyTravelSpacePage({ items = [] }) {
     navigate(`/trip-room/${id}`);
   };
 
-  // 나가기(탈퇴)
   const handleDelete = async (room) => {
     const id = Number(room?.id ?? room?.travelRoomId ?? room?.roomId);
     if (!Number.isFinite(id)) return;
@@ -93,7 +86,6 @@ export default function MyTravelSpacePage({ items = [] }) {
     }
   };
 
-  // ✅ 삭제(방 자체 삭제) — 방장일 때만 낙관적
   const handleRemove = async (room) => {
     const id = Number(room?.id ?? room?.travelRoomId ?? room?.roomId);
     if (!Number.isFinite(id)) return;
@@ -102,8 +94,7 @@ export default function MyTravelSpacePage({ items = [] }) {
     try {
       const optimistic = room?.isOwner || room?.canDelete || false;
       await removeRoom(id, { optimistic: true });
-      // 선택: 서버 진실과 동기화하고 싶으면 아래 한 줄 추가
-      // await reload();
+      // 필요 시 서버 재동기화: await reload();
     } catch (e) {
       const status = e?.response?.status;
       const message =
@@ -117,12 +108,7 @@ export default function MyTravelSpacePage({ items = [] }) {
 
   return (
     <div className="travel-page">
-      <MyTravelToolbar
-        q={q}
-        onChangeQ={setQ}
-        status={status}
-        onChangeStatus={setStatus}
-      />
+      <MyTravelToolbar q={q} onChangeQ={setQ} status={status} onChangeStatus={setStatus} />
 
       <div className="travel-card">
         {loading ? (
@@ -137,7 +123,8 @@ export default function MyTravelSpacePage({ items = [] }) {
             rooms={pageItems}
             onEnter={handleEnter}
             onDelete={handleDelete}
-            onRemove={handleRemove}  // ✅ 삭제 배선
+            onRemove={handleRemove}
+            onViewSchedule={(room) => setViewTarget(room)} // ✅ 일정 조회 연결
           />
         )}
       </div>
@@ -162,6 +149,14 @@ export default function MyTravelSpacePage({ items = [] }) {
             <button className="pg-btn" onClick={() => setPage(pageCount)} disabled={page === pageCount} aria-label="마지막 페이지">»</button>
           </div>
         </div>
+      )}
+
+      {/* ✅ 일정 조회 모달 */}
+      {viewTarget && (
+        <SchedulePreview
+          room={viewTarget}
+          onClose={() => setViewTarget(null)}
+        />
       )}
     </div>
   );
