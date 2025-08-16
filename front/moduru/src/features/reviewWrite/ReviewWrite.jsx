@@ -1,5 +1,5 @@
 // src/features/reviewWrite/ReviewWrite.jsx
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import "./reviewWrite.css";
 import StepTitle from "./ui/StepTitle";
 import SelectBox from "./ui/SelectBox";
@@ -11,24 +11,58 @@ export default function ReviewWrite({
   open,
   onClose,
   onStart,
-  fetchTrips,          
-  fetchPlacesByTrip,   
+  fetchTrips,          // () => Promise<{id,title,period}[]>
+  fetchPlacesByTrip,   // (tripId) => Promise<{id,name,address}[]>
+  initialTrip,         // { id, title, period } | null
 }) {
   if (!open) return null;
 
   const [activeTab, setActiveTab] = useState(0); // 0=닫힘, 1=step1, 2=step2
-  const [trips, setTrips]   = useState([]);
+  const [trips, setTrips] = useState([]);
   const [places, setPlaces] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [loading, setLoading] = useState(false);     // 리스트 로딩
+  const [error, setError] = useState("");
 
-  const [selectedTrip, setSelectedTrip]   = useState(null);
+  const [selectedTrip, setSelectedTrip] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const [selectedKeywords, setSelectedKeywords] = useState([]); // ReviewTags에서 선택된 content 배열
+  const [selectedKeywords, setSelectedKeywords] = useState([]); // 문자열 or 객체 혼재 가능
+
+  const [submitting, setSubmitting] = useState(false);
 
   const overlayRef = useRef(null);
+
+  // ====== 초기 프리셀렉트 처리 ======
+  useEffect(() => {
+    if (!open) return;
+    if (initialTrip?.id) {
+      setSelectedTrip(initialTrip);
+      setSelectedPlace(null);
+      setSelectedKeywords([]);
+      setActiveTab(0); // 필요시 2로 열고 자동 로드하고 싶으면 아래 주석 참고
+      // if (fetchPlacesByTrip) {
+      //   (async () => {
+      //     setLoading(true); setError("");
+      //     try {
+      //       const list = await fetchPlacesByTrip(initialTrip.id);
+      //       setPlaces(Array.isArray(list) ? list : []);
+      //       setActiveTab(2);
+      //     } catch { setError("장소 목록을 불러오지 못했습니다."); }
+      //     finally { setLoading(false); }
+      //   })();
+      // }
+    }
+  }, [open, initialTrip, fetchPlacesByTrip]);
+
+  // ESC로 닫기
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose?.();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const onOverlayClick = (e) => { if (e.target === overlayRef.current) onClose?.(); };
 
+  // step 토글 시 데이터 로딩
   const toggleOpen = async (step) => {
     const willOpen = activeTab !== step ? step : 0;
     setActiveTab(willOpen);
@@ -43,7 +77,7 @@ export default function ReviewWrite({
       } finally { setLoading(false); }
     }
 
-    if (willOpen === 2 && fetchPlacesByTrip && selectedTrip) {
+    if (willOpen === 2 && fetchPlacesByTrip && (selectedTrip?.id != null)) {
       setLoading(true); setError("");
       try {
         const list = await fetchPlacesByTrip(selectedTrip.id);
@@ -54,23 +88,40 @@ export default function ReviewWrite({
     }
   };
 
-  // 작성 버튼: 여행 + 장소 + 키워드 ≥ 1
-  const canSubmit = !!selectedTrip && !!selectedPlace && selectedKeywords.length > 0;
+  // 작성 버튼 활성화 조건: 여행 + 장소 + 키워드 ≥ 1
+  const canSubmit = !!selectedTrip && !!selectedPlace && selectedKeywords.length > 0 && !submitting;
 
-  // 작성 클릭 시 API 호출(테스트: placeId=1, tagIds=[1,2] 고정) + 콘솔 출력
+  // 유틸: 태그 배열에서 id 추출(객체/숫자/문자열 혼재 대응)
+  const toId = (x) => {
+    if (x == null) return null;
+    if (typeof x === "object") return x.id ?? x.tagId ?? null;
+    const n = Number(x);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  // 제출
   const submit = async () => {
     if (!canSubmit) return;
 
-    const payload = { placeId: 1, tagIds: [1, 2] };
+    const tagIds = [...new Set(selectedKeywords.map(toId).filter(Boolean))];
+    const payload = {
+      tripId: selectedTrip.id,          // 백엔드가 필요 없다면 무시됨
+      placeId: selectedPlace.id,
+      ...(tagIds.length > 0 ? { tagIds } : { tags: selectedKeywords }), // id가 있으면 id 우선
+    };
+
     try {
+      setSubmitting(true);
       const res = await createReview(payload);
       console.log("[리뷰 작성 성공]", res);
+      onStart?.({ trip: selectedTrip, place: selectedPlace, tagIds, tags: selectedKeywords });
+      onClose?.();
     } catch (e) {
-      console.error("[리뷰 작성 실패]", e.message);
+      console.error("[리뷰 작성 실패]", e?.response?.data || e);
+      alert("리뷰 저장에 실패했어요.");
+    } finally {
+      setSubmitting(false);
     }
-
-    onStart?.({ trip: selectedTrip, place: selectedPlace, keywords: selectedKeywords });
-    onClose?.();
   };
 
   return (
@@ -200,7 +251,7 @@ export default function ReviewWrite({
             disabled={!canSubmit}
             onClick={submit}
           >
-            작성
+            {submitting ? "저장 중..." : "작성"}
           </button>
         </div>
       </div>

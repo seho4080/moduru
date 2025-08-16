@@ -1,0 +1,49 @@
+/* src/features/itinerary/ui/DayDropZone.css */
+
+.day-dropzone {
+  width: 360px; /* 보드 한 칼럼 고정폭 (필요시 조정) */
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb; /* slate-200 */
+  border-radius: 8px;
+  padding: 8px;
+  transition: box-shadow 0.15s ease, outline 0.15s ease;
+}
+
+.day-dropzone.dragover {
+  outline: 2px dashed rgba(100, 116, 139, 0.5); /* slate-500 */
+  outline-offset: 4px;
+}
+
+.day-dropzone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.day-dropzone-empty {
+  height: 56px;
+  display: grid;
+  place-items: center;
+  color: #64748b; /* slate-500 */
+  font-size: 12px;
+  border: 1px dashed rgba(100, 116, 139, 0.35);
+  border-radius: 6px;
+  background: #f8fafc; /* slate-50 */
+}
+
+/* 카드 래퍼 (draggable) */
+.dd-card-wrapper {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 2px; /* 카드 자체에 패딩 있으니 최소만 */
+}
+
+/* 가로선 드롭 슬롯 */
+.dd-slot {
+  height: 6px;
+  border-radius: 3px;
+  outline: 1px dashed rgba(100, 116, 139, 0.45);
+  outline-offset: 4px;
+}
