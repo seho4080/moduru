@@ -3,20 +3,15 @@ package com.B108.tripwish.domain.place.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.B108.tripwish.domain.place.dto.ai.AiPlaceResult;
-import com.B108.tripwish.domain.place.dto.ai.AiPlaceSpec;
-import com.B108.tripwish.domain.place.dto.request.AiPlaceRequestDto;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
 import com.B108.tripwish.domain.place.document.PlaceDocument;
+import com.B108.tripwish.domain.place.dto.ai.AiPlaceResult;
+import com.B108.tripwish.domain.place.dto.ai.AiPlaceSpec;
+import com.B108.tripwish.domain.place.dto.request.AiPlaceRequestDto;
 import com.B108.tripwish.domain.place.dto.request.PlaceSearchRequest;
-import com.B108.tripwish.domain.place.dto.response.AiRecommendResponse;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceResponseDto;
 import com.B108.tripwish.domain.place.entity.Place;
@@ -29,10 +24,10 @@ import com.B108.tripwish.global.common.entity.Region;
 import com.B108.tripwish.global.common.enums.PlaceType;
 import com.B108.tripwish.global.exception.CustomException;
 import com.B108.tripwish.global.exception.ErrorCode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -115,7 +110,7 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
   @Override
   @Transactional(readOnly = true)
   public PlaceListResponseDto searchPlacesByAI(
-          CustomUserDetails user, Long roomId, AiPlaceRequestDto request) {
+      CustomUserDetails user, Long roomId, AiPlaceRequestDto request) {
 
     Region region = roomService.getRegionByRoomId(roomId);
     if (region == null || region.getId() == null) {
@@ -123,15 +118,15 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
       throw new CustomException(ErrorCode.REGION_NOT_FOUND);
     }
     Long regionId = region.getId();
-    log.info("[AI place] roomId={} regionId={} keyword='{}'",
-            roomId, regionId, request != null ? request.getKeyword() : null);
-
+    log.info(
+        "[AI place] roomId={} regionId={} keyword='{}'",
+        roomId,
+        regionId,
+        request != null ? request.getKeyword() : null);
 
     // 1) AI 호출 사양
-    AiPlaceSpec spec = AiPlaceSpec.builder()
-            .regionId(regionId)
-            .query(request.getKeyword().trim())
-            .build();
+    AiPlaceSpec spec =
+        AiPlaceSpec.builder().regionId(regionId).query(request.getKeyword().trim()).build();
 
     try {
       String reqJson = objectMapper.writeValueAsString(spec);
@@ -169,31 +164,29 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
     }
 
     // 3-2. id -> Place 맵 구성
-    Map<Long, Place> byId = found.stream()
-            .collect(Collectors.toMap(Place::getId, p -> p, (a, b) -> a));
+    Map<Long, Place> byId =
+        found.stream().collect(Collectors.toMap(Place::getId, p -> p, (a, b) -> a));
 
     // 4) AI 순서 유지 + 중복 제거 + 존재하는 것만 필터
-    List<Long> orderedExistingIds = new LinkedHashSet<>(aiIds).stream()
-            .filter(byId::containsKey)
-            .toList();
+    List<Long> orderedExistingIds =
+        new LinkedHashSet<>(aiIds).stream().filter(byId::containsKey).toList();
 
     if (orderedExistingIds.isEmpty()) {
       throw new CustomException(ErrorCode.PLACE_NOT_FOUND);
     }
 
     // 5) liked/wanted 배치 조회
-    Set<Long> likedPlaceIds  = myPlaceReaderService.getMyPlaceIds(user.getUser().getId(), orderedExistingIds);
-    Set<Long> wantedPlaceIds = wantPlaceReaderService.getWantPlaceIds(roomId, orderedExistingIds, PlaceType.PLACE);
+    Set<Long> likedPlaceIds =
+        myPlaceReaderService.getMyPlaceIds(user.getUser().getId(), orderedExistingIds);
+    Set<Long> wantedPlaceIds =
+        wantPlaceReaderService.getWantPlaceIds(roomId, orderedExistingIds, PlaceType.PLACE);
 
     // 6) DTO 매핑 (fromEntity 사용 → 이미지/카테고리 접근 안전)
     List<PlaceResponseDto> places = new ArrayList<>(orderedExistingIds.size());
     for (Long id : orderedExistingIds) {
       Place p = byId.get(id);
-      places.add(PlaceResponseDto.fromEntity(
-              p,
-              likedPlaceIds.contains(id),
-              wantedPlaceIds.contains(id)
-      ));
+      places.add(
+          PlaceResponseDto.fromEntity(p, likedPlaceIds.contains(id), wantedPlaceIds.contains(id)));
     }
 
     return new PlaceListResponseDto(places);
@@ -203,14 +196,20 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
   private List<Long> normalizeIds(Object raw) {
     if (raw instanceof List<?> list) {
       return list.stream()
-              .map(o -> {
+          .map(
+              o -> {
                 if (o == null) return null;
                 if (o instanceof Number n) return n.longValue();
-                try { return Long.parseLong(o.toString().trim()); } catch (Exception e) { return null; }
+                try {
+                  return Long.parseLong(o.toString().trim());
+                } catch (Exception e) {
+                  return null;
+                }
               })
-              .filter(Objects::nonNull)
-              .collect(Collectors.toCollection(LinkedHashSet::new)) // 순서 유지 + 중복 제거
-              .stream().toList();
+          .filter(Objects::nonNull)
+          .collect(Collectors.toCollection(LinkedHashSet::new)) // 순서 유지 + 중복 제거
+          .stream()
+          .toList();
     }
 
     String s = String.valueOf(raw);
@@ -228,10 +227,9 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
       try {
         Long id = Long.parseLong(token);
         if (seen.add(id)) out.add(id);
-      } catch (NumberFormatException ignore) {}
+      } catch (NumberFormatException ignore) {
+      }
     }
     return out;
   }
-
-
 }

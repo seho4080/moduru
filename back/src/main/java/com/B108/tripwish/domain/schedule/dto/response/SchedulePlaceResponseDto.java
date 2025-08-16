@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SchedulePlaceResponseDto {
-    private String placeName;
-    private String address;
+  private String placeName;
+  private String address;
 }
