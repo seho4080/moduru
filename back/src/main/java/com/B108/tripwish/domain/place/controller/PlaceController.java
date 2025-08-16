@@ -1,12 +1,10 @@
 package com.B108.tripwish.domain.place.controller;
 
-import com.B108.tripwish.domain.place.dto.request.AiPlaceRequestDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
-import com.B108.tripwish.domain.place.dto.request.PlaceSearchRequest;
 import com.B108.tripwish.domain.place.dto.response.PlaceDetailResponseDto;
 import com.B108.tripwish.domain.place.dto.response.PlaceListResponseDto;
 import com.B108.tripwish.domain.place.service.PlaceSearchService;
