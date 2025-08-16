@@ -1,0 +1,254 @@
+/* src/pages/MyPage.css */
+@font-face {
+  font-family: 'Ownglyph_meetme-Rg';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/Ownglyph_meetme-Rg.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.mypage-container {
+  min-height: 100vh;
+  background-color: #f5f6fa;
+  font-family: 'Ownglyph_meetme-Rg', sans-serif;
+}
+
+.mypage-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.mypage-container.expanded .mypage-content {
+  gap: 0;
+  padding: 2rem;
+  max-width: none;
+}
+
+/* 사이드바 스타일 */
+.mypage-sidebar {
+  width: 280px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(109, 135, 219, 0.1);
+  padding: 2rem;
+  height: fit-content;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.mypage-sidebar.hidden {
+  width: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.sidebar-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f0f2f8;
+}
+
+.sidebar-header h2 {
+  color: #6d87db;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.nav-item:hover {
+  background-color: rgba(109, 135, 219, 0.1);
+  transform: translateX(4px);
+}
+
+.nav-item.active {
+  background-color: #6d87db;
+  color: white;
+  box-shadow: 0 4px 12px rgba(109, 135, 219, 0.3);
+}
+
+.nav-item.active:hover {
+  transform: translateX(0);
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+/* 메인 콘텐츠 영역 */
+.mypage-main {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(109, 135, 219, 0.1);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  min-height: calc(100vh - 4rem);
+}
+
+.mypage-main.full-width {
+  width: 100%;
+  flex: none;
+  min-height: calc(100vh - 4rem);
+}
+
+/* 사이드바 토글 버튼 */
+.sidebar-toggle {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.toggle-btn {
+  background: #6d87db;
+  border: none;
+  width: 44px;
+  height: 88px;
+  border-radius: 44px 0 0 44px;      /* 반달 모양 */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow .18s, background .18s, transform .12s, width .18s;
+  box-shadow: 2px 0 16px rgba(109,135,219,0.18);
+  position: relative;
+  left: 0;
+  outline: none;
+  padding: 0;
+}
+
+.mypage-container.expanded .toggle-btn {
+  border-radius: 0 44px 44px 0;      /* 반달 방향 반대로 */
+  box-shadow: -2px 0 16px rgba(109,135,219,0.18);
+  left: -20px;
+}
+
+.toggle-btn:hover {
+  background: #5c75c4;
+  width: 52px;
+  box-shadow: 0 2px 20px rgba(109,135,219,0.28);
+  transform: scale(1.08);
+}
+
+.toggle-btn .arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+/* SVG 화살표 (<) */
+.toggle-btn .arrow svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .18s;
+}
+
+/* 확장 시 화살표 방향 반대로 */
+.mypage-container.expanded .toggle-btn .arrow svg {
+  transform: scaleX(-1);
+}
+
+.reviews-placeholder {
+  padding: 3rem;
+  text-align: center;
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mypage-content {
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .mypage-container.expanded .mypage-content {
+    padding: 1rem;
+  }
+  
+  .mypage-sidebar {
+    width: 100%;
+  }
+  
+  .mypage-sidebar.hidden {
+    height: 0;
+    width: 100%;
+    min-height: 0;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 1rem;
+  }
+  
+  .nav-item {
+    min-width: fit-content;
+    white-space: nowrap;
+  }
+  
+  .sidebar-toggle {
+    order: -1;
+    margin-bottom: 1rem;
+  }
+  
+  .toggle-btn {
+    width: 60px;
+    height: 30px;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -2px 8px rgba(135, 206, 235, 0.3);
+  }
+  
+  .mypage-container.expanded .toggle-btn {
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 2px 8px rgba(135, 206, 235, 0.3);
+  }
+  
+  .mypage-main {
+    min-height: calc(100vh - 2rem);
+  }
+  
+  .mypage-main.full-width {
+    min-height: calc(100vh - 2rem);
+  }
+}
