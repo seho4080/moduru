@@ -21,6 +21,32 @@ import { exportScheduleAsImage } from "../lib/exportScheduleImage";
 
 const EMPTY_OBJ = Object.freeze({});
 
+/** 컴팩트 헤더/버튼 공통 스타일 */
+const BTN_BASE = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: 26,
+  padding: "0 8px",
+  fontSize: 12,
+  lineHeight: 1,
+  borderRadius: 6,
+  textAlign: "center",
+  whiteSpace: "nowrap",
+};
+const BTN_ICON = {
+  ...BTN_BASE,
+  width: 26,
+  padding: 0,
+};
+const SELECT_SM = {
+  height: 26,
+  padding: "2px 8px",
+  fontSize: 12,
+  borderRadius: 6,
+  lineHeight: 1,
+};
+
 export default function ItineraryEditorView({
   onClose,
   headerRef,
@@ -141,8 +167,10 @@ export default function ItineraryEditorView({
   }, [legsForSelectedDay, currentDate, roomId, dispatch]);
 
   /* ===================== 이미지 내보내기 ===================== */
-  // 보드 DOM 참조
+  // 보드 DOM 참조 (래퍼에 부착해서 스케일 포함 영역을 캡처)
   const boardRef = useRef(null);
+  // (선택) 내부 보드 ref가 필요하면 유지
+  const innerBoardRef = useRef(null);
 
   // 저장 성공 시에만 내보내기 버튼 "무장(armed)"
   const [exportArmed, setExportArmed] = useState(false);
@@ -161,7 +189,14 @@ export default function ItineraryEditorView({
     return () => window.removeEventListener("schedule:commit:ok", onCommitOk);
   }, [roomId]);
 
-  // 실제 내보내기
+  // 화면상 배율(줌): 2개 보드가 보이도록 기본 80%
+  const [boardScale, setBoardScale] = useState(0.8);
+  const changeScale = useCallback((next) => {
+    const v = Math.min(1, Math.max(0.5, Number(next) || 1));
+    setBoardScale(v);
+  }, []);
+
+  // 실제 내보내기: 캡처 전에 100%로 복원 → 캡처 후 배율 되돌림
   const handleExportImage = useCallback(async () => {
     const root = boardRef.current;
     if (!root) {
@@ -173,7 +208,23 @@ export default function ItineraryEditorView({
     const b = (allDates[allDates.length - 1] || "end").split("-").join("");
     const filename = `schedule_${roomId || "room"}_${a}-${b}.png`;
 
-    await exportScheduleAsImage(root, { filename });
+    // 배율 임시 해제
+    const prevTransform = root.style.transform;
+    const prevWidth = root.style.width;
+    const prevOrigin = root.style.transformOrigin;
+
+    root.style.transform = "";
+    root.style.transformOrigin = "";
+    root.style.width = "";
+
+    try {
+      await exportScheduleAsImage(root, { filename });
+    } finally {
+      // 복원
+      root.style.transform = prevTransform;
+      root.style.transformOrigin = prevOrigin;
+      root.style.width = prevWidth;
+    }
   }, [boardRef, daysMap, roomId]);
 
   /* ===================== ESC 닫기 + 스크롤 락 ===================== */
@@ -190,33 +241,36 @@ export default function ItineraryEditorView({
 
   return (
     <>
-      {/* 헤더 (소요시간 관련 UI는 제거됨) */}
+      {/* 헤더 (컴팩트 버전) */}
       <div
         className="itin-header"
         ref={headerRef}
         style={{
-          padding: "6px 10px",
-          gap: 8,
+          padding: "4px 8px",
+          gap: 6,
           alignItems: "center",
-          minHeight: "44px",
+          minHeight: "36px",
+          display: "flex",
+          flexWrap: "wrap",
         }}
       >
         {/* 왼쪽: 제목 + Day 선택 */}
         <div
           className="itin-title"
-          style={{ display: "flex", alignItems: "center", gap: 8 }}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
         >
-          <span style={{ fontSize: 14, fontWeight: 700 }}>일정 편집</span>
+          <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1 }}>
+            일정 편집
+          </span>
           <select
             value={selectedDay}
             onChange={(e) => setSelectedDay(Number(e.target.value))}
             title="날짜 선택"
-            style={{
-              height: 28,
-              padding: "2px 8px",
-              fontSize: 12,
-              borderRadius: 6,
-            }}
+            style={SELECT_SM}
           >
             {dayOptions.map((d) => (
               <option key={d.day} value={d.day}>
@@ -230,7 +284,7 @@ export default function ItineraryEditorView({
         <div
           className="itin-toolbar"
           style={{
-            display: "flex",
+            display: "inline-flex",
             gap: 6,
             alignItems: "center",
             flexWrap: "wrap",
@@ -251,12 +305,7 @@ export default function ItineraryEditorView({
               onClick={onRunAiRoute}
               disabled={routeBusy || placeListForSelectedDay.length < 2}
               title="이 일차의 장소들로 AI 경로를 추천"
-              style={{
-                height: 28,
-                padding: "0 10px",
-                fontSize: 12,
-                borderRadius: 6,
-              }}
+              style={BTN_BASE}
             >
               {routeBusy ? "AI 생성…" : "AI 추천"}
             </button>
@@ -267,12 +316,7 @@ export default function ItineraryEditorView({
                 className="btn ghost"
                 onClick={onApplyRoute}
                 title="추천 결과를 이 일차에 적용"
-                style={{
-                  height: 28,
-                  padding: "0 10px",
-                  fontSize: 12,
-                  borderRadius: 6,
-                }}
+                style={BTN_BASE}
               >
                 적용
               </button>
@@ -291,33 +335,57 @@ export default function ItineraryEditorView({
             }}
           >
             {/* 저장 성공시 onSaved로 무장 */}
-            <ScheduleSaveButton small onSaved={handleSavedOk} />
+            <div style={{ display: "inline-flex", alignItems: "center" }}>
+              <ScheduleSaveButton small onSaved={handleSavedOk} />
+            </div>
 
             {/* 저장 성공시에만 활성화, 내보내기 완료 후 자동 비활성화 */}
-            <ExportImageButton
-              small
-              armed={exportArmed}
-              onExport={handleExportImage}
-              onDisarm={() => setExportArmed(false)}
-            />
+            <div style={{ display: "inline-flex", alignItems: "center" }}>
+              <ExportImageButton
+                small
+                armed={exportArmed}
+                onExport={handleExportImage}
+                onDisarm={() => setExportArmed(false)}
+              />
+            </div>
+          </div>
+
+          {/* 보기 배율(줌) */}
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              paddingLeft: 6,
+              marginLeft: 4,
+              borderLeft: "1px solid #e5e7eb",
+            }}
+            title="보드 보기 배율"
+          >
+            <span style={{ fontSize: 12, lineHeight: 1 }}>줌</span>
+            <select
+              value={String(Math.round(boardScale * 100))}
+              onChange={(e) => changeScale(Number(e.target.value) / 100)}
+              style={SELECT_SM}
+            >
+              <option value="70">70%</option>
+              <option value="80">80%</option>
+              <option value="90">90%</option>
+              <option value="100">100%</option>
+            </select>
           </div>
         </div>
 
         {/* 오른쪽: 날짜 변경 / 닫기 */}
         <div
           className="itin-actions"
-          style={{ display: "flex", gap: 6, marginLeft: 8 }}
+          style={{ display: "inline-flex", gap: 6, marginLeft: 8 }}
         >
           <button
             type="button"
             className="btn ghost"
             onClick={() => dispatch(openTripForm())}
-            style={{
-              height: 28,
-              padding: "0 10px",
-              fontSize: 12,
-              borderRadius: 6,
-            }}
+            style={BTN_BASE}
           >
             날짜 변경
           </button>
@@ -326,7 +394,7 @@ export default function ItineraryEditorView({
             className="btn icon"
             aria-label="닫기"
             onClick={onClose}
-            style={{ height: 28, width: 28, borderRadius: 6, fontSize: 14 }}
+            style={BTN_ICON}
             title="닫기"
           >
             ✕
@@ -335,8 +403,19 @@ export default function ItineraryEditorView({
       </div>
 
       <div className="itin-body">
-        {/* 보드 ref 연결: 이미지 내보내기에서 캡처 대상 */}
-        <ItineraryBoard ref={boardRef} showEta />
+        {/* 보드 래퍼: 배율 적용(두 개 보드가 보이도록 기본 80%) */}
+        <div
+          ref={boardRef}
+          style={{
+            transform: `scale(${boardScale})`,
+            transformOrigin: "top left",
+            // 스케일에 따라 실제 렌더 폭이 줄어들어 빈 공간이 생기지 않게 보정
+            width: `${100 / boardScale}%`,
+          }}
+        >
+          {/* 내부 보드 ref가 필요한 경우 대비 */}
+          <ItineraryBoard ref={innerBoardRef} showEta />
+        </div>
       </div>
     </>
   );
