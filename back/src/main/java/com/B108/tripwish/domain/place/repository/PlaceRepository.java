@@ -66,6 +66,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
   @Query(
       """
+<<<<<<< HEAD
   SELECT DISTINCT p FROM Place p
   LEFT JOIN FETCH p.images
   LEFT JOIN FETCH p.categoryId
@@ -75,6 +76,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
   @Query(
       """
+=======
+>>>>>>> feature/337-마이페이지
     select distinct p
     from Place p
     join MyPlace mp on mp.placeId = p.id
