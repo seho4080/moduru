@@ -157,11 +157,11 @@ public class PlaceSearchServiceImpl implements PlaceSearchService {
     // 3) DB 조회 (N+1 방지: 이미지 + 카테고리 fetch-join)
     // 3-1. ID 수가 많을 수 있으면 청크 처리(선택)
     List<Place> found = new ArrayList<>();
-    final int CHUNK = 800; // 드라이버/DB 환경에 맞게 조절
-    for (int i = 0; i < aiIds.size(); i += CHUNK) {
-      List<Long> sub = aiIds.subList(i, Math.min(i + CHUNK, aiIds.size()));
-      found.addAll(placeRepository.findAllWithImagesAndCategoryByIdIn(sub));
-    }
+    // final int CHUNK = 800; // 드라이버/DB 환경에 맞게 조절
+    // for (int i = 0; i < aiIds.size(); i += CHUNK) {
+    //   List<Long> sub = aiIds.subList(i, Math.min(i + CHUNK, aiIds.size()));
+    //   found.addAll(placeRepository.findAllWithImagesAndCategoryByIdIn(sub));
+    // }
 
     // 3-2. id -> Place 맵 구성
     Map<Long, Place> byId =
