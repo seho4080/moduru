@@ -1,3 +1,4 @@
+// src/features/itinerary/ui/useCalcStatusByDate.js
 import { useEffect, useRef, useState } from "react";
 import { subscribeTravelStatus } from "../../webSocket/travelStatusSocket";
 
@@ -5,29 +6,14 @@ import { subscribeTravelStatus } from "../../webSocket/travelStatusSocket";
  * 날짜 배열 단위로 계산 상태/에러/타임아웃을 관리
  * - /topic/room/{roomId}/travel/status (단일 토픽) 구독
  * - STARTED / ALREADY_RUNNING / DONE / FAILED 처리
- * - ✅ result가 왔는데 DONE이 안 오는 서버를 위한 보조 API: markResolvedFromResult
+ * - 결과(result)만 와도 로딩을 풀 수 있도록 markResolvedFromResult 제공
  */
-export default function useCalcStatusByDate(
-  roomId,
-  dates,
-  { notify, timeoutMs = 30000 } = {}
-) {
+export default function useCalcStatusByDate(roomId, dates, { notify } = {}) {
   const [loadingByDate, setLoadingByDate] = useState({});
   const [errorByDate, setErrorByDate] = useState({});
   const timersRef = useRef({}); // { [dateKey]: timeoutId }
 
-  // payload(day 또는 date)로 dateKey를 찾아낸다.
-  const resolveDateKey = (payload) => {
-    const dateStr = payload?.date;
-    if (dateStr && dates.includes(dateStr)) return dateStr;
-    const dayNum = Number(payload?.day);
-    if (Number.isFinite(dayNum) && dayNum > 0 && dayNum <= dates.length) {
-      return dates[dayNum - 1];
-    }
-    return null;
-  };
-
-  // dates 변경 시 상태/타이머 정리
+  // dates 바뀔 때 존재하지 않는 키 정리
   useEffect(() => {
     setLoadingByDate((prev) => {
       const next = {};
@@ -49,7 +35,7 @@ export default function useCalcStatusByDate(
     });
   }, [dates]);
 
-  const startTimeout = (dateKey, ms = timeoutMs) => {
+  const startTimeout = (dateKey, ms = 30000) => {
     const prev = timersRef.current[dateKey];
     if (prev) clearTimeout(prev);
     timersRef.current[dateKey] = setTimeout(() => {
@@ -67,48 +53,54 @@ export default function useCalcStatusByDate(
     }
   };
 
-  // 버튼 클릭 직후 낙관적 로딩 시작 (STARTED 지연 대비)
+  // 내 버튼 클릭 직후 낙관적 로딩 처리 (status STARTED가 늦을 수 있어서)
   const markOwnRequestAndStart = (dateKey) => {
     setLoadingByDate((p) => ({ ...p, [dateKey]: true }));
     setErrorByDate((p) => ({ ...p, [dateKey]: null }));
     startTimeout(dateKey);
   };
 
-  // ✅ result 수신만으로도 로딩 종료 (DONE 누락 대비)
-  const markResolvedFromResult = (payload) => {
-    const dk = resolveDateKey(payload);
+  // result만 도착(DONE 누락)하는 서버 대응
+  const markResolvedFromResult = (resultBody) => {
+    const dayNum = Number(resultBody?.day);
+    const dk = Number.isFinite(dayNum) && dayNum > 0 ? dates[dayNum - 1] : null;
     if (!dk) return;
     setLoadingByDate((p) => ({ ...p, [dk]: false }));
     setErrorByDate((p) => ({ ...p, [dk]: null }));
     clearTimeoutFor(dk);
   };
 
-  // status 단일 토픽 구독
+  // 단일 토픽 구독
   useEffect(() => {
     if (!roomId) return;
 
     const off = subscribeTravelStatus(roomId, ({ status, body }) => {
-      const dk = resolveDateKey(body);
+      const dayNum = Number(body?.day);
+      const dk =
+        Number.isFinite(dayNum) && dayNum > 0 ? dates[dayNum - 1] : null;
       if (!dk) return;
 
       switch (status) {
-        case "STARTED":
+        case "STARTED": {
           setLoadingByDate((p) => ({ ...p, [dk]: true }));
           setErrorByDate((p) => ({ ...p, [dk]: null }));
           startTimeout(dk);
           break;
-        case "ALREADY_RUNNING":
+        }
+        case "ALREADY_RUNNING": {
           setLoadingByDate((p) => ({ ...p, [dk]: true }));
           setErrorByDate((p) => ({ ...p, [dk]: null }));
           if (notify) notify("다른 사용자가 계산 중입니다.");
           startTimeout(dk);
           break;
-        case "DONE":
+        }
+        case "DONE": {
           setLoadingByDate((p) => ({ ...p, [dk]: false }));
           setErrorByDate((p) => ({ ...p, [dk]: null }));
           clearTimeoutFor(dk);
           break;
-        case "FAILED":
+        }
+        case "FAILED": {
           setLoadingByDate((p) => ({ ...p, [dk]: false }));
           setErrorByDate((p) => ({
             ...p,
@@ -116,6 +108,7 @@ export default function useCalcStatusByDate(
           }));
           clearTimeoutFor(dk);
           break;
+        }
         default:
           break;
       }
@@ -123,16 +116,16 @@ export default function useCalcStatusByDate(
 
     return () => {
       off?.();
-      // 모든 타이머 정리
+      // 안전하게 모든 타이머 제거
       Object.values(timersRef.current).forEach((t) => clearTimeout(t));
       timersRef.current = {};
     };
-  }, [roomId, dates, notify, timeoutMs]);
+  }, [roomId, dates, notify]);
 
   return {
     loadingByDate,
     errorByDate,
     markOwnRequestAndStart,
-    markResolvedFromResult, // 🔹 ItineraryBoard에서 사용할 것
+    markResolvedFromResult,
   };
 }
