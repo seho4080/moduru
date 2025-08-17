@@ -1,11 +1,12 @@
 package com.B108.tripwish.domain.room.service;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.room.dto.response.VotePlaceResponseDto;
 import com.B108.tripwish.domain.room.entity.WantPlace;
 import com.B108.tripwish.global.common.enums.PlaceType;
 
 public interface WantPlaceService {
-  void toggleVotePlace(CustomUserDetails user, Long roomId, Long wantId);
+  VotePlaceResponseDto toggleVotePlace(CustomUserDetails user, Long roomId, Long wantId);
 
   WantPlace saveWantPlace(Long roomId, PlaceType type, Long refId);
 
