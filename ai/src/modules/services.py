@@ -1,5 +1,5 @@
 import psycopg2
-import pandas as pd
+import numpy as np
 from sklearn.cluster import KMeans
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 import os
@@ -51,13 +51,64 @@ def k_means_clustering(data, days):
         print("Invalid number of days for clustering.")
         return []
 
-    coords = [(d["lat"], d["lng"]) for d in data]
+    coords = np.array([(d["lat"], d["lng"]) for d in data])
+    n_points = len(data)
+
     kmeans = KMeans(n_clusters=days, random_state=42, n_init=10)
     labels = kmeans.fit_predict(coords)
+    centroids = kmeans.cluster_centers_
+
+    target_size = n_points // days
+    if n_points % days != 0:
+        target_size += 1
+
+    for _ in range(5):
+        cluster_counts = np.bincount(labels, minlength=days)
+        overpopulated_clusters = [i for i, count in enumerate(cluster_counts) if count > target_size]
+        underpopulated_clusters = [i for i, count in enumerate(cluster_counts) if count < target_size]
+
+        if not overpopulated_clusters:
+            break
+
+        moved_count = 0
+        for over_cluster in overpopulated_clusters:
+            over_indices = np.where(labels == over_cluster)[0]
+
+            distances_from_center = np.linalg.norm(coords[over_indices] - centroids[over_cluster], axis=1)
+            sorted_by_distance = over_indices[np.argsort(distances_from_center)[::-1]]
+
+            for point_idx in sorted_by_distance:
+                if cluster_counts[over_cluster] <= target_size:
+                    break
+
+                if not underpopulated_clusters:
+                    break
+
+                min_dist = float("inf")
+                closest_under_cluster = -1
+
+                for under_cluster in underpopulated_clusters:
+                    dist = np.linalg.norm(coords[point_idx] - centroids[under_cluster])
+                    if dist < min_dist:
+                        min_dist = dist
+                        closest_under_cluster = under_cluster
+
+                if closest_under_cluster != -1:
+                    labels[point_idx] = closest_under_cluster
+                    cluster_counts[over_cluster] -= 1
+                    cluster_counts[closest_under_cluster] += 1
+
+                    if cluster_counts[closest_under_cluster] >= target_size:
+                        underpopulated_clusters.remove(closest_under_cluster)
+
+                    moved_count += 1
+
+        if moved_count == 0:
+            break
 
     clusters = {}
-    for label, point in zip(labels, data):
-        clusters.setdefault(label, []).append(point)
+    for i, point in enumerate(data):
+        clusters.setdefault(int(labels[i]), []).append(point)
 
     return [{"cluster": label, "points": points} for label, points in clusters.items()]
 
