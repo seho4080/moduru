@@ -9,7 +9,7 @@ import modules.kakao_maps_api as kakao
 conn = psycopg2.connect(
     host=os.getenv("POSTGRES_HOST", "localhost"),
     port=os.getenv("POSTGRES_PORT", 5432),
-    dbname=os.getenv("POSTGRES_DB", "mydb"),
+    dbname=os.getenv("POSTGRES_DB", "postgres"),
     user=os.getenv("POSTGRES_USER", "postgres"),
     password=os.getenv("POSTGRES_PASSWORD", "ssafy"),
 )
