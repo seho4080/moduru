@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: "http://localhost:8080",
   headers: { "Content-Type": "application/json" },
   withCredentials: true, // 쿠키 기본 전송
 });
@@ -10,7 +10,9 @@ const api = axios.create({
 /** ── Helpers ─────────────────────────────────────────── */
 function hasRefreshCookie() {
   if (typeof document === "undefined") return false;
-  return document.cookie.split("; ").some((c) => c.startsWith("refresh_token="));
+  return document.cookie
+    .split("; ")
+    .some((c) => c.startsWith("refresh_token="));
 }
 
 // 백엔드가 내려주는 "만료" 신호를 최대한 보수적으로 판정
@@ -72,7 +74,13 @@ api.interceptors.response.use(
     const status = response?.status ?? 0;
     const url = config?.url || "";
 
-    console.warn("[AXIOS-INT]", config?.method?.toUpperCase(), url, "→", status);
+    console.warn(
+      "[AXIOS-INT]",
+      config?.method?.toUpperCase(),
+      url,
+      "→",
+      status
+    );
 
     // 재시도 금지 조건
     if (!config || config._retry) return Promise.reject(error);
@@ -106,7 +114,8 @@ api.interceptors.response.use(
             config.headers.Authorization = `Bearer ${newAccess}`;
           } else {
             // 혹시 이전에 붙여둔 Authorization 제거 (쿠키만으로 가는 정책일 때)
-            if (config.headers?.Authorization) delete config.headers.Authorization;
+            if (config.headers?.Authorization)
+              delete config.headers.Authorization;
           }
           config._retry = true;
           return api(config);
