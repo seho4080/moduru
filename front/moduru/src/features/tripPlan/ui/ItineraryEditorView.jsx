@@ -7,7 +7,7 @@ import "./ItineraryEditor.css";
 
 import ScheduleSaveButton from "./ScheduleSaveButton";
 import useAiRoute from "../../aiRoute/model/useAiRoute";
-import { setOrderForDate } from "../../../redux/slices/itinerarySlice";
+import { setOrderForDate, setDays } from "../../../redux/slices/itinerarySlice";
 import { publishSchedule } from "../../webSocket/scheduleSocket";
 
 import useUnsavedGuard from "./useUnsavedGuard";
@@ -26,8 +26,8 @@ export default function ItineraryEditorView({
   onClose,
   headerRef,
   lockScroll = false,
-  containerRef, // 🔸 외부 컨테이너 ref (인라인 패널에서 전달)
-  hideClose = false, // 🔸 인라인 패널에서 닫기 버튼 숨김
+  containerRef, // 외부 컨테이너 ref (인라인 패널에서 전달)
+  hideClose = false, // 인라인 패널에서 닫기 버튼 숨김
 }) {
   const dispatch = useDispatch();
   const roomId = useSelector((s) => s.tripRoom?.roomId);
@@ -57,9 +57,14 @@ export default function ItineraryEditorView({
   const [selectedDay, setSelectedDay] = useState(() =>
     dayOptions.length ? dayOptions[0].day : 1
   );
+
+  // 배열 자체 의존: 기존 선택 유지/없으면 첫째날
   useEffect(() => {
-    if (dayOptions.length) setSelectedDay(dayOptions[0].day);
-  }, [dayOptions.length]);
+    if (!dayOptions.length) return;
+    setSelectedDay((prev) =>
+      dayOptions.some((d) => d.day === prev) ? prev : dayOptions[0].day
+    );
+  }, [dayOptions]);
 
   const currentDate = useMemo(
     () => dayOptions.find((d) => d.day === selectedDay)?.date,
@@ -70,11 +75,61 @@ export default function ItineraryEditorView({
     [dayOptions, selectedDay]
   );
 
-  const hasAnyItinerary = useMemo(
-    () => Object.values(daysMap).some((arr) => (arr?.length || 0) > 0),
-    [daysMap]
-  );
-  useUnsavedGuard(hasAnyItinerary);
+  /* 변경 감지(dirty) & 저장 반영 */
+  const lastSavedSig = useRef("");
+  const [dirty, setDirty] = useState(false);
+
+  // 날짜/순서만 추린 시그니처 (저장 비교용)
+  const makeSig = useCallback((m) => {
+    return JSON.stringify(
+      Object.entries(m)
+        .sort(([a], [b]) => String(a).localeCompare(String(b)))
+        .map(([date, events]) => [
+          date,
+          (events ?? []).map((e) => Number(e.wantId ?? e.id ?? -1)),
+        ])
+    );
+  }, []);
+
+  // 최초 로드 시 baseline 잡기 (초기 더티 방지)
+  useEffect(() => {
+    if (lastSavedSig.current === "") {
+      lastSavedSig.current = makeSig(daysMap);
+    }
+  }, [daysMap, makeSig]);
+
+  // daysMap이 바뀌면 dirty 판정 + 내보내기 비무장
+  useEffect(() => {
+    const now = makeSig(daysMap);
+    const changed = now !== lastSavedSig.current;
+    setDirty(changed);
+  }, [daysMap, makeSig]);
+
+  // 저장/더티 커스텀 이벤트 수신
+  useEffect(() => {
+    const onSaved = (e) => {
+      if (!roomId || e?.detail?.roomId === roomId) {
+        lastSavedSig.current = makeSig(daysMap);
+        setDirty(false);
+        setExportArmed(true);
+      }
+    };
+    const onDirty = (e) => {
+      if (!roomId || e?.detail?.roomId === roomId) {
+        setDirty(true);
+        setExportArmed(false);
+      }
+    };
+    window.addEventListener("schedule:commit:ok", onSaved);
+    window.addEventListener("schedule:dirty", onDirty);
+    return () => {
+      window.removeEventListener("schedule:commit:ok", onSaved);
+      window.removeEventListener("schedule:dirty", onDirty);
+    };
+  }, [roomId, daysMap, makeSig]);
+
+  // 페이지 이탈/닫기 가드
+  useUnsavedGuard(dirty);
 
   /* AI 경로 추천 */
   const { runAiRoute } = useAiRoute(roomId);
@@ -91,7 +146,8 @@ export default function ItineraryEditorView({
   );
 
   const [asking, setAsking] = useState(false);
-  const routeBusy = asking || aiStatus === "STARTED" || aiStatus === "PROGRESS";
+  const routeBusy =
+    asking || aiStatus === "STARTED" || aiStatus === "PROGRESS";
 
   const onRunAiRoute = useCallback(async () => {
     if (!roomId) return;
@@ -136,7 +192,39 @@ export default function ItineraryEditorView({
       dateKey: currentDate,
       wantOrderIds: orderWantIds,
     });
+
+    // 변경 발생 → dirty 알림
+    window.dispatchEvent(
+      new CustomEvent("schedule:dirty", { detail: { roomId } })
+    );
   }, [legsForSelectedDay, currentDate, roomId, dispatch]);
+
+  /* 날짜 저장 후 재매핑 */
+  const remapDaysByNewDates = useCallback((oldMap, newDates) => {
+    const sortedOld = Object.entries(oldMap)
+      .sort(([a], [b]) => String(a).localeCompare(String(b)))
+      .map(([, ev]) => ev ?? []);
+    const next = {};
+    newDates.forEach((d, i) => {
+      next[d] = sortedOld[i] ?? [];
+    });
+    return next;
+  }, []);
+
+  useEffect(() => {
+    const onDatesChanged = (e) => {
+      if (e?.detail?.roomId !== roomId) return;
+      const { newDates, ok } = e.detail || {};
+      if (!ok || !Array.isArray(newDates) || !newDates.length) return;
+      const next = remapDaysByNewDates(daysMap, newDates);
+      dispatch(setDays(next));
+      setSelectedDay(1);
+      // 저장으로 취급 → baseline 갱신은 commit:ok 이벤트에서 처리됨
+    };
+    window.addEventListener("trip:dates:changed", onDatesChanged);
+    return () =>
+      window.removeEventListener("trip:dates:changed", onDatesChanged);
+  }, [roomId, daysMap, dispatch, remapDaysByNewDates]);
 
   /* 이미지 내보내기 */
   const boardRef = useRef(null);
@@ -144,6 +232,7 @@ export default function ItineraryEditorView({
   const [exportArmed, setExportArmed] = useState(false);
 
   const handleSavedOk = useCallback(() => setExportArmed(true), []);
+
   useEffect(() => {
     const onCommitOk = (e) => {
       if (!roomId || e?.detail?.roomId === roomId) setExportArmed(true);
@@ -152,126 +241,6 @@ export default function ItineraryEditorView({
     return () => window.removeEventListener("schedule:commit:ok", onCommitOk);
   }, [roomId]);
 
-  /* 🔸 개선된 반응형 패널 크기 감지 */
-  const panelRef = useRef(null);
-  const [panelWidth, setPanelWidth] = useState(0);
-  const [panelType, setPanelType] = useState("side");
-
-  useEffect(() => {
-    const targetElement =
-      containerRef?.current || panelRef.current?.parentElement;
-    if (!targetElement) return;
-
-    const updateDimensions = () => {
-      const rect = targetElement.getBoundingClientRect();
-      const width = rect.width;
-      setPanelWidth(width);
-
-      // 🔸 패널 타입 결정 로직 개선
-      const parent = targetElement.parentElement;
-      if (parent) {
-        const isInline =
-          parent.classList.contains("inline-panel") ||
-          width > window.innerWidth * 0.7 ||
-          width > 800;
-        setPanelType(isInline ? "inline" : "side");
-      }
-    };
-
-    const observer = new ResizeObserver(updateDimensions);
-    observer.observe(targetElement);
-    updateDimensions();
-
-    return () => observer.disconnect();
-  }, [containerRef]);
-
-  // 🔸 보드 크기 계산 로직 개선
-  const { boardWidth, visibleBoards, cardWidth } = useMemo(() => {
-    const GAP = 16;
-    const PADDING = 32;
-    const HEADER_HEIGHT = 60;
-
-    let calculatedBoardWidth;
-    let calculatedVisibleBoards;
-
-    if (panelType === "inline") {
-      // 인라인 패널: 더 유연한 크기 조절
-      if (panelWidth < 400) {
-        calculatedBoardWidth = 240;
-        calculatedVisibleBoards = 1;
-      } else if (panelWidth < 600) {
-        calculatedBoardWidth = 260;
-        calculatedVisibleBoards = 2;
-      } else if (panelWidth < 900) {
-        calculatedBoardWidth = 280;
-        calculatedVisibleBoards = 3;
-      } else if (panelWidth < 1200) {
-        calculatedBoardWidth = 300;
-        calculatedVisibleBoards = 4;
-      } else if (panelWidth < 1500) {
-        calculatedBoardWidth = 320;
-        calculatedVisibleBoards = 4;
-      } else {
-        calculatedBoardWidth = 340;
-        calculatedVisibleBoards = 5;
-      }
-    } else {
-      // 사이드 패널: 더 작은 크기로 최적화
-      if (panelWidth < 350) {
-        calculatedBoardWidth = 200;
-        calculatedVisibleBoards = 1;
-      } else if (panelWidth < 500) {
-        calculatedBoardWidth = 220;
-        calculatedVisibleBoards = 2;
-      } else if (panelWidth < 650) {
-        calculatedBoardWidth = 240;
-        calculatedVisibleBoards = 2;
-      } else {
-        calculatedBoardWidth = 260;
-        calculatedVisibleBoards = 3;
-      }
-    }
-
-    // 🔸 실제 사용 가능한 공간을 고려한 보드 수 재계산
-    const availableWidth = panelWidth - PADDING;
-    const maxPossibleBoards = Math.floor(
-      availableWidth / (calculatedBoardWidth + GAP)
-    );
-    const finalVisibleBoards = Math.max(
-      1,
-      Math.min(calculatedVisibleBoards, maxPossibleBoards)
-    );
-
-    // 🔸 보드 수에 맞춰 보드 폭 재조정
-    if (finalVisibleBoards < calculatedVisibleBoards && panelWidth > 400) {
-      const optimalBoardWidth = Math.floor(
-        (availableWidth - GAP * (finalVisibleBoards - 1)) / finalVisibleBoards
-      );
-      calculatedBoardWidth = Math.max(
-        200,
-        Math.min(calculatedBoardWidth, optimalBoardWidth)
-      );
-    }
-
-    const calculatedCardWidth = Math.max(180, calculatedBoardWidth - 40);
-
-    return {
-      boardWidth: calculatedBoardWidth,
-      visibleBoards: finalVisibleBoards,
-      cardWidth: calculatedCardWidth,
-    };
-  }, [panelWidth, panelType]);
-
-  /* 🔸 화면 배율 상태 개선 */
-  const [manualScale, setManualScale] = useState(1);
-  const MIN_SCALE = 0.6;
-  const MAX_SCALE = 1.2;
-  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-  const changeScale = (s) => setManualScale(clamp(s, MIN_SCALE, MAX_SCALE));
-  const resetScale = () => setManualScale(1);
-  const finalScale = manualScale;
-  const manualScaleOffset = Math.round((finalScale - 1) * 100);
-
   const handleExportImage = useCallback(async () => {
     const root = boardRef.current;
     if (!root) {
@@ -279,24 +248,16 @@ export default function ItineraryEditorView({
       return;
     }
     const allDates = Object.keys(daysMap).sort();
+    // 날짜 문자열의 '-' 를 제거해서 파일명에 YYYYMMDD로 사용
     const a = (allDates[0] || "start").split("-").join("");
     const b = (allDates[allDates.length - 1] || "end").split("-").join("");
     const filename = `schedule_${roomId || "room"}_${a}-${b}.png`;
 
-    const prevTransform = root.style.transform;
-    const prevWidth = root.style.width;
-    const prevOrigin = root.style.transformOrigin;
-
-    root.style.transform = "";
-    root.style.transformOrigin = "";
-    root.style.width = "";
-
     try {
       await exportScheduleAsImage(root, { filename });
-    } finally {
-      root.style.transform = prevTransform;
-      root.style.transformOrigin = prevOrigin;
-      root.style.width = prevWidth;
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("이미지 내보내기에 실패했습니다.");
     }
   }, [boardRef, daysMap, roomId]);
 
@@ -430,7 +391,6 @@ export default function ItineraryEditorView({
 
   return (
     <div
-      ref={panelRef}
       className="itinerary-editor"
       style={{
         height: "100vh",
@@ -444,10 +404,10 @@ export default function ItineraryEditorView({
         ref={headerRef}
         className="itinerary-editor__header itinerary-editor__header--compact"
         style={{
-          height: "60px", // 🔸 고정 높이 설정
+          height: "60px", // 고정 높이 설정
           minHeight: "60px",
           maxHeight: "60px",
-          flexShrink: 0, // 🔸 축소 방지
+          flexShrink: 0, // 축소 방지
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -487,34 +447,6 @@ export default function ItineraryEditorView({
             onDisarm={() => setExportArmed(false)}
             customStyle="itinerary-editor__button itinerary-editor__button--compact"
           />
-          <div className="itinerary-editor__divider itinerary-editor__divider--short" />
-          <span className="itinerary-editor__status itinerary-editor__status--inline">
-            {visibleBoards}일 · {boardWidth}px · {Math.round(panelWidth)}px
-          </span>
-          <select
-            value={String(Math.round(finalScale * 100))}
-            onChange={(e) => changeScale(Number(e.target.value) / 100)}
-            className="itinerary-editor__select itinerary-editor__select--scale itinerary-editor__select--compact"
-            title="화면 배율"
-          >
-            <option value="60">60%</option>
-            <option value="70">70%</option>
-            <option value="80">80%</option>
-            <option value="90">90%</option>
-            <option value="100">100%</option>
-            <option value="110">110%</option>
-            <option value="120">120%</option>
-          </select>
-          {manualScaleOffset !== 0 && (
-            <button
-              type="button"
-              onClick={resetScale}
-              className="itinerary-editor__button itinerary-editor__button--ghost itinerary-editor__button--reset itinerary-editor__button--compact"
-              title="자동 크기로 리셋"
-            >
-              ↺
-            </button>
-          )}
         </div>
 
         <div
@@ -694,7 +626,7 @@ export default function ItineraryEditorView({
         className="itinerary-editor__body"
         style={{
           overflow: "hidden",
-          height: "calc(100vh - 60px)", // 🔸 헤더 높이만큼 빼기
+          height: "calc(100vh - 60px)", // 헤더 높이만큼 빼기
           flex: 1,
         }}
       >
@@ -702,19 +634,12 @@ export default function ItineraryEditorView({
           ref={boardRef}
           className="itinerary-editor__board-container"
           style={{
-            transform: `scale(${finalScale})`,
-            transformOrigin: "top left",
-            width: `${(1 / finalScale) * 100}%`,
-            height: `${(1 / finalScale) * 100}%`,
-            overflow: "auto", // 🔸 스케일링으로 잘린 부분 스크롤 가능
+            overflow: "auto",
           }}
         >
           <ItineraryBoard
             ref={innerBoardRef}
             showEta
-            boardWidth={boardWidth} // 🔸 동적 보드 폭 전달
-            visibleBoards={visibleBoards} // 🔸 동적 표시 보드 수 전달
-            panelType={panelType} // 🔸 패널 타입 전달
           />
         </div>
       </div>

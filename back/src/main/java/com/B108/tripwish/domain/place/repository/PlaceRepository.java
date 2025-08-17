@@ -66,6 +66,15 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
   @Query(
       """
+  SELECT DISTINCT p FROM Place p
+  LEFT JOIN FETCH p.images
+  LEFT JOIN FETCH p.categoryId
+  WHERE p.id IN :ids
+  """)
+  List<Place> findAllWithImagesAndCategoryByIdIn(@Param("ids") java.util.Collection<Long> ids);
+
+  @Query(
+      """
     select distinct p
     from Place p
     join MyPlace mp on mp.placeId = p.id
