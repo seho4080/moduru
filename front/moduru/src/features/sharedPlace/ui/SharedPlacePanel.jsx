@@ -55,7 +55,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
 
   // 화면 모드
   const [viewMode, setViewMode] = useState("shared"); // "shared" | "result" | "newSelection"
-  
+
   // 날짜 선택 모달 상태
   const [showDateModal, setShowDateModal] = useState(false);
 
@@ -240,7 +240,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
 
       if (window?.toast?.success) {
         window.toast.success(
-          `Day ${dayNumber} 일정을 AI 추천으로 교체했습니다.`
+          `Day ${dayNumber} 일정을 추천으로 교체했습니다.`
         );
       }
     },
@@ -252,8 +252,8 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
     viewMode === "shared"
       ? "희망장소"
       : viewMode === "result"
-      ? "AI 추천 결과"
-      : "새 AI 일정 추천";
+        ? "추천 결과"
+        : "새 일정 추천";
 
   // 진행 중인지 확인
   const isLoading = status === "STARTED" || status === "PROGRESS";
@@ -282,10 +282,10 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
       <div className="px-4 py-3 border-b border-slate-200 bg-white">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
-                         <div className="text-[13px] font-bold text-slate-800 tracking-tight truncate">
-               {headerTitle}
-             </div>
-             <div className="text-[10px] text-slate-500 mt-0.5">
+            <div className="text-[13px] font-bold text-slate-800 tracking-tight truncate">
+              {headerTitle}
+            </div>
+            <div className="text-[10px] text-slate-500 mt-0.5">
               {viewMode === "shared" && `총 ${sharedPlaces.length}개`}
               {viewMode === "result" &&
                 (hasAiResults
@@ -296,22 +296,21 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
             </div>
           </div>
 
-                     {/* 일정창 열기/닫기 버튼 */}
-           {viewMode === "shared" && (
-             <button
-               type="button"
-               onClick={handleToggleItinerary}
-               className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
-                 isItineraryOpen
-                   ? "border-red-300 text-red-700 hover:bg-red-50 bg-red-50/50"
-                   : "border-blue-300 text-blue-700 hover:bg-blue-50 bg-blue-50/50"
-               }`}
-               title={
-                 isItineraryOpen
-                   ? "일정 편집창을 닫습니다"
-                   : "일정 편집창을 엽니다"
-               }
-             >
+          {/* 일정창 열기/닫기 버튼 */}
+          {viewMode === "shared" && (
+            <button
+              type="button"
+              onClick={handleToggleItinerary}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors ${isItineraryOpen
+                  ? "border-red-300 text-red-700 hover:bg-red-50 bg-red-50/50"
+                  : "border-blue-300 text-blue-700 hover:bg-blue-50 bg-blue-50/50"
+                }`}
+              title={
+                isItineraryOpen
+                  ? "일정 편집창을 닫습니다"
+                  : "일정 편집창을 엽니다"
+              }
+            >
               <svg
                 className="w-3.5 h-3.5"
                 viewBox="0 0 24 24"
@@ -334,7 +333,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
               type="button"
               onClick={handleRetryFromResult}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
-              title="장소를 선택해서 새 AI 일정을 추천받습니다"
+              title="장소를 선택해서 새 일정을 추천받습니다"
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -349,7 +348,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
                   d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 10-8 8"
                 />
               </svg>
-              AI 일정 추천 다시 받기
+              일정 추천 다시 받기
             </button>
           )}
         </div>
@@ -362,7 +361,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
               <div className="text-lg font-semibold text-slate-800">
-                AI가 일정을 구성 중입니다
+                일정을 구성 중입니다
               </div>
             </div>
 
@@ -396,7 +395,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
           <SharedPlaceList
             selectMode={false}
             selectedWantIds={[]}
-            onChangeSelected={() => {}}
+            onChangeSelected={() => { }}
             onRemove={handleRemove}
             onCardClick={onCardClick}
           />
@@ -430,7 +429,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
                 type="button"
                 onClick={handleViewExistingResults}
                 className="w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:from-green-800 active:to-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                title="이전에 받은 AI 추천 일정을 확인합니다"
+                title="이전에 받은 추천 일정을 확인합니다"
               >
                 <svg
                   className="w-4 h-4"
@@ -445,7 +444,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                <span>이전 AI 추천 일정 보기</span>
+                <span>이전 추천 일정 보기</span>
                 <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
                   {totalAiPlaces}곳
                 </span>
@@ -457,7 +456,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
               type="button"
               onClick={handleStartSelect}
               className="w-full rounded-lg bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-gray-700 active:from-gray-900 active:to-gray-800 text-white px-4 py-3 text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-              title="AI가 장소들을 분석해 일정을 추천합니다"
+              title="장소들을 분석해 일정을 추천합니다"
             >
               <svg
                 className="w-4 h-4"
@@ -472,7 +471,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              <span>{hasAiResults ? "새 AI 일정 추천" : "AI 일정 추천"}</span>
+              <span>{hasAiResults ? "새 일정 추천" : "일정 추천"}</span>
               {hasAiResults && (
                 <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
                   NEW
@@ -512,10 +511,10 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
               title={
                 !inRange
                   ? `선택 개수는 최소 ${minCount}개, 최대 ${maxCount}개입니다`
-                  : "선택한 장소로 AI 일정 추천을 시작합니다"
+                  : "선택한 장소로 일정 추천을 시작합니다"
               }
             >
-              <span>AI 추천</span>
+              <span>추천</span>
               <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
                 {count}개 선택
               </span>
