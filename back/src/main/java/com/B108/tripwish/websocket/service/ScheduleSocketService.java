@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import com.B108.tripwish.websocket.dto.response.ScheduleMessageResponseDto;
 
 import lombok.RequiredArgsConstructor;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScheduleSocketService {
@@ -83,6 +85,10 @@ public class ScheduleSocketService {
     final String redisKey = "schedule:" + roomId;
     final Integer day = request.getDay();
     final LocalDate date = request.getDate();
+
+    // 디버깅 로그 추가
+    log.info("🔍 [ScheduleSocketService] roomId={}, day={}, date={}, events.size={}", 
+        roomId, day, date, request.getEvents().size());
 
     // Redis에서 해당 day의 기존 데이터 조회
     DayScheduleRedisDto existing = redisScheduleService.getScheduleByDay(redisKey, day);

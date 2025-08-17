@@ -121,7 +121,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
   const dayOf = useCallback(
     (dateKey) => {
       const i = dates.indexOf(dateKey);
-      return i >= 0 ? i + 1 : null;
+      return i >= 0 ? i + 1 : null;  // 이미 1-based로 되어 있음
     },
     [dates]
   );
@@ -172,7 +172,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
           eventOrder: i + 1,
         }))
         .filter((e) => Number.isFinite(e.wantId));
-      publishSchedule({ roomId, type, dateKey, day, events, ...extra });
+      publishSchedule({ roomId, type, date: dateKey, day, events, ...extra });
     },
     [roomId, dayOf]
   );
@@ -367,6 +367,9 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     const t = transportByDate[dateKey] || "driving";
 
     const day = dates.indexOf(dateKey) + 1;
+    
+    // 디버깅 로그 추가
+    console.log("🔍 [requestCalcForDate] dateKey=", dateKey, "dates=", dates, "day=", day);
 
     const events = items.map((it, i) => ({
       wantId: it.wantId ?? it.placeId,
@@ -435,11 +438,21 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
         .filter((n) => Number.isFinite(n));
       if (wantOrderIds.length > 0) {
         dispatch(setOrderForDate({ dateKey, wantOrderIds }));
+        
+        // AI 일정 적용 시 draftVersion을 명시적으로 업데이트
+        const day = dayOf(dateKey);
+        if (day) {
+          dispatch(setDraftVersion({ day, draftVersion: 1 }));
+        }
+        
+        // 디버깅 로그 추가
+        console.log("🔍 [replaceDayWithPlaces] dateKey=", dateKey, "day=", day);
+        
         publishSchedule({
           roomId,
           type: "REPLACE_DAY",
-          dateKey,
-          day: dayOf(dateKey),
+          date: dateKey,  // dateKey를 date로 변경
+          day: day,
           events: wantOrderIds.map((id, idx) => ({
             wantId: id,
             eventOrder: idx + 1,
