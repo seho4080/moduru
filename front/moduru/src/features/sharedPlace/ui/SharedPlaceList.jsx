@@ -148,7 +148,7 @@ export default function SharedPlaceList({
                     place={place}
                     onRemove={() => onRemove?.(place)}
                     onCardClick={onCardClick}
-                    usedInItinerary={isUsed}
+                    usedInItinerary={false}
                     responsive={true}
                   />
                 </div>
