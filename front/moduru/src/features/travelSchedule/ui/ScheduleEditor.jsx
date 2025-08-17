@@ -70,9 +70,8 @@ export default function ScheduleEditor({
       {/* 상단 네비 */}
       <div className="flex items-center gap-2 px-2 py-1.5">
         <button
-          className={`inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 ${
-            !canPrev ? "invisible" : ""
-          }`}
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 ${!canPrev ? "invisible" : ""
+            }`}
           onClick={goPrev}
           aria-label="prev days"
         >
@@ -82,18 +81,17 @@ export default function ScheduleEditor({
         <div className="text-xs text-gray-600">
           {days.length > 0
             ? `${startIndex + 1}–${Math.min(
-                startIndex + WINDOW_SIZE,
-                days.length
-              )} / ${days.length}일`
+              startIndex + WINDOW_SIZE,
+              days.length
+            )} / ${days.length}일`
             : "0일"}
         </div>
 
         <div className="flex-1" />
 
         <button
-          className={`inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 ${
-            !canNext ? "invisible" : ""
-          }`}
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 ${!canNext ? "invisible" : ""
+            }`}
           onClick={goNext}
           aria-label="next days"
         >
@@ -130,7 +128,7 @@ export default function ScheduleEditor({
       {/* 하단 버튼(컴팩트) */}
       <div className="flex items-end justify-between gap-2 border-t px-3 pb-3 pt-2">
         <button className="rounded-lg border border-blue-600 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50">
-          AI 경로 추천
+          경로 추천
         </button>
         <div className="flex flex-col gap-1.5">
           <button className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">
