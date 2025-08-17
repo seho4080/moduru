@@ -13,13 +13,14 @@ public class VotePlaceSocketService {
   private final RedisPublisher redisPublisher;
 
   public void sendVoteResult(Long roomId, Long wantPlaceId, int voteCnt, String senderId) {
-    VotePlaceMessage message = VotePlaceMessage.builder()
-        .roomId(roomId)
-        .wantId(wantPlaceId)
-        .voteCnt(voteCnt)
-        .senderId(senderId)
-        .build();
-    
+    VotePlaceMessage message =
+        VotePlaceMessage.builder()
+            .roomId(roomId)
+            .wantId(wantPlaceId)
+            .voteCnt(voteCnt)
+            .senderId(senderId)
+            .build();
+
     redisPublisher.publish(RedisChannelType.PLACE_VOTE, message);
   }
 }

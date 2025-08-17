@@ -1,9 +1,9 @@
 package com.B108.tripwish.domain.room.service;
 
-import com.B108.tripwish.domain.room.dto.response.VotePlaceResponseDto;
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.auth.service.CustomUserDetails;
+import com.B108.tripwish.domain.room.dto.response.VotePlaceResponseDto;
 import com.B108.tripwish.domain.room.entity.VotePlace;
 import com.B108.tripwish.domain.room.entity.VotePlaceId;
 import com.B108.tripwish.domain.room.entity.WantPlace;
@@ -23,81 +23,79 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WantPlaceServiceImpl implements WantPlaceService {
 
-    private final WantPlaceRepository wantPlaceRepository;
-    private final VotePlaceRepository votePlaceRepository;
-    private final TravelRoomRepository travelRoomRepository;
+  private final WantPlaceRepository wantPlaceRepository;
+  private final VotePlaceRepository votePlaceRepository;
+  private final TravelRoomRepository travelRoomRepository;
 
-    private final VotePlaceSocketService votePlaceSocketService;
+  private final VotePlaceSocketService votePlaceSocketService;
 
-    @Override
-    public VotePlaceResponseDto toggleVotePlace(CustomUserDetails user, Long roomId, Long wantId) {
-        WantPlace wantPlace =
-                wantPlaceRepository
-                        .findById(wantId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.WANT_PLACE_NOT_FOUND));
+  @Override
+  public VotePlaceResponseDto toggleVotePlace(CustomUserDetails user, Long roomId, Long wantId) {
+    WantPlace wantPlace =
+        wantPlaceRepository
+            .findById(wantId)
+            .orElseThrow(() -> new CustomException(ErrorCode.WANT_PLACE_NOT_FOUND));
 
-        VotePlaceId id = new VotePlaceId(wantPlace.getId(), user.getUser().getId());
+    VotePlaceId id = new VotePlaceId(wantPlace.getId(), user.getUser().getId());
 
-        VotePlace votePlace = votePlaceRepository.findById(id).orElse(null);
+    VotePlace votePlace = votePlaceRepository.findById(id).orElse(null);
 
-        if (votePlace != null) {
-            // 이미 존재하면 -> vote 필드 toggle
-            votePlace.setVote(!votePlace.isVote());
-            log.info(
-                    "🔁 [toggleVotePlace] 투표 상태 토글 - userId: {}, wantId: {}, vote: {}",
-                    user.getUser().getId(),
-                    wantPlace.getId(),
-                    votePlace.isVote());
-        } else {
-            // 존재하지 않으면 새로 생성
-            votePlace =
-                    VotePlace.builder()
-                            .id(id)
-                            .user(user.getUser())
-                            .wantPlace(wantPlace)
-                            .vote(true) // 처음은 항상 true
-                            .build();
-            log.info(
-                    "✅ [toggleVotePlace] 새 투표 생성 - userId: {}, wantId: {}",
-                    user.getUser().getId(),
-                    wantPlace.getId());
-        }
-
-        votePlaceRepository.save(votePlace);
-
-        VotePlaceResponseDto response = VotePlaceResponseDto.builder()
-                .wantId(wantId)
-                .isVoted(votePlace.isVote())
-                .build();
-
-        int voteCnt = votePlaceRepository.countByWantPlaceAndVoteIsTrue(wantPlace).intValue();
-
-        String senderId = user.getUuid().toString();
-        votePlaceSocketService.sendVoteResult(roomId, wantId, voteCnt, senderId);
-
-        return response;
+    if (votePlace != null) {
+      // 이미 존재하면 -> vote 필드 toggle
+      votePlace.setVote(!votePlace.isVote());
+      log.info(
+          "🔁 [toggleVotePlace] 투표 상태 토글 - userId: {}, wantId: {}, vote: {}",
+          user.getUser().getId(),
+          wantPlace.getId(),
+          votePlace.isVote());
+    } else {
+      // 존재하지 않으면 새로 생성
+      votePlace =
+          VotePlace.builder()
+              .id(id)
+              .user(user.getUser())
+              .wantPlace(wantPlace)
+              .vote(true) // 처음은 항상 true
+              .build();
+      log.info(
+          "✅ [toggleVotePlace] 새 투표 생성 - userId: {}, wantId: {}",
+          user.getUser().getId(),
+          wantPlace.getId());
     }
 
-    @Override
-    public WantPlace saveWantPlace(Long roomId, PlaceType type, Long refId) {
+    votePlaceRepository.save(votePlace);
 
-        var travelRoom =
-                travelRoomRepository
-                        .findById(roomId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+    VotePlaceResponseDto response =
+        VotePlaceResponseDto.builder().wantId(wantId).isVoted(votePlace.isVote()).build();
 
-        WantPlace wantPlace =
-                WantPlace.builder().travelRoom(travelRoom).type(type).refId(refId).build();
+    int voteCnt = votePlaceRepository.countByWantPlaceAndVoteIsTrue(wantPlace).intValue();
 
-        return wantPlaceRepository.save(wantPlace);
-    }
+    String senderId = user.getUuid().toString();
+    votePlaceSocketService.sendVoteResult(roomId, wantId, voteCnt, senderId);
 
-    @Override
-    public void removeWantPlace(Long roomId, Long wantId) {
-        WantPlace wantPlace =
-                wantPlaceRepository
-                        .findById(wantId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.WANT_PLACE_NOT_FOUND));
-        wantPlaceRepository.delete(wantPlace);
-    }
+    return response;
+  }
+
+  @Override
+  public WantPlace saveWantPlace(Long roomId, PlaceType type, Long refId) {
+
+    var travelRoom =
+        travelRoomRepository
+            .findById(roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+
+    WantPlace wantPlace =
+        WantPlace.builder().travelRoom(travelRoom).type(type).refId(refId).build();
+
+    return wantPlaceRepository.save(wantPlace);
+  }
+
+  @Override
+  public void removeWantPlace(Long roomId, Long wantId) {
+    WantPlace wantPlace =
+        wantPlaceRepository
+            .findById(wantId)
+            .orElseThrow(() -> new CustomException(ErrorCode.WANT_PLACE_NOT_FOUND));
+    wantPlaceRepository.delete(wantPlace);
+  }
 }
