@@ -17,7 +17,9 @@ export default function Controls({
   mode, setMode,
   zoomIn, zoomOut,
   removeMode, setRemoveMode,
-  onDeleteConfirm
+  onDeleteConfirm,
+  roomId,
+  mapRef
 }) {
   const [choiceOpen, setChoiceOpen] = useState(false);     // 선택 모달
   const [customPlaceOpen, setCustomPlaceOpen] = useState(false); // ★ 주소 등록 모달
@@ -125,6 +127,9 @@ export default function Controls({
       {customPlaceOpen && (
         <CustomPlace
           open={customPlaceOpen}
+          roomId={roomId}
+          mapRef={mapRef}
+          onDisablePinMode={() => setMode("")}
           onClose={() => setCustomPlaceOpen(false)}
           // onSearch={async (q) => { ... 실제 검색 API 연결해도 됨 }}
         />

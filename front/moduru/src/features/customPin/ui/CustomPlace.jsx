@@ -5,11 +5,12 @@ import { FaSearch } from "react-icons/fa";
 import { searchKakaoPlaces, createCustomPlace } from "../lib/placeApi";
 import SearchResultList from "./SearchResultList";
 import ConfirmPlaceModal from "./ConfirmPlaceModal";
+import { sendSharedPlaceAdd } from "../../sharedPlace/lib/sharedPlaceSocket";
 
 export default function CustomPlace({
   open = true,
   roomId,                     // 상위에서 주는 값(선택)
-  onPin,                      // 지도에 핀 꽂기({lat,lng,name,address})
+  mapRef,                     // 지도 참조
   onDisablePinMode,           // 핀모드 해제 콜백(선택)
   onClose,
   placeholder = "상호명 또는 주소를 입력하세요",
@@ -109,14 +110,13 @@ export default function CustomPlace({
   const handleConfirmYes = async () => {
     if (!confirmData) return;
 
-    // 1) 즉시 핀 꽂기
-    onPin?.({
-      name: confirmData.name,
-      address: confirmData.address,
-      lat: confirmData.lat,
-      lng: confirmData.lng,
-      optimistic: true,
-    });
+    // 1) 즉시 핀 꽂기 (지도에 직접 추가)
+    if (mapRef?.current) {
+      mapRef.current.addMarker({
+        lat: confirmData.lat,
+        lng: confirmData.lng
+      });
+    }
 
     // 2) 핀모드 해제
     onDisablePinMode?.();
@@ -125,11 +125,12 @@ export default function CustomPlace({
     setConfirmOpen(false);
     onClose?.();
 
-    // 4) 서버 등록(백그라운드)
+    // 4) 서버 등록 먼저 수행
     if (!roomIdSafe) {
       console.warn("[createCustomPlace] roomId 없음 → 서버 등록 생략");
       return;
     }
+    
     try {
       setSubmitLoading(true);
       setSubmitErr("");
@@ -145,9 +146,34 @@ export default function CustomPlace({
 
       const res = await createCustomPlace(payload);
       console.log("[createCustomPlace 응답]", res);
+      console.log("[createCustomPlace 응답 데이터]", res.data);
+      console.log("[createCustomPlace 응답 데이터 타입]", typeof res.data);
 
       if (!res.success) {
-        setSubmitErr(res.message || "등록 실패"); // 필요시 토스트 등
+        setSubmitErr(res.message || "등록 실패");
+        return;
+      }
+
+      // 5) 서버에서 받은 실제 custom_places ID를 사용하여 want_places에 추가
+      const customPlaceId = res.data; // 백엔드에서 직접 Long ID 반환
+      console.log("[CustomPlace] 추출한 customPlaceId:", customPlaceId);
+      console.log("[CustomPlace] res.data 전체:", res.data);
+      
+      if (customPlaceId) {
+        // WebSocket을 통해 want_places 테이블에 저장 요청
+        sendSharedPlaceAdd({
+          roomId: roomIdSafe,
+          type: "custom",
+          id: customPlaceId, // custom_places의 실제 ID
+        });
+
+        // 성공 메시지
+        if (window?.toast?.success) {
+          window.toast.success(`${confirmData.name}이(가) 희망장소에 추가되었습니다.`);
+        }
+      } else {
+        console.error("[CustomPlace] 서버에서 custom_places ID를 받지 못함");
+        setSubmitErr("서버에서 장소 ID를 받지 못했습니다.");
       }
     } finally {
       setSubmitLoading(false);
