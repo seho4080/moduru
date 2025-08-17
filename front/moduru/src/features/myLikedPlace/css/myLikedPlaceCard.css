@@ -108,3 +108,14 @@
 
 /* 주소는 사용 안 함 */
 .lp-card__address { display: none !important; }
+
+.side-menu-box {
+  overflow-y: unset !important;   /* 스크롤 완전히 제거 */
+  max-height: none !important;
+  height: auto !important;
+}
+.side-menu-list {
+  overflow-y: unset !important;   /* 리스트에도 스크롤 제거 */
+  max-height: none !important;
+  height: auto !important;
+}

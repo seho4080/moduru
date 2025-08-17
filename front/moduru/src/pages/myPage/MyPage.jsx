@@ -1,8 +1,9 @@
+// src/pages/myPage/MyPage.jsx
 import React, { useState } from "react";
 import MyProfile from "../../features/profile/ui/MyProfile";
 import MyLikeSpace from "./ui/MyLikePlaceContent";
 import MyReviewsList from "../../features/myReview/ui/MyReviewsList";
-import MyTravelSpacePage from "../myTravelSpacePage/MyTravelSpacePage"; // 추가
+import MyTravelSpacePage from "../myTravelSpacePage/MyTravelSpacePage";
 import "./css/MyPage.css";
 
 export default function MyPage() {
@@ -29,7 +30,7 @@ export default function MyPage() {
         {/* 사이드 탭 메뉴 */}
         <aside className="mypage-sidebar">
           <div className="sidebar-header">
-            <h2>마이페이지</h2>
+            <h2>MODURU</h2>
           </div>
           <nav className="sidebar-nav">
             <button
@@ -59,11 +60,12 @@ export default function MyPage() {
           </nav>
         </aside>
 
-          {/* {renderContent()} */}
-
         {/* 메인 콘텐츠 영역 */}
         <main className={`mypage-main ${activeTab === "liked" ? "is-liked" : ""}`}>
-          {renderContent()}
+          {/* ✅ 영역 정렬/높이 맞춤을 위한 공통 랩퍼 */}
+          <div className="main-scroll">
+            {renderContent()}
+          </div>
         </main>
       </div>
     </div>
