@@ -37,10 +37,8 @@ import {
 } from "@dnd-kit/sortable";
 
 import SharedPlaceCard from "../../sharedPlace/ui/SharedPlaceCard";
-import { connectWebSocket, unsubscribeKeys } from "../../webSocket/coreSocket";
 import {
   publishTravel,
-  subscribeTravel,
   getLastRequestedTransport,
 } from "../../webSocket/travelSocket";
 import { publishSchedule } from "../../webSocket/scheduleSocket";
@@ -342,110 +340,8 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     markResolvedFromResult,
   } = useCalcStatusByDate(roomId, dates, { notify });
 
-  // travel/result 구독 + schedule 동기화
-  useEffect(() => {
-    if (!roomId) return;
-
-    const offResult = subscribeTravel(
-      roomId,
-      (body) => {
-        if (!body) return;
-
-        const {
-          day,
-          transport: tFromServer,
-          totalDistanceMeters,
-          totalDurationMinutes,
-          legs,
-          updatedAt,
-        } = body;
-
-        const dayNum = Number(day);
-        if (!Number.isFinite(dayNum)) return;
-
-        let t =
-          (typeof tFromServer === "string" && tFromServer) ||
-          getLastRequestedTransport(roomId, dayNum) ||
-          "transit";
-        t = String(t).toLowerCase();
-        if (t === "driver") t = "driving";
-
-        if (Array.isArray(legs) && legs.length > 0) {
-          const items = legs.map((l) => ({
-            fromWantId: Number(l.fromWantId ?? l.fromId),
-            toWantId: Number(l.toWantId ?? l.toId),
-            distanceMeters: Number(l.distanceMeters ?? l.distance ?? 0),
-            durationMinutes: Number(l.durationMinutes ?? l.duration ?? 0),
-            updatedAt: l.updatedAt ?? updatedAt,
-          }));
-          dispatch(upsertDayEtas({ day: dayNum, transport: t, items }));
-        }
-
-        if (
-          typeof totalDistanceMeters === "number" &&
-          typeof totalDurationMinutes === "number"
-        ) {
-          dispatch(
-            upsertDayTotals({
-              day: dayNum,
-              transport: t,
-              totalDistanceMeters,
-              totalDurationMinutes,
-              updatedAt,
-            })
-          );
-        }
-
-        markResolvedFromResult(body);
-
-        // 계산 완료 시 마지막 계산된 교통수단 업데이트
-        const resultDayNum = Number(body?.day);
-        if (Number.isFinite(resultDayNum) && resultDayNum > 0) {
-          const dateKey = dates[resultDayNum - 1];
-          const transport = body?.transport || transportByDate[dateKey] || "driving";
-          setLastCalculatedTransport(prev => ({
-            ...prev,
-            [dateKey]: transport
-          }));
-        }
-      },
-      { key: "travel-result/board" }
-    );
-
-    const scheduleKey = `itinerary-board|${roomId}|${SCHEDULE_HANDLER}`;
-    connectWebSocket(roomId, [
-      {
-        handler: SCHEDULE_HANDLER,
-        key: scheduleKey,
-        callback: (msg) => {
-          const { day, date, events, draftVersion } = msg || {};
-
-          const dayNum = Number(day);
-          const verNum = Number(draftVersion);
-          if (Number.isFinite(dayNum) && Number.isFinite(verNum)) {
-            dispatch({
-              type: setDraftVersion.type,
-              payload: { day: dayNum, draftVersion: verNum },
-              meta: { fromWs: true },
-            });
-          }
-
-          if (date && Array.isArray(events)) {
-            dispatch({
-              type: replaceDayFromServer.type,
-              payload: { dateKey: date, events },
-              meta: { fromWs: true },
-            });
-          }
-        },
-      },
-    ]);
-
-    return () => {
-      offResult();
-      unsubscribeKeys([scheduleKey]);
-    };
-  }, [roomId, dispatch, markResolvedFromResult]);
+  // WebSocket 구독은 TripRoomProvider에서 통합 처리
+  // 개별 구독은 제거하여 중복 방지
 
   // 네이티브 드롭 파싱
   function parseDropData(e) {

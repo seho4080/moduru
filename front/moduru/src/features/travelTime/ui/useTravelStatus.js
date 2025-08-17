@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import { subscribeTravelStatus } from "../../webSocket/travelStatusSocket";
 
 /**
  * @param {number|string} roomId
@@ -16,10 +15,10 @@ export default function useTravelStatus(roomId, { onToast } = {}) {
     onToastRef.current = onToast;
   }, [onToast]);
 
+  // 이동 시간 계산 상태 이벤트 리스너
   useEffect(() => {
-    if (!roomId) return;
-
-    const off = subscribeTravelStatus(roomId, ({ status, body }) => {
+    const handleTravelStatusUpdate = ({ detail }) => {
+      const { status, body } = detail;
       console.log("[TravelStatus] recv:", status, body);
       switch (status) {
         case "STARTED":
@@ -45,10 +44,14 @@ export default function useTravelStatus(roomId, { onToast } = {}) {
         default:
           break;
       }
-    });
+    };
 
-    return off;
-  }, [roomId]);
+    window.addEventListener('travel-status-update', handleTravelStatusUpdate);
+
+    return () => {
+      window.removeEventListener('travel-status-update', handleTravelStatusUpdate);
+    };
+  }, []);
 
   return { loading, buttonDisabled, error, setError };
 }
