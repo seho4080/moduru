@@ -43,14 +43,12 @@ export default function MyTravelSpacePage({ items = [] }) {
     initialFilter: "none",
   });
 
+  // 상태
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
 
+  // 소스
   const source = items.length ? items : rooms;
-
-  useEffect(() => { setPage(1); }, [q, status]);
 
   const filtered = useMemo(() => {
     const byQuery = (it) => {
@@ -113,11 +111,13 @@ export default function MyTravelSpacePage({ items = [] }) {
   const start = (page - 1) * pageSize;
   const pageItems = filtered.slice(start, start + pageSize);
 
+  // 필터/크기 변화 시 현재 페이지 보정
   useEffect(() => {
     const newCount = Math.max(1, Math.ceil(filtered.length / pageSize));
     if (page > newCount) setPage(newCount);
-  }, [filtered.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filtered.length, pageSize, page]);
 
+  // 이벤트 핸들러
   const handleEnter = (room) => {
     const id = room?.travelRoomId ?? room?.id ?? room?.roomId;
     if (!id) return;
@@ -141,17 +141,14 @@ export default function MyTravelSpacePage({ items = [] }) {
     const id = Number(room?.id ?? room?.travelRoomId ?? room?.roomId);
     if (!Number.isFinite(id)) return;
     if (!window.confirm("정말로 이 여행 방을 삭제할까요? 되돌릴 수 없습니다.")) return;
-
     try {
-      const optimistic = room?.isOwner || room?.canDelete || false;
       await removeRoom(id, { optimistic: true });
       // 필요 시 서버 재동기화: await reload();
     } catch (e) {
       const status = e?.response?.status;
       const message =
-        status === 403
-          ? "방장만 삭제할 수 있어요."
-          : e?.response?.data?.message || e?.message || "요청 실패";
+        status === 403 ? "방장만 삭제할 수 있어요."
+        : e?.response?.data?.message || e?.message || "요청 실패";
       console.error("[Page] remove error", status, e?.response?.data || e);
       alert(message);
     }
@@ -166,7 +163,8 @@ export default function MyTravelSpacePage({ items = [] }) {
         onChangeStatus={setStatus}
       />
 
-      <div className="travel-card">
+      {/* 카드: 내부 스크롤 금지, 높이는 내용에 따름 */}
+      <div className="travel-card" ref={cardRef}>
         {loading ? (
           <div className="travel-empty"><p className="empty-text">불러오는 중…</p></div>
         ) : error ? (
@@ -189,25 +187,23 @@ export default function MyTravelSpacePage({ items = [] }) {
         )}
       </div>
 
+      {/* 페이지네이션: 하단에 고정/측정용 ref */}
       {!loading && !error && (
-        <div className="travel-pagination">
-          <div className="pg-info">Page {page} of {pageCount}</div>
-          <div className="pg-pages" role="navigation" aria-label="페이지네이션">
-            <button className="pg-btn" onClick={() => setPage(1)} disabled={page === 1} aria-label="첫 페이지">«</button>
-            <button className="pg-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} aria-label="이전 페이지">‹</button>
-            {Array.from({ length: Math.min(pageCount, 7) }, (_, i) => i + 1).map((slot) => (
-              <button
-                key={slot}
-                className={`pg-num ${page === slot ? "is-active" : ""}`}
-                onClick={() => setPage(slot)}
-                aria-current={page === slot ? "page" : undefined}
-              >
-                {slot}
-              </button>
-            ))}
-            <button className="pg-btn" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page === pageCount} aria-label="다음 페이지">›</button>
-            <button className="pg-btn" onClick={() => setPage(pageCount)} disabled={page === pageCount} aria-label="마지막 페이지">»</button>
-          </div>
+        <div className="travel-pagination" ref={pagerRef}>
+          <button className="pg-btn" onClick={() => setPage(1)} disabled={page === 1} aria-label="첫 페이지">«</button>
+          <button className="pg-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} aria-label="이전 페이지">‹</button>
+          {Array.from({ length: Math.min(pageCount, 7) }, (_, i) => i + 1).map((slot) => (
+            <button
+              key={slot}
+              className={`pg-num ${page === slot ? "is-active" : ""}`}
+              onClick={() => setPage(slot)}
+              aria-current={page === slot ? "page" : undefined}
+            >
+              {slot}
+            </button>
+          ))}
+          <button className="pg-btn" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page === pageCount} aria-label="다음 페이지">›</button>
+          <button className="pg-btn" onClick={() => setPage(pageCount)} disabled={page === pageCount} aria-label="마지막 페이지">»</button>
         </div>
       )}
 
