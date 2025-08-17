@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
+// src/pages/myTravelSpacePage/MyTravelSpacePage.jsx
+import React, { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./myTravelSpacePage.css";
 
@@ -11,6 +12,7 @@ export default function MyTravelSpacePage({ items = [] }) {
   const navigate = useNavigate();
   const [viewTarget, setViewTarget] = useState(null); // ✅ 일정 모달 대상
 
+  // YYYY-MM-DD → 로컬 00:00 Date
   const toLocalDate = (s) => {
     if (!s) return null;
     const [y, m, d] = String(s).split("-").map(Number);
@@ -18,6 +20,7 @@ export default function MyTravelSpacePage({ items = [] }) {
     return new Date(y, m - 1, d, 0, 0, 0, 0);
   };
 
+  // 여행 방 상태 계산
   const statusOf = (it) => {
     const s = (it?.status || "").trim();
     if (s === "진행중") return "ongoing";
@@ -25,9 +28,12 @@ export default function MyTravelSpacePage({ items = [] }) {
 
     const today = new Date();
     const end = toLocalDate(it?.endDate);
-    if (end && end < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-      return "done";
-    }
+
+    // 날짜만 비교(시·분 영향 제거)
+    const endDay = end ? new Date(end.getFullYear(), end.getMonth(), end.getDate()) : null;
+    const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    if (endDay && endDay < todayDay) return "done";
     return "ongoing";
   };
 
@@ -57,6 +63,51 @@ export default function MyTravelSpacePage({ items = [] }) {
     );
   }, [source, q, status]);
 
+  // ===== 스크롤 없이 화면에 꽉 채우는 pageSize 계산 =====
+  const cardRef = useRef(null);     // .travel-card
+  const pagerRef = useRef(null);    // 페이지네이션 영역
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const card = cardRef.current;
+      if (!card) return;
+
+      const vpH = window.innerHeight;                     // 뷰포트 높이
+      const cardTop = card.getBoundingClientRect().top;   // 카드 시작 y
+      const pagerH = pagerRef.current?.offsetHeight ?? 56;
+
+      // 테이블 헤더/첫 행 높이 추정
+      const head = card.querySelector(".travel-table-head");
+      const firstRow = card.querySelector(".travel-row");
+      const headH = Math.max(36, head?.offsetHeight ?? 40);
+      const rowH = Math.max(48, firstRow?.offsetHeight ?? 64);
+
+      // 카드 내부 여백/간격 여유치
+      const guard = 24;
+
+      // 실제 목록이 사용할 수 있는 높이
+      const usable = Math.max(120, vpH - cardTop - headH - pagerH - guard);
+
+      // 들어갈 수 있는 행 수
+      const next = Math.max(5, Math.min(50, Math.floor(usable / rowH)));
+
+      setPageSize((prev) => (prev !== next ? next : prev));
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+    const ro = new ResizeObserver(measure);
+    if (cardRef.current) ro.observe(cardRef.current);
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      ro.disconnect();
+    };
+  }, [q, status]);
+
+  // 페이지 슬라이스
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const start = (page - 1) * pageSize;
@@ -108,7 +159,12 @@ export default function MyTravelSpacePage({ items = [] }) {
 
   return (
     <div className="travel-page">
-      <MyTravelToolbar q={q} onChangeQ={setQ} status={status} onChangeStatus={setStatus} />
+      <MyTravelToolbar
+        q={q}
+        onChangeQ={setQ}
+        status={status}
+        onChangeStatus={setStatus}
+      />
 
       <div className="travel-card">
         {loading ? (
@@ -119,13 +175,17 @@ export default function MyTravelSpacePage({ items = [] }) {
             <button className="pg-btn" onClick={reload}>다시 시도</button>
           </div>
         ) : (
-          <TravelRoomsTable
-            rooms={pageItems}
-            onEnter={handleEnter}
-            onDelete={handleDelete}
-            onRemove={handleRemove}
-            onViewSchedule={(room) => setViewTarget(room)} // ✅ 일정 조회 연결
-          />
+          // 본문: overflow를 없애서 스크롤 방지
+          <div className="travel-body" style={{ overflow: "visible" }}>
+            {/* TravelRoomsTable은 헤더 + 행(.travel-row)을 모두 렌더링함 */}
+            <TravelRoomsTable
+              rooms={pageItems}
+              onEnter={handleEnter}
+              onDelete={handleDelete}
+              onRemove={handleRemove}
+              onViewSchedule={(room) => setViewTarget(room)} // ✅ 일정 조회 연결
+            />
+          </div>
         )}
       </div>
 
