@@ -14,7 +14,7 @@ const handlers = new Map(); // Map<string, { dest, cb }>
 // ✅ 연결 전/재연결 중 발행을 보관할 큐
 const pendingPublishes = []; // [{ destination, payload }]
 
-const WS_URL = "/api/ws-stomp";
+const WS_URL = "http://localhost:8080/ws-stomp";
 
 // action이 없으면 생략된 경로를 반환
 const topic = (roomId, handler, action) =>
