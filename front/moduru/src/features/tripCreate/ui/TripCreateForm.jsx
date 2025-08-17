@@ -5,42 +5,16 @@ import TripDatePicker from './TripDatePicker';
 import { updateTripRoomRegion, getTripRoomInfoForModal } from '../lib/tripRoomApi';
 import './tripCreateForm.css';
 
-/* 날짜를 YYYY-MM-DD 형식으로 변환 (시간대 무시) */
+/* 로컬 타임존 기준 YYYY-MM-DD */
 function toYmd(date) {
   const d = date instanceof Date ? date : new Date(date);
-  
-  // 디버깅 로그
-  console.log('🔍 toYmd 디버깅:', {
-    inputDate: date,
-    parsedDate: d,
-    year: d.getFullYear(),
-    month: d.getMonth() + 1,
-    day: d.getDate(),
-    timezoneOffset: d.getTimezoneOffset()
-  });
-  
-  // 직접 년-월-일 추출 (시간대 영향 없음)
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
 }
 
 /* 오늘 날짜 문자열 */
 function todayYmd() {
   return toYmd(new Date());
-}
-
-/* 문자열 날짜를 Date 객체로 변환 (시간대 무시) */
-function parseYmdToDate(dateString) {
-  if (!dateString) return null;
-  // YYYY-MM-DD 형식인지 정확히 확인
-  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return null;
-  
-  const [, year, month, day] = match;
-  // UTC 기준으로 날짜 생성 (시간대 영향 없음)
-  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
 }
 
 /* 제목은 날짜(YYYY-MM-DD)까지만 유지 */
@@ -83,10 +57,10 @@ export default function TripCreateForm({
           setRegion(roomInfo.region);
         }
 
-        // 날짜 업데이트 (시간대 무시하고 파싱)
+        // 날짜 업데이트
         if (roomInfo.startDate && roomInfo.endDate) {
-          const startDate = parseYmdToDate(roomInfo.startDate);
-          const endDate = parseYmdToDate(roomInfo.endDate);
+          const startDate = new Date(roomInfo.startDate);
+          const endDate = new Date(roomInfo.endDate);
           setDates([startDate, endDate]);
         }
       } catch (error) {
@@ -127,15 +101,7 @@ export default function TripCreateForm({
   );
 
   const handleDatesChange = useCallback(
-    (v) => { 
-      // 날짜를 정규화 (시간 정보 제거, UTC 기준)
-      const normalizedDates = v ? [
-        v[0] ? new Date(Date.UTC(v[0].getFullYear(), v[0].getMonth(), v[0].getDate())) : null,
-        v[1] ? new Date(Date.UTC(v[1].getFullYear(), v[1].getMonth(), v[1].getDate())) : null
-      ] : [null, null];
-      setDates(normalizedDates); 
-      emitDirty(); 
-    },
+    (v) => { setDates(v); emitDirty(); },
     [setDates, emitDirty]
   );
 
@@ -167,17 +133,6 @@ export default function TripCreateForm({
     const titleToSend = stripTitleToYmd(rawTitle); // 안전빵
     const start = hasStart ? toYmd(dates[0]) : todayYmd();
     const end   = hasEnd   ? toYmd(dates[1]) : todayYmd();
-
-    // 디버깅 로그
-    console.log('🔍 날짜 디버깅:', {
-      originalDates: dates,
-      hasStart,
-      hasEnd,
-      start,
-      end,
-      startDate: dates?.[0],
-      endDate: dates?.[1]
-    });
 
     const payload = { title: titleToSend, region: region.trim(), startDate: start, endDate: end };
 
