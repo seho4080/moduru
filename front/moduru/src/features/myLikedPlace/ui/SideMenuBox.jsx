@@ -11,7 +11,7 @@ export default function SideMenuBox() {
   const [page, setPage] = useState(1);
 
   // 화면 비율에 따라 동적으로 계산할 상태
-  const [pageSize, setPageSize] = useState(7);
+  const [pageSize, setPageSize] = useState(6);
 
   // 레이아웃 측정용 ref들
   const boxRef = useRef(null);
