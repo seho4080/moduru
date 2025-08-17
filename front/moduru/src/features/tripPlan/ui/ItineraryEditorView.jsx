@@ -285,11 +285,7 @@ export default function ItineraryEditorView({
           className="itinerary-editor__board-container"
           style={{ overflow: "auto" }}
         >
-          <ItineraryBoard
-            ref={innerBoardRef}
-            showEta
-            onCardClick={onCardClick}
-          />
+          <ItineraryBoard ref={innerBoardRef} showEta onCardClick={onCardClick} />
         </div>
       </div>
     </div>
