@@ -1,0 +1,417 @@
+/* src/features/tripPlan/ui/ItineraryEditor.css */
+
+/* 기본 컨테이너 */
+.itinerary-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #f8fafc;
+}
+
+/* 간소화된 헤더 */
+.itinerary-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  min-height: 56px;
+}
+
+.itinerary-editor__header--compact {
+  min-height: 48px;
+  padding: 8px 16px;
+}
+
+/* 헤더 섹션들 */
+.itinerary-editor__header-left,
+.itinerary-editor__header-center,
+.itinerary-editor__header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.itinerary-editor__header-left {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.itinerary-editor__header-center {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.itinerary-editor__header-right {
+  flex: 0 0 auto;
+}
+
+/* 제목 */
+.itinerary-editor__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* 버튼 스타일 */
+.itinerary-editor__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.itinerary-editor__button--compact {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.itinerary-editor__button--primary {
+  background: #4f46e5;
+  border-color: #4338ca;
+  color: white;
+}
+
+.itinerary-editor__button--primary:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.itinerary-editor__button--secondary {
+  background: white;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.itinerary-editor__button--secondary:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.itinerary-editor__button--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #64748b;
+}
+
+.itinerary-editor__button--ghost:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.itinerary-editor__button--icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 18px;
+}
+
+.itinerary-editor__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 상태 표시 */
+.itinerary-editor__status {
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.itinerary-editor__status--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 구분선 */
+.itinerary-editor__divider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+}
+
+.itinerary-editor__divider--short {
+  height: 20px;
+}
+
+/* 보드 영역 */
+.itinerary-editor__body {
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: 16px;
+  min-height: 0;
+}
+
+.itinerary-editor__board-container {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+/* 디버그 정보 */
+.itinerary-editor__debug {
+  position: fixed;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 4px;
+  font-family: monospace;
+  z-index: 9999;
+}
+
+/* 모달 오버레이 */
+.itinerary-editor__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* 캘린더 모달 */
+.itinerary-editor__calendar-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.itinerary-editor__calendar-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #1e293b;
+}
+
+.itinerary-editor__calendar-status {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.itinerary-editor__calendar-status--selecting-start {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.itinerary-editor__calendar-status--selecting-end {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.itinerary-editor__date-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.itinerary-editor__date-input label {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.itinerary-editor__date-input-value {
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  min-height: 36px;
+}
+
+.itinerary-editor__calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.itinerary-editor__calendar-nav {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itinerary-editor__calendar-nav:hover {
+  background: #e2e8f0;
+}
+
+.itinerary-editor__calendar-month {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1e293b;
+  margin: 0;
+}
+
+.itinerary-editor__calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.itinerary-editor__calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  padding: 4px;
+}
+
+.itinerary-editor__calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.itinerary-editor__calendar-day {
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  background: white;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.itinerary-editor__calendar-day:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.itinerary-editor__calendar-day:disabled {
+  cursor: default;
+  color: transparent;
+}
+
+.itinerary-editor__calendar-day--today {
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.itinerary-editor__calendar-day--start {
+  background: #4f46e5;
+  color: white;
+}
+
+.itinerary-editor__calendar-day--end {
+  background: #4f46e5;
+  color: white;
+}
+
+.itinerary-editor__calendar-day--range {
+  background: #e0e7ff;
+  color: #1e293b;
+}
+
+.itinerary-editor__trip-duration {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  color: #0369a1;
+}
+
+.itinerary-editor__modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.itinerary-editor__modal-button {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.itinerary-editor__modal-button--cancel {
+  background: white;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+.itinerary-editor__modal-button--cancel:hover {
+  background: #f8fafc;
+}
+
+.itinerary-editor__modal-button--confirm {
+  background: #4f46e5;
+  border-color: #4338ca;
+  color: white;
+}
+
+.itinerary-editor__modal-button--confirm:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.itinerary-editor__modal-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 반응형 처리 */
+@media (max-width: 640px) {
+  .itinerary-editor__header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .itinerary-editor__header-center {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .itinerary-editor__calendar-modal {
+    padding: 16px;
+    max-width: 100%;
+    width: 95%;
+  }
+}

@@ -64,7 +64,7 @@ export default function useScheduleCommit(roomId) {
 
     setIsSaving(true);
     try {
-      const res = await commitSchedules(roomId, { versions: versionsByDay });
+      const res = await commitSchedules(roomId, versionsByDay);
       console.log("[commit res]", res.status, res.data);
 
       // 200 OK — 서버가 확정 일정 목록을 반환

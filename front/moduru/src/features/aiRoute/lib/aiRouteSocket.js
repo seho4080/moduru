@@ -1,51 +1,56 @@
-// WebSocket topics (소문자):
-// /topic/room/{roomId}/ai-route/status  (payload: { roomId, status: "STARTED"|"PROGRESS"|"DONE"|"ERROR"|"INVALIDATED", ... })
-// /topic/room/{roomId}/ai-route/result  (payload: { roomId, jobId, schedule: ... })
-
+// src/features/aiRoute/lib/aiRouteApi.js (subscribe 부분)
 import { connectWebSocket, unsubscribeKeys } from "../../webSocket/coreSocket";
 
 const HANDLER = "ai-route";
 
 /**
+ * AI Route WS 구독
  * @param {string|number} roomId
- * @param {{ onStatus?:(msg:any)=>void, onResult?:(msg:any)=>void, keyPrefix?: string }} handlers
+ * @param {{
+ *   onStatus?:(msg:any)=>void,
+ *   onResult?:(msg:any)=>void,
+ *   keyPrefix?: string
+ * }} handlers
  * @returns {() => void} cleanup
  */
 export function subscribeAiRoute(roomId, handlers = {}) {
+  if (!roomId) return () => {};
+  const { onStatus, onResult, keyPrefix = "" } = handlers;
+
+  const makeTopic = (action) => `/topic/room/${roomId}/${HANDLER}/${action}`;
+  const makeKey = (action) =>
+    (keyPrefix ? `${keyPrefix}|` : "") + `${roomId}|${makeTopic(action)}`;
+
   const subs = [];
 
-  const statusKey = `${roomId}|/topic/room/${roomId}/${HANDLER}/status`;
-  const resultKey = `${roomId}|/topic/room/${roomId}/${HANDLER}/result`;
-
-  if (handlers.onStatus) {
+  if (typeof onStatus === "function") {
     subs.push({
       handler: HANDLER,
       action: "status",
-      callback: handlers.onStatus,
-      key: handlers.keyPrefix
-        ? `${handlers.keyPrefix}|${statusKey}`
-        : statusKey,
+      topic: makeTopic("status"), // topic 명시 (핸들러/액션 조합과 함께 안전)
+      callback: onStatus,
+      key: makeKey("status"),
     });
   }
 
-  if (handlers.onResult) {
+  if (typeof onResult === "function") {
     subs.push({
       handler: HANDLER,
       action: "result",
-      callback: handlers.onResult,
-      key: handlers.keyPrefix
-        ? `${handlers.keyPrefix}|${resultKey}`
-        : resultKey,
+      topic: makeTopic("result"),
+      callback: onResult,
+      key: makeKey("result"),
     });
   }
 
-  if (subs.length) connectWebSocket(roomId, subs);
+  if (subs.length > 0) {
+    // coreSocket는 동일 key 중복 등록을 무시(또는 대체)하도록 되어 있다고 가정
+    connectWebSocket(roomId, subs);
+  }
 
-  // cleanup
   return () => {
-    const keys = subs.map(
-      (s) => s.key ?? `${roomId}|/topic/room/${roomId}/${HANDLER}/${s.action}`
-    );
-    unsubscribeKeys(keys);
+    if (subs.length > 0) {
+      unsubscribeKeys(subs.map((s) => s.key));
+    }
   };
 }

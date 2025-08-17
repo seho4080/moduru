@@ -6,12 +6,12 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import useMarkerMode from "../../map/model/useMarkerMode";
 import useMeasureMode from "../../map/model/useMeasureMode";
 
 // NOTE: 추가 - 지도 중심/틱 구독 셀렉터
-import { selectMapCenter, selectMapTick } from "../../../redux/slices/mapSlice";
+import { selectMapCenter, selectMapTick, selectSelectedPinId, selectSelectedDay, setSelectedPinId, setSelectedDay } from "../../../redux/slices/mapSlice";
 
 const KakaoMap = forwardRef(function KakaoMap(
   {
@@ -29,6 +29,7 @@ const KakaoMap = forwardRef(function KakaoMap(
 ) {
   const containerRef = useRef(null);
   const mapObjRef = useRef(null);
+  const dispatch = useDispatch();
 
   // 모드/삭제 모드 상태
   const modeRef = useRef("");
@@ -42,6 +43,9 @@ const KakaoMap = forwardRef(function KakaoMap(
 
   // 삭제/선택 모드에서 쓰는 선택 상태
   const selected = useRef(new Set());
+  
+  // 선택된 일차의 경로 화살표
+  const dayRoutePolyline = useRef(null);
 
   // 공유된 장소 목록 (리덕스)
   const sharedPlaces = useSelector(
@@ -51,6 +55,9 @@ const KakaoMap = forwardRef(function KakaoMap(
   // NOTE: 추가 - Redux에서 지도 중심과 트리거틱 구독
   const center = useSelector(selectMapCenter);
   const tick = useSelector(selectMapTick);
+  const selectedPinId = useSelector(selectSelectedPinId);
+  const selectedDay = useSelector(selectSelectedDay);
+  const itineraryDays = useSelector((state) => state.itinerary?.days) || {};
 
   // 1) 지도 초기화
   useEffect(() => {
@@ -65,7 +72,13 @@ const KakaoMap = forwardRef(function KakaoMap(
     });
     map.setZoomable(!!zoomable);
     mapObjRef.current = map;
-  }, [zoomable /* NOTE: center는 초기화 의존성에서 제외 */]);
+
+    // 지도 클릭 시 선택된 핀과 일차 해제
+    kakao.maps.event.addListener(map, "click", () => {
+      dispatch(setSelectedPinId(null));
+      dispatch(setSelectedDay(null));
+    });
+  }, [zoomable, dispatch /* NOTE: center는 초기화 의존성에서 제외 */]);
 
   // NOTE: 추가 - Redux center/tick 변경 시 panTo
   useEffect(() => {
@@ -75,6 +88,53 @@ const KakaoMap = forwardRef(function KakaoMap(
     const pos = new kakao.maps.LatLng(center.lat, center.lng);
     mapObjRef.current.panTo(pos);
   }, [center, tick]);
+
+  // 선택된 일차의 경로를 화살표로 표시
+  useEffect(() => {
+    if (!mapObjRef.current || !window.kakao?.maps) return;
+    
+    // 기존 화살표 제거
+    if (dayRoutePolyline.current) {
+      dayRoutePolyline.current.setMap(null);
+      dayRoutePolyline.current = null;
+    }
+
+    // 선택된 일차가 없으면 종료
+    if (!selectedDay || !itineraryDays[selectedDay]) return;
+
+    const dayItems = itineraryDays[selectedDay];
+    if (!Array.isArray(dayItems) || dayItems.length < 2) return;
+
+         // 해당 일차의 장소들을 순서대로 연결하는 화살표 생성
+     const path = dayItems
+       .map(item => {
+         // 일정 데이터에서 좌표 추출 (여러 가능한 필드명 확인)
+         const lat = Number(item?.lat ?? item?.latitude ?? item?.place?.lat ?? item?.place?.latitude);
+         const lng = Number(item?.lng ?? item?.longitude ?? item?.place?.lng ?? item?.place?.longitude);
+         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+         return new kakao.maps.LatLng(lat, lng);
+       })
+       .filter(Boolean);
+
+    if (path.length < 2) return;
+
+    const polyline = new kakao.maps.Polyline({
+      path: path,
+      strokeWeight: 3,
+      strokeColor: '#3B82F6', // 파란색
+      strokeOpacity: 0.8,
+      strokeStyle: 'solid'
+    });
+
+    polyline.setMap(mapObjRef.current);
+    dayRoutePolyline.current = polyline;
+
+    // 경로가 포함된 영역으로 지도 이동
+    const bounds = new kakao.maps.LatLngBounds();
+    path.forEach(pos => bounds.extend(pos));
+    mapObjRef.current.setBounds(bounds);
+
+  }, [selectedDay, itineraryDays]);
 
   // 2) 외부 제어 메서드
   useImperativeHandle(
@@ -208,7 +268,27 @@ const KakaoMap = forwardRef(function KakaoMap(
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
       const pos = new LatLng(lat, lng);
-      const marker = new kakao.maps.Marker({ position: pos });
+      
+             // 선택된 핀인지 확인하고 색깔 설정
+       const isSelected = selectedPinId === p.wantId || selectedPinId === p.id;
+       
+       let marker;
+       if (isSelected) {
+         // 선택된 핀은 빨간색 마커로 표시
+         const markerImage = new kakao.maps.MarkerImage(
+           'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/marker_red.png',
+           new kakao.maps.Size(31, 35)
+         );
+         marker = new kakao.maps.Marker({ 
+           position: pos,
+           image: markerImage,
+           zIndex: 1000 // 선택된 핀을 위에 표시
+         });
+       } else {
+         // 일반 핀은 기본 마커 사용
+         marker = new kakao.maps.Marker({ position: pos });
+       }
+      
       marker.setMap(map);
       sharedMarkers.current.push(marker);
       bounds.extend(pos);
@@ -221,12 +301,12 @@ const KakaoMap = forwardRef(function KakaoMap(
       }
     });
 
-    if (sharedMarkers.current.length > 1) {
-      map.setBounds(bounds);
-    } else if (firstPos) {
-      map.panTo(firstPos);
-    }
-  }, [sharedPlaces, onSelectMarker]);
+         if (sharedMarkers.current.length > 1) {
+       map.setBounds(bounds);
+     } else if (firstPos) {
+       map.panTo(firstPos);
+     }
+   }, [sharedPlaces, onSelectMarker, selectedPinId]);
 
   // 모드별 훅 연결
   useMarkerMode({

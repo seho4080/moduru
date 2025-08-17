@@ -52,6 +52,13 @@ const tripRoomSlice = createSlice({
     bumpRegionVersion(state) {
       state.regionVersion += 1;
     },
+
+    // 여행 기간만 업데이트
+    updateTripRoom(state, action) {
+      const { startDate, endDate } = action.payload;
+      if (startDate) state.startDate = startDate;
+      if (endDate) state.endDate = endDate;
+    },
   },
 });
 
@@ -61,6 +68,7 @@ export const {
   updateRoomRegion,
   bumpRegionVersion,
   setTitle,
+  updateTripRoom,
 } = tripRoomSlice.actions;
 
 export const selectRegionVersion = (state) => state.tripRoom.regionVersion;

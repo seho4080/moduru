@@ -1,3 +1,4 @@
+// src/features/myTravelSpace/model/useTravelRooms.js
 import { useEffect, useState, useCallback } from "react";
 import api from "../../../lib/axios";
 
@@ -29,7 +30,6 @@ export async function fetchTravelRoomsApi({
     canReview: it.canReview ?? false,
     isOwner: it.isOwner ?? false,
     canDelete: it.canDelete ?? false,
-    // (선택) isOwner: it.isOwner ?? false,  // 권한 표시 쓰려면
   }));
 }
 
@@ -45,7 +45,7 @@ export async function leaveTravelRoomApi(
 
   const res = await api.delete(url, {
     withCredentials: true,
-    useToken, // ⬅️ 하드코딩 제거
+    useToken,
     headers: { Accept: "*/*" },
   });
   return res?.data ?? { ok: true }; // 204 대비
@@ -75,6 +75,7 @@ export default function useTravelRooms(options = {}) {
   const LEAVE_BASE  = options.leaveBase  ?? "/rooms";
   const REMOVE_BASE = options.removeBase ?? "/rooms";
   const USE_TOKEN   = options.useToken   ?? false;
+  const ENABLED     = options.enabled    ?? true;   // ✅ 추가
 
   const [filter, setFilter] = useState(options.initialFilter ?? "none");
   const cacheKey = `${LS_KEY_PREFIX}${filter}`;
@@ -85,11 +86,13 @@ export default function useTravelRooms(options = {}) {
       return Array.isArray(cached) ? cached : [];
     } catch { return []; }
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(ENABLED);  // ✅ 비활성 시 초기 로딩 false
   const [error, setError] = useState(null);
 
   const fetchRooms = useCallback(async () => {
-    setLoading(true); setError(null);
+    if (!ENABLED) return;                // ✅ 비활성 가드
+    setLoading(true);
+    setError(null);
     try {
       const normalized = await fetchTravelRoomsApi({
         endpoint: ENDPOINT,
@@ -99,13 +102,15 @@ export default function useTravelRooms(options = {}) {
       setRooms(normalized);
       localStorage.setItem(cacheKey, JSON.stringify(normalized));
     } catch (e) {
-      setError(e);
+      setError(e); // 인터셉터 재시도 후의 최종 에러만 반영
     } finally {
       setLoading(false);
     }
-  }, [ENDPOINT, USE_TOKEN, filter, cacheKey]);
+  }, [ENDPOINT, USE_TOKEN, filter, cacheKey, ENABLED]);
 
-  useEffect(() => { fetchRooms(); }, [fetchRooms]);
+  useEffect(() => {
+    if (ENABLED) fetchRooms();           // ✅ 활성일 때만 첫 fetch
+  }, [fetchRooms, ENABLED]);
 
   // 필터 바뀔 때 캐시 선반영
   useEffect(() => {
@@ -167,6 +172,5 @@ export default function useTravelRooms(options = {}) {
     [REMOVE_BASE, USE_TOKEN, cacheKey]
   );
 
-  // ✅ 한 번만 반환
   return { rooms, loading, error, reload: fetchRooms, filter, setFilter, leaveRoom, removeRoom };
 }
