@@ -117,6 +117,10 @@ public class ScheduleServiceImpl implements ScheduleService {
     // 2. Redis → 전체 일정 조회
     String redisKey = redisScheduleService.getRedisKey(roomId);
     Map<String, DayScheduleRedisDto> drafts = redisScheduleService.getSchedule(redisKey);
+    
+    // 디버깅 로그 추가
+    log.info("🔍 [commitSchedule] redisKey={}, drafts.keys={}", redisKey, drafts.keySet());
+    
     if (drafts.isEmpty()) {
       throw new CustomException(ErrorCode.SCHEDULE_EMPTY_DRAFT);
     }
@@ -147,6 +151,16 @@ public class ScheduleServiceImpl implements ScheduleService {
     for (Map.Entry<String, DayScheduleRedisDto> entry : drafts.entrySet()) {
       Integer day = Integer.valueOf(entry.getKey());
       DayScheduleRedisDto draft = entry.getValue();
+
+      // 디버깅 로그 추가
+      log.info("🔍 [commitSchedule] day={}, draft.date={}, draft.events.size={}", 
+          day, draft.getDate(), draft.getEvents().size());
+
+      // day=0이거나 date가 null인 경우 건너뛰기
+      if (day == 0 || draft.getDate() == null) {
+        log.warn("⚠️ [commitSchedule] 건너뛰기: day={}, date={}", day, draft.getDate());
+        continue;
+      }
 
       draft
           .getEvents()
