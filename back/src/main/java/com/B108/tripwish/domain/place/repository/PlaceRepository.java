@@ -83,13 +83,6 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     where mp.user.id = :userId
       and (:regionId is null or p.regionId.id = :regionId)
     """)
-<<<<<<< HEAD
   List<Place> findAllLikedByUserIdAndRegion(
       @Param("userId") Long userId, @Param("regionId") Long regionId);
-=======
-  List<Place> findAllLikedByUserIdAndRegion(@Param("userId") Long userId,
-                                            @Param("regionId") Long regionId);
-
-
->>>>>>> 967c1bf ([FEAT] 장소 투표 기능 추가)
 }

@@ -175,9 +175,9 @@ export default function SharedPlaceList({
                     place={place}
                     onRemove={() => onRemove?.(place)}
                     onCardClick={onCardClick}
-                    onHeartClick={handleHeart}          {/* ✅ 추가: 투표 핸들러 전달 */}
+                    onHeartClick={handleHeart}          
                     usedInItinerary={isUsed}
-                    isSelected={checked}                 {/* 선택 강조 쓰려면 */}
+                    isSelected={checked}                
                     // responsive={true}                 {/* 카드에서 안 쓰면 제거해도 됨 */}
                   />
                 </div>

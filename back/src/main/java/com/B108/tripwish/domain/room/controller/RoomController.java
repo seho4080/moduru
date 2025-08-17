@@ -236,7 +236,8 @@ public class RoomController {
       @PathVariable Long roomId,
       @PathVariable Long wantId) {
     VotePlaceResponseDto response = wantPlaceService.toggleVotePlace(user, roomId, wantId);
-    log.info("📤 [votePlace] API 응답: wantId={}, isVoted={}", response.getWantId(), response.isVoted());
+    log.info(
+        "📤 [votePlace] API 응답: wantId={}, isVoted={}", response.getWantId(), response.isVoted());
     return ResponseEntity.ok(response);
   }
 
