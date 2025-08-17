@@ -7,21 +7,15 @@ import {
   resetSharedPlaces,
 } from "../../../redux/slices/sharedPlaceSlice";
 
+// 디버그 로그 토글 (원하면 false로 꺼도 됨)
+const DEBUG_VOTE = true;
+
 function pickArray(data) {
   if (Array.isArray(data)) return data;
   if (!data || typeof data !== "object") return [];
-  // 흔한 케이스 순회
-  for (const k of [
-    "sharedPlaces",
-    "data",
-    "content",
-    "items",
-    "list",
-    "results",
-  ]) {
+  for (const k of ["sharedPlaces", "data", "content", "items", "list", "results"]) {
     if (Array.isArray(data[k])) return data[k];
   }
-  // 객체 안의 첫 번째 배열 아무거나
   for (const v of Object.values(data)) {
     if (Array.isArray(v)) return v;
   }
@@ -43,33 +37,35 @@ export default function useSharedPlaceList(roomId) {
     }
 
     console.log("[useSharedPlaceList] rid =", rid);
-
     dispatch(resetSharedPlaces());
 
     let cancelled = false;
 
     (async () => {
       try {
-        // 프록시 쓰면 `/api/rooms/${rid}/wants`
+        // axios 인스턴스가 /api baseURL이면 아래처럼 /rooms/... 만 써도 됨
         const url = `/rooms/${rid}/wants`;
         console.log("[useSharedPlaceList] GET", url);
         const res = await api.get(url);
-        console.log(
-          "[useSharedPlaceList] res.status",
-          res.status,
-          "res.data:",
-          res.data
-        );
+        console.log("[useSharedPlaceList] res.status", res.status, "res.data:", res.data);
 
         const list = pickArray(res.data);
-        console.log(
-          "[useSharedPlaceList] parsed list length =",
-          list.length,
-          list
-        );
+        console.log("[useSharedPlaceList] parsed list length =", list.length, list);
+
+        if (DEBUG_VOTE) {
+          list.forEach((item, index) => {
+            console.log(`[useSharedPlaceList] item ${index}:`, {
+              wantId: item?.wantId,
+              placeName: item?.placeName,
+              isVoted: item?.isVoted,
+              voteCnt: item?.voteCnt,
+              raw: item,
+            });
+          });
+        }
 
         if (!cancelled) {
-          dispatch(setSharedPlaces(list)); // 비어도 그대로 넣음(초기 상태 유지 목적이면 이대로 OK)
+          dispatch(setSharedPlaces(list));
         }
       } catch (err) {
         if (!cancelled) {

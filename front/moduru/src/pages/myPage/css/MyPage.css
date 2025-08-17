@@ -220,6 +220,105 @@ body:has(.mypage-container.expanded) {
   border-bottom: none;
 }
 
+/* ===== 테이블 반응형 처리 개선 ===== */
+.mypage-main .travel-table {
+  width: 100% !important;
+  overflow-x: auto !important;
+  min-width: 0 !important;
+}
+
+.mypage-main .travel-table-head,
+.mypage-main .travel-row {
+  display: grid !important;
+  grid-template-columns: minmax(200px, 2fr) minmax(120px, 1.2fr) minmax(160px, 1.6fr) minmax(60px, 0.8fr) minmax(200px, auto) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 740px !important;
+}
+
+/* 컬럼별 최대 너비 제한 */
+.mypage-main .col {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  padding: 0 4px !important;
+}
+
+.mypage-main .col-title {
+  max-width: 300px !important;
+}
+
+.mypage-main .col-region {
+  max-width: 150px !important;
+}
+
+.mypage-main .col-period {
+  max-width: 200px !important;
+}
+
+.mypage-main .col-status {
+  max-width: 80px !important;
+  text-align: center !important;
+}
+
+.mypage-main .col-actions {
+  max-width: none !important;
+  min-width: 200px !important;
+}
+
+/* 반응형 브레이크포인트 */
+@media (max-width: 1200px) {
+  .mypage-main .travel-table-head,
+  .mypage-main .travel-row {
+    grid-template-columns: minmax(180px, 1.8fr) minmax(100px, 1fr) minmax(140px, 1.4fr) minmax(50px, 0.6fr) minmax(180px, auto) !important;
+    min-width: 650px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .mypage-main .travel-table-head,
+  .mypage-main .travel-row {
+    grid-template-columns: minmax(160px, 1.6fr) minmax(80px, 0.8fr) minmax(120px, 1.2fr) minmax(40px, 0.4fr) minmax(160px, auto) !important;
+    min-width: 560px !important;
+  }
+  
+  .mypage-main .col {
+    font-size: 13px !important;
+  }
+  
+  .mypage-main .row-btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* 테이블 전체를 감싸는 스크롤 컨테이너 */
+.mypage-main .travel-table {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+/* 스크롤바 스타일링 */
+.mypage-main .travel-table::-webkit-scrollbar {
+  height: 6px;
+}
+
+.mypage-main .travel-table::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.mypage-main .travel-table::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.mypage-main .travel-table::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 /* ===== 더보기 메뉴 시스템 ===== */
 /* 모든 부모 요소 overflow 해제 */
 .mypage-main,
@@ -250,7 +349,7 @@ body:has(.mypage-container.expanded) {
 .mypage-main .row-more {
   background: transparent !important;
   border: none !important;
-  padding: 0px !important;
+  padding: 6px !important;
   cursor: pointer !important;
   border-radius: 4px !important;
   display: flex !important;
