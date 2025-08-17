@@ -201,6 +201,7 @@ export default function useRoomWebSocket(roomId) {
       // 6. 이동 시간 계산 결과
       {
         handler: "travel",
+        action: "result",
         callback: (msg) => {
           console.log("[WebSocket] 이동 시간 결과:", msg);
           if (!msg) return;

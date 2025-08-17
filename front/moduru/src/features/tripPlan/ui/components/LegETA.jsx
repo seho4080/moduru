@@ -25,8 +25,17 @@ export default function LegETA({
     const tryPick = (t) =>
       selectLegEta(s, { day, transport: t, fromWantId, toWantId });
     let hit = tryPick(requestedTransport);
-    if (!hit && requestedTransport === "transit") hit = tryPick("walking");
-    if (!hit) hit = tryPick("driving");
+    
+    // 대중교통 요청 시에는 대중교통 또는 도보 데이터만 사용 (운전 데이터 폴백 제거)
+    if (!hit && requestedTransport === "transit") {
+      hit = tryPick("walking");
+    }
+    
+    // 운전 요청 시에만 운전 데이터 폴백 사용
+    if (!hit && requestedTransport === "driving") {
+      hit = tryPick("driving");
+    }
+    
     return hit
       ? {
           mode: requestedTransport,
