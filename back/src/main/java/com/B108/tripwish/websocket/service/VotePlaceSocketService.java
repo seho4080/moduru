@@ -1,9 +1,8 @@
 package com.B108.tripwish.websocket.service;
 
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import com.B108.tripwish.websocket.dto.response.VotePlaceBroadCastResponseDto;
+import com.B108.tripwish.websocket.dto.response.VotePlaceMessage;
 
 import lombok.RequiredArgsConstructor;
 
@@ -11,11 +10,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VotePlaceSocketService {
 
-  private final SimpMessagingTemplate messagingTemplate;
+  private final RedisPublisher redisPublisher;
 
-  public void sendVoteResult(Long roomId, Long wantPlaceId, int voteCnt, String receiverId) {
-    VotePlaceBroadCastResponseDto message =
-        new VotePlaceBroadCastResponseDto(wantPlaceId, voteCnt, receiverId);
-    messagingTemplate.convertAndSend("/topic/room/" + roomId + "/place-vote", message);
+  public void sendVoteResult(Long roomId, Long wantPlaceId, int voteCnt, String senderId) {
+    VotePlaceMessage message = VotePlaceMessage.builder()
+        .roomId(roomId)
+        .wantId(wantPlaceId)
+        .voteCnt(voteCnt)
+        .senderId(senderId)
+        .build();
+    
+    redisPublisher.publish(RedisChannelType.PLACE_VOTE, message);
   }
 }
