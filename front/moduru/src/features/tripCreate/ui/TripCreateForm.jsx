@@ -168,17 +168,6 @@ export default function TripCreateForm({
     const start = hasStart ? toYmd(dates[0]) : todayYmd();
     const end   = hasEnd   ? toYmd(dates[1]) : todayYmd();
 
-    // 디버깅 로그
-    console.log('🔍 날짜 디버깅:', {
-      originalDates: dates,
-      hasStart,
-      hasEnd,
-      start,
-      end,
-      startDate: dates?.[0],
-      endDate: dates?.[1]
-    });
-
     const payload = { title: titleToSend, region: region.trim(), startDate: start, endDate: end };
 
     try {

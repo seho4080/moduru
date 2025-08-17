@@ -126,9 +126,9 @@ public class RoomServiceImpl implements RoomService {
   @Transactional
   public Long createCustomPlace(CustomPlaceCreateRequestDto dto) {
     TravelRoom room =
-            travelRoomRepository
-                    .findById(dto.getRoomId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+        travelRoomRepository
+            .findById(dto.getRoomId())
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     // 카카오 API로 주소 받아오기
     String address = kakaomapService.getAddressFromCoords(dto.getLat(), dto.getLng()).getAddress();
 
@@ -236,16 +236,17 @@ public class RoomServiceImpl implements RoomService {
 
   @Override
   public TravelRoomResponseDto getRoomInfo(Long roomId) {
-    TravelRoom room = travelRoomRepository
+    TravelRoom room =
+        travelRoomRepository
             .findById(roomId)
             .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
 
     return TravelRoomResponseDto.builder()
-            .travelRoomId(room.getId())
-            .title(room.getTitle())
-            .region(room.getRegion().getName())
-            .startDate(room.getStartDate())
-            .endDate(room.getEndDate())
-            .build();
+        .travelRoomId(room.getId())
+        .title(room.getTitle())
+        .region(room.getRegion().getName())
+        .startDate(room.getStartDate())
+        .endDate(room.getEndDate())
+        .build();
   }
 }

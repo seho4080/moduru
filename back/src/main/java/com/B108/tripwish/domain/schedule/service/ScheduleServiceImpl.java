@@ -261,10 +261,12 @@ public class ScheduleServiceImpl implements ScheduleService {
   public List<SchedulePlaceResponseDto> getPlaceListBySchedule(Long roomId) {
     return scheduleRepository.findPlaceNameAddrByRoomId(roomId).stream()
         .map(
-            row ->
+            r ->
                 SchedulePlaceResponseDto.builder()
-                    .placeName((String) row[0])
-                    .address((String) row[1])
+                    .placeId(r.getPlaceId())
+                    .categoryId(r.getCategoryId())
+                    .placeName(r.getPlaceName())
+                    .address(r.getAddress())
                     .build())
         .toList();
   }
