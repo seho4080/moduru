@@ -1,7 +1,6 @@
 // src/features/sharedPlace/ui/SharedPlaceCard.jsx
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { FaHeart, FaRegHeart, FaCheckCircle } from "react-icons/fa";
-/** NEW: 이미지 폴백 로고 */
 import fallbackLogo from "../../../assets/images/moduru-logo.png";
 
 export default function SharedPlaceCard({
@@ -19,22 +18,19 @@ export default function SharedPlaceCard({
   isDraggable = true,
   enableTimePopover = false,
   onConfirmTimes,
-  /** ✅ 새로 추가: 일정에 이미 포함되었는지 */
-  usedInItinerary = false,
-  /** ✅ 새로 추가: 카드 클릭 시 핀 포커스 */
-  onCardClick,
-  /** ✅ 새로 추가: 선택된 상태 표시 */
-  isSelected = false,
+  usedInItinerary = false, // 일정 포함 배지
+  onCardClick,             // 카드 클릭 포커스
+  isSelected = false,      // 선택 강조
 }) {
-  const { placeName, imgUrl, category, address, likeCount, voteCnt } =
+  const { placeName, imgUrl, category, address, likeCount, voteCnt, isVoted } =
     place ?? {};
+
   const count =
     typeof likeCount === "number"
       ? likeCount
       : typeof voteCnt === "number"
       ? voteCnt
       : 0;
-  const hasLikes = count > 0;
 
   const [imgError, setImgError] = useState(false);
   const [grabbed, setGrabbed] = useState(false);
@@ -46,10 +42,9 @@ export default function SharedPlaceCard({
     return s.length ? s : null;
   }, [imgUrl]);
 
-  /** NEW: 실제로 표시할 이미지 소스(원본 실패/없음 → 로고) */
   const displaySrc = imgError || !validImgSrc ? fallbackLogo : validImgSrc;
 
-  // 시간 팝오버 상태(보드에서만 사용)
+  // 시간 팝오버
   const [openTime, setOpenTime] = useState(false);
   const [localStart, setLocalStart] = useState(startTime ?? "");
   const [localEnd, setLocalEnd] = useState(endTime ?? "");
@@ -62,12 +57,6 @@ export default function SharedPlaceCard({
       setTimeout(() => startInputRef.current?.focus(), 0);
     }
   }, [openTime, startTime, endTime]);
-
-  const timeLabel =
-    (startTime && endTime && `${startTime} - ${endTime}`) ||
-    (startTime && `${startTime} - ?`) ||
-    (endTime && `? - ${endTime}`) ||
-    "시간 미정";
 
   const confirmTimes = () => {
     onConfirmTimes?.(localStart, localEnd);
@@ -85,14 +74,13 @@ export default function SharedPlaceCard({
     }
   };
 
-  // 네이티브 드래그(외부→보드)
+  // DnD
   const handleDragStart = (e) => {
     const payload = { type: "PLACE", place };
     const body = JSON.stringify(payload);
     e.dataTransfer.setData("application/json", body);
     e.dataTransfer.setData("text/plain", body);
     e.dataTransfer.effectAllowed = "copy";
-
     if (dragPreviewRef.current && displaySrc) {
       const ghost = dragPreviewRef.current;
       e.dataTransfer.setDragImage(ghost, ghost.width / 2, ghost.height / 2);
@@ -111,16 +99,13 @@ export default function SharedPlaceCard({
       }
     : {};
 
-  // 카드 클릭 핸들러
+  // 카드 클릭(드래그/버튼 클릭은 무시)
   const handleCardClick = (e) => {
-    // 드래그 중이거나 삭제/좋아요 버튼 클릭 시 무시
-    if (grabbed || e.target.closest('[data-nodrag]')) return;
-    
-    console.log('SharedPlaceCard clicked:', place);
+    if (grabbed || e.target.closest("[data-nodrag]")) return;
     onCardClick?.(place);
   };
 
-  // ✅ 일정 포함 시 강조 스타일
+  // 강조 스타일: 일정 포함 > 선택됨 > 기본
   const usedClasses = usedInItinerary
     ? "border-emerald-300 bg-emerald-50/40 ring-1 ring-emerald-200"
     : isSelected
@@ -130,9 +115,7 @@ export default function SharedPlaceCard({
   return (
     <div
       className={`relative mb-2 flex h-[70px] items-center gap-2 rounded-lg border-[1.5px] bg-white p-2 ${usedClasses}
-        ${
-          isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
-        } hover:bg-gray-50 transition-colors`}
+        ${isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} hover:bg-gray-50 transition-colors`}
       style={{ width: cardWidth ? `${cardWidth}px` : undefined }}
       {...dragProps}
       onClick={handleCardClick}
@@ -145,7 +128,7 @@ export default function SharedPlaceCard({
       }
       aria-label={usedInItinerary ? "일정 포함됨" : undefined}
     >
-      {/* 드래그 프리뷰용 투명 이미지 (원본 없으면 로고 사용) */}
+      {/* 드래그 프리뷰용 투명 이미지 */}
       {isDraggable && (
         <img
           ref={dragPreviewRef}
@@ -157,7 +140,7 @@ export default function SharedPlaceCard({
         />
       )}
 
-      {/* 좌상단 리본 배지: 일정 포함 */}
+      {/* 일정 포함 배지 */}
       {usedInItinerary && (
         <div className="absolute -left-1 -top-1 z-10 flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-[2px] text-[10px] font-semibold text-white shadow">
           <FaCheckCircle className="h-3 w-3" />
@@ -165,25 +148,25 @@ export default function SharedPlaceCard({
         </div>
       )}
 
-      {/* 좋아요 */}
+      {/* 하트/투표 */}
       {showVote && (
         <button
           type="button"
           onClick={() => onHeartClick?.(place)}
           className="absolute right-[8px] top-[6px] z-10 inline-flex h-5 w-5 items-center justify-center"
-          aria-label="좋아요"
-          title="좋아요"
+          aria-label={isVoted ? "투표 취소" : "투표"}
+          title={isVoted ? "투표 취소" : "투표"}
           data-nodrag
         >
           <span className="relative inline-flex h-5 w-5 items-center justify-center">
-            {hasLikes ? (
+            {isVoted ? (
               <FaHeart className="absolute inset-0 m-auto h-5 w-5 text-red-500" />
             ) : (
               <FaRegHeart className="absolute inset-0 m-auto h-5 w-5 text-slate-400" />
             )}
             <span
               className={`relative text-[10px] font-semibold leading-none ${
-                hasLikes ? "text-white" : "text-slate-400"
+                isVoted ? "text-white" : "text-slate-400"
               }`}
               style={{ transform: "translateY(0.5px)" }}
             >
@@ -193,7 +176,7 @@ export default function SharedPlaceCard({
         </button>
       )}
 
-      {/* 썸네일 (없으면 자동으로 로고 표시) */}
+      {/* 썸네일 */}
       <div className="relative flex-shrink-0">
         <img
           src={displaySrc}
@@ -216,15 +199,15 @@ export default function SharedPlaceCard({
         </button>
       </div>
 
-      {/* 텍스트 + 메타 */}
+      {/* 텍스트/메타 */}
       <div className="flex min-w-0 flex-1 flex-col justify-start pt-[8px]">
         <span className="text-[12px] font-semibold leading-[1.2] line-clamp-2 break-words">
           {placeName ?? "이름 없음"}
         </span>
 
-        {/* 카테고리 + 시간 라벨(보드에서만) */}
         <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-600">
           {category && <span className="truncate">{category}</span>}
+
           {enableTimePopover && (
             <div className="relative inline-flex items-center" data-nodrag>
               <button
@@ -294,17 +277,15 @@ export default function SharedPlaceCard({
           )}
         </div>
 
-        {/* 주소 */}
         {showAddress && (
-                  <div
-          className="text-[10px] text-slate-500 mt-0.5 truncate"
+          <div
+            className="text-[10px] text-slate-500 mt-0.5 truncate"
             title={address || ""}
           >
-            주소
+            {address || "주소 정보 없음"}
           </div>
         )}
 
-        {/* (옵션) 기존 인라인 시간 입력 */}
         {showTimeInputs && (
           <div className="mt-1 flex items-center gap-2" data-nodrag>
             <label className="flex items-center gap-1.5 text-[11px] text-slate-600 whitespace-nowrap">

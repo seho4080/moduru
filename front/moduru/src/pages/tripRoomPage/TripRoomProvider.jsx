@@ -26,6 +26,7 @@ import { useMapMarkerFlow } from "./hooks/useMapMarkerFlow";
 // 공유 장소 목록/소켓 구독 훅
 import useSharedPlaceList from "../../features/sharedPlace/model/useSharedPlaceList";
 import useSharedPlaceSocket from "../../features/sharedPlace/model/useSharedPlaceSocket";
+import usePlaceVoteSocket from "../../features/placeVote/model/usePlaceVoteSocket";
 
 // 유틸: 지역명 → 위경도 변환
 import { getLatLngFromRegion } from "../../features/map/lib/regionUtils";
@@ -62,6 +63,9 @@ export default function TripRoomProvider({ children }) {
 
   // 현재 방 ID 기준으로 공유 장소 소켓 구독
   useSharedPlaceSocket(meta.travelRoomId);
+
+  // 현재 방 ID 기준으로 투표 소켓 구독
+  usePlaceVoteSocket(meta.travelRoomId);
 
   // Redux 동기화: 화면 메타 상태를 전역 store에 반영
   useEffect(() => {

@@ -10,7 +10,7 @@ export const useWishToggle = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/rooms/${roomId}/wants`,
+        `/api/rooms/${roomId}/wants`,
         {
           method: "POST",
           headers: {
