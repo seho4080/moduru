@@ -7,7 +7,6 @@ import {
   getTripRoomInfo,
 } from "../../../features/tripCreate/lib/tripRoomApi";
 import useSharedPlaceList from "../../../features/sharedPlace/model/useSharedPlaceList";
-import useSharedPlaceSocket from "../../../features/sharedPlace/model/useSharedPlaceSocket";
 
 const EMPTY_ARRAY = []; // 변경 불가능한 빈 배열 (selector 기본값)
 
@@ -76,12 +75,10 @@ export function useTripRoomMeta({
   const inviteRegion = searchParams.get("region");
 
   /**
-   * 공유장소 훅 주의:
-   * - 이 훅이 Provider 내부에서도 호출된다면 중복 구독/요청이 발생할 수 있다.
-   * - 한 곳에서만 호출되도록 설계하거나, 내부에서 중복 연결 방지 로직을 둔다.
+   * 공유장소 목록 로딩
+   * - 웹소켓 구독은 TripRoomProvider에서 통합 처리
    */
   useSharedPlaceList(travelRoomId);
-  useSharedPlaceSocket(travelRoomId);
 
   // 로컬 UI 상태들
   const [activeTab, setActiveTab] = useState(null); // 사이드바 활성 탭

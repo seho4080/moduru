@@ -1,7 +1,6 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  subscribeAiRoute,
   requestAiRoute,
   getAiRouteSnapshot,
   isAiRouteBusy,
@@ -28,37 +27,8 @@ export default function useAiRoute(roomId) {
   const aiStatus = useSelector(selectAiRouteStatus); // "IDLE" | "STARTED" | "PROGRESS" | "DONE" | ...
   const inFlight = useRef(new Set()); // key: `${roomId}:${day}`
 
-  // WebSocket 구독
-  useEffect(() => {
-    if (!roomId) return;
-    console.log('Setting up AI Route WebSocket for roomId:', roomId);
-    const off = subscribeAiRoute(roomId, {
-      onStatus: (msg) => {
-        console.log('AI Route status received:', msg);
-        const raw = String(
-          msg?.status ?? msg?.type ?? msg?.phase ?? ""
-        ).toUpperCase();
-        if (raw === "STARTED") {
-          dispatch(applyRouteStatusStarted({ msg }));
-        } else if (raw === "PROGRESS" || typeof msg?.progress === "number") {
-          dispatch(applyRouteStatusProgress({ msg }));
-        } else if (raw === "DONE") {
-          dispatch(applyRouteStatusDone({ msg }));
-        } else if (raw === "ERROR") {
-          dispatch(applyRouteStatusError({ msg }));
-        } else if (raw === "INVALIDATED") {
-          dispatch(applyRouteStatusInvalidated({ msg }));
-        }
-      },
-      onResult: (msg) => {
-        console.log('AI Route result received:', msg);
-        // 일부 서버는 DONE 없이 result만 보냄 → 보정
-        dispatch(applyRouteResult({ msg }));
-        dispatch(applyRouteStatusDone({ msg: { ...msg, status: "DONE" } }));
-      },
-    });
-    return () => off();
-  }, [roomId, dispatch]);
+  // WebSocket 구독은 TripRoomProvider에서 통합 처리
+  // 개별 구독은 제거하여 중복 방지
 
   /** 일반 실행(스냅샷 미참조) */
   const runAiRoute = useCallback(
