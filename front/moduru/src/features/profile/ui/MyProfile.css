@@ -197,12 +197,12 @@
 
 /* 저장 버튼 */
 .btn-save {
-  background: #2f9e44;
+  background: #6d87db;
   color: white;
 }
 
 .btn-save:hover {
-  background: #22863a;
+  background: #6d87db;
 }
 
 /* 취소 버튼 */

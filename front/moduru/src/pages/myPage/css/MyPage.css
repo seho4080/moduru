@@ -1,3 +1,7 @@
+/* =========================
+   File: src/pages/myPage/css/MyPage.css
+   ========================= */
+
 @font-face {
   font-family: 'Ownglyph_meetme-Rg';
   src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2402_1@1.0/Ownglyph_meetme-Rg.woff2') format('woff2');
@@ -10,6 +14,7 @@
   min-height: 100vh;
   background-color: #f5f6fa;
   font-family: 'Ownglyph_meetme-Rg', sans-serif;
+  transition: all 0.3s ease;
 }
 
 .mypage-content {
@@ -84,15 +89,16 @@
 
 /* ── 메인 영역 ────────────────────────── */
 .mypage-main {
-  flex: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(109, 135, 219, 0.1);
-  /* overflow: hidden;  ← 잘림 원인 제거 */
   overflow: visible;
-  min-height: calc(100vh - 4rem);
+  height: auto;
   transition: all 0.3s ease;
-  padding: 12px 16px;     /* 좌우 여백 축소 */
+  padding: 12px 16px;
   margin: 0;
   max-width: none;
   box-sizing: border-box;
@@ -105,7 +111,442 @@
   font-size: 1.1rem;
 }
 
+/* ── 확대 기능 ────────────────────────── */
+.mypage-container.expanded {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  background: white;
+}
+
+.mypage-sidebar.hidden {
+  display: none;
+}
+
+.mypage-main.expanded {
+  width: 100vw;
+  height: 100vh;
+  margin-left: 0;
+  padding: 0;
+}
+
+.like-content.expanded {
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.map-card.expanded {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
+.map-card.expanded .map-viewport {
+  width: 100%;
+  height: 100%;
+}
+
+.map-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.expand-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #6366f1;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #6366f1;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+.expand-button:hover {
+  background: #6366f1;
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+}
+
+.expand-button:active {
+  transform: translateY(0);
+}
+
+/* 확대 상태에서 스크롤 방지 */
+body:has(.mypage-container.expanded) {
+  overflow: hidden;
+}
+
+/* ── MyTravelSpacePage 임베드 최적화 ───── */
+.mypage-main :where(.travel-page, .travel-card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.mypage-main :where(.mytravel-toolbar) {
+  margin: 0 0 12px 0 !important;
+  padding: 8px 0 !important;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: transparent;
+  border-bottom: none;
+}
+
+/* ===== 더보기 메뉴 시스템 ===== */
+/* 모든 부모 요소 overflow 해제 */
+.mypage-main,
+.main-scroll,
+.travel-page,
+.travel-card,
+.travel-body,
+.travel-table,
+.travel-table-body,
+.travel-row,
+.room-item,
+.col-actions,
+.action-group,
+.more-wrap {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* 더보기 래퍼 */
+.mypage-main .more-wrap {
+  position: relative !important;
+  z-index: 1000 !important;
+  display: inline-block !important;
+  margin-left: 8px !important;
+}
+
+/* 더보기 버튼 */
+.mypage-main .row-more {
+  background: transparent !important;
+  border: none !important;
+  padding: 0px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.mypage-main .row-more:hover {
+  background: #f9fafb !important;
+}
+
+.mypage-main .row-more svg {
+  fill: #6b7280 !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* 더보기 메뉴 - 항상 표시 */
+.mypage-main .more-menu {
+  position: absolute !important;
+  right: 0 !important;
+  top: 100% !important;
+  z-index: 99999 !important;
+  background: #111827 !important;
+  color: #fff !important;
+  min-width: 120px !important;
+  border-radius: 8px !important;
+  padding: 6px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 4px !important;
+}
+
+/* 더보기 메뉴 아이템 */
+.mypage-main .more-item {
+  width: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  color: #fff !important;
+  padding: 8px 12px !important;
+  text-align: left !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', Arial, sans-serif !important;
+  font-weight: 300 !important;
+}
+
+.mypage-main .more-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.mypage-main .more-item--leave {
+  color: #fbbf24 !important;
+}
+
+.mypage-main .more-item--leave:hover {
+  background: rgba(251, 191, 36, 0.1) !important;
+}
+
+.mypage-main .more-item--delete {
+  color: #f87171 !important;
+}
+
+.mypage-main .more-item--delete:hover {
+  background: rgba(248, 113, 113, 0.1) !important;
+}
+
+/* 액션 버튼 영역 */
+.mypage-main .col-actions {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  justify-content: flex-start !important;
+  overflow: visible !important;
+}
+
+.mypage-main .action-group {
+  z-index: 1 !important;
+}
+
+/* ===== liked 탭 레이아웃 ===== */
+.mypage-main.is-liked {
+  background: #6d87db;
+  padding: 24px !important;
+  overflow: hidden;
+}
+
+.mypage-main.is-liked .like-page {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.mypage-main.is-liked .like-content {
+  display: grid !important;
+  grid-template-columns: 320px minmax(0,1fr) !important;
+  gap: 24px !important;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  height: calc(100vh - 48px) !important;
+  align-items: stretch !important;
+}
+
+.mypage-main.is-liked .side-menu-box {
+  position: relative !important;
+  top: auto !important;
+  height: 100% !important;
+  max-width: 320px;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mypage-main.is-liked .side-menu-box__section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.mypage-main.is-liked .map-card {
+  height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 16px;
+}
+
+.mypage-main.is-liked .map-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.mypage-main.is-liked .map-viewport > *,
+.mypage-main.is-liked .map-viewport > div,
+.mypage-main.is-liked .map-viewport canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ===== MyProfile 임베드 ===== */
+.mypage-main .profile-page {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.mypage-main .profile-card {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  border-radius: 16px;
+  min-height: calc(100vh - 48px) !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,.1);
+}
+
+.mypage-main .profile-info-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 24px 16px;
+}
+
+.mypage-main .profile-card-header {
+  padding: 20px 24px 12px;
+}
+
+.mypage-main .profile-avatar-section {
+  padding: 0 24px 8px;
+}
+
+.mypage-main .profile-actions {
+  padding: 12px 24px 20px;
+  border-top: 1px solid #eef1f6;
+}
+
+.mypage-main .info-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+}
+
+/* ===== 공통 랩퍼 ===== */
+.mypage-main > .main-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  overflow: visible;
+}
+
+.mypage-main > .main-scroll .mytravel-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 8px 0;
+  background: transparent;
+  border-bottom: none;
+}
+
+.mypage-main > .main-scroll .travel-body,
+.mypage-main > .main-scroll .ts-wrap,
+.mypage-main > .main-scroll .table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.mypage-main > .main-scroll .travel-pagination {
+  position: static !important;
+  margin-top: auto;
+  align-self: center;
+}
+
+/* 페이지네이션 */
+.mypage-main .travel-pagination {
+  position: static !important;
+  margin-top: auto;
+  align-self: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 16px;
+}
+
+.mypage-main .pg-info {
+  display: none;
+}
+
+.mypage-main .pg-pages {
+  display: flex;
+  gap: 6px;
+}
+
+.mypage-main .pg-btn,
+.mypage-main .pg-num {
+  min-width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid #e1e7ff;
+  background: #fff;
+  font-size: 13px;
+  color: #405089;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+
+.mypage-main .pg-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.mypage-main .pg-btn:hover:not(:disabled),
+.mypage-main .pg-num:hover {
+  background: #eef2ff;
+}
+
+.mypage-main .pg-num.is-active {
+  background: #6d87db;
+  color: #fff;
+  border-color: #6d87db;
+}
+
 /* ── 반응형 ───────────────────────────── */
+@media (max-width: 980px) {
+  .mypage-main.is-liked .like-content {
+    height: auto !important;
+    grid-template-columns: 1fr !important;
+  }
+  
+  .mypage-main.is-liked .side-menu-box,
+  .mypage-main.is-liked .map-card {
+    height: auto !important;
+    position: static !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .mypage-main .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .mypage-content {
     flex-direction: column;
@@ -131,276 +572,18 @@
   .mypage-main {
     min-height: calc(100vh - 2rem);
   }
-}
 
-/* ── MyTravelSpacePage 임베드 최적화 ───── */
-
-/* travel-page / travel-card 류의 바깥 카드 스타일 제거 */
-.mypage-main :where(.travel-page, .travel-card) {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-}
-
-/* 툴바: 좌우 꽉 차게, sticky 상단 고정 */
-.mypage-main :where(.mytravel-toolbar) {
-  margin: 0 0 12px 0 !important;
-  padding: 8px 0 !important;     /* 좌우 패딩 제거 */
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: transparent;
-  border-bottom: none;
-}
-
-/* 테이블 래퍼/테이블: 가로 꽉 + 필요 시 스크롤 */
-.mypage-main :where(.ts-wrap) {
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow-x: auto;      /* ← 좁은 화면에서 잘림 방지 */
-  overflow-y: visible;
-}
-
-.mypage-main :where(.ts-table) {
-  width: 100% !important;
-  min-width: 980px;      /* 버튼/액션 컬럼 보호(필요 시 조정) */
-  table-layout: fixed;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-/* thead sticky 위치 보정 */
-.mypage-main :where(.ts-table thead th) {
-  position: sticky;
-  top: 0 !important;
-  z-index: 2;
-  background: #fbfcff;
-  border-bottom: 1px solid #eef1f6;
-  font-size: 13px;
-  font-weight: 700;
-  color: #667085;
-  text-align: left;
-  padding: 8px 12px;
-}
-
-/* 컬럼 넓이 가이드(테이블에 ts-col-* 클래스가 있을 때 적용) */
-.mypage-main .ts-col-title   { width: 44%; }
-.mypage-main .ts-col-region  { width: 18%; }
-.mypage-main .ts-col-period  { width: 24%; }
-.mypage-main .ts-col-members { width: 6%;  text-align: right; }
-.mypage-main .ts-col-actions { width: 8%; }
-
-/* 바디 셀/행 스타일 */
-.mypage-main :where(.ts-table tbody td) {
-  height: 44px;
-  padding: 6px 12px;
-  border-bottom: 1px solid #f3f5fb;
-  vertical-align: middle;
-  color: #1f2937;
-  font-size: 14px;
-}
-
-.mypage-main :where(.ts-table tbody tr:nth-child(2n)) { background: #fcfdff; }
-.mypage-main :where(.ts-table tbody tr:hover) { background: #f5f8ff; }
-
-/* 말줄임 텍스트 */
-.mypage-main .ts-title,
-.mypage-main .ts-region,
-.mypage-main .ts-period {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.mypage-main .ts-title  { font-weight: 700; color: #173366; }
-.mypage-main .ts-region { color: #3d4c66; }
-.mypage-main .ts-period { color: #3d4c66; font-variant-numeric: tabular-nums; }
-
-/* 멤버 숫자 우측 정렬 */
-.mypage-main .ts-members { text-align: right; color: #334155; }
-
-/* 액션 버튼 영역 */
-.mypage-main .ts-actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-/* 공통 버튼 */
-.mypage-main .ts-btn {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background .12s ease, border-color .12s ease, transform .06s ease;
-}
-.mypage-main .ts-btn:active { transform: scale(.98); }
-
-/* 주 버튼 */
-.mypage-main .ts-btn--primary {
-  background: #6d87db;
-  color: #fff;
-}
-.mypage-main .ts-btn--primary:hover { background: #5a74d5; }
-
-/* 보조 버튼 */
-.mypage-main .ts-btn--ghost {
-  background: #f7f9ff;
-  color: #344585;
-  border: 1px solid #e2e8ff;
-}
-.mypage-main .ts-btn--ghost:hover { background: #eef2ff; }
-
-/* 더보기 버튼(…) */
-.mypage-main .ts-btn--more {
-  width: 28px; height: 28px; padding: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 8px; background: #fff; border: 1px solid #e2e8ff;
-  font-size: 18px; line-height: 1;
-}
-.mypage-main .ts-btn--more:hover { background: #f3f6ff; }
-
-/* 더보기 팝업 */
-.mypage-main .ts-menu { position: relative; display: inline-block; }
-.mypage-main .ts-menu:has(.ts-btn--more:hover) .ts-menu__popup,
-.mypage-main .ts-menu:hover .ts-menu__popup {
-  opacity: 1; visibility: visible; transform: translateY(0);
-}
-.mypage-main .ts-menu__popup {
-  position: absolute;
-  right: 0; top: calc(100% + 6px);
-  min-width: 120px;
-  background: #fff;
-  border: 1px solid #e2e8ff;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(35, 53, 122, 0.12);
-  padding: 6px;
-  opacity: 0; visibility: hidden; transform: translateY(-4px);
-  transition: all .12s ease;
-  z-index: 10;
-}
-.mypage-main .ts-menu__item {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 13px;
-  color: #21305f;
-  cursor: pointer;
-}
-.mypage-main .ts-menu__item:hover { background: #f2f5ff; }
-.mypage-main .ts-menu__item.danger { color: #d13232; }
-.mypage-main .ts-menu__item.danger:hover { background: #fff2f2; }
-
-/* 페이지네이션 */
-.mypage-main .travel-pagination {
-  display: flex; justify-content: center; align-items: center;
-  gap: 10px; padding: 12px 0 16px;
-}
-.mypage-main .pg-info { display: none; }
-.mypage-main .pg-pages { display: flex; gap: 6px; }
-
-.mypage-main .pg-btn,
-.mypage-main .pg-num {
-  min-width: 30px; height: 30px;
-  border-radius: 10px;
-  border: 1px solid #e1e7ff;
-  background: #fff;
-  font-size: 13px; color: #405089;
-  cursor: pointer;
-  transition: background .12s ease, border-color .12s ease;
-}
-.mypage-main .pg-btn:disabled { opacity: .5; cursor: not-allowed; }
-.mypage-main .pg-btn:hover:not(:disabled),
-.mypage-main .pg-num:hover { background: #eef2ff; }
-.mypage-main .pg-num.is-active { background: #6d87db; color: #fff; border-color: #6d87db; }
-
-
-/* ===== liked 탭 레이아웃 비율 고정 ===== */
-
-/* mypage-main(파란 배경) 안쪽 여백 일정화 */
-.mypage-main.is-liked{
-  background:#6d87db;
-  padding:24px !important;    /* 내부 여백 고정 */
-  overflow:hidden;
-}
-
-/* 살구색 배경 제거 */
-.mypage-main.is-liked .like-page{
-  background:transparent !important;
-  padding:0 !important;       /* 여백은 mypage-main에서만 관리 */
-}
-
-/* 부모 한 군데에서 높이 고정 -> 두 칼럼이 동일 높이 사용 */
-.mypage-main.is-liked .like-content{
-  display:grid !important;
-  grid-template-columns: 320px minmax(0,1fr) !important;
-  gap:24px !important;
-  width:100%;
-  max-width:1360px;
-  margin:0 auto;
-
-  height: calc(100vh - 48px) !important; /* 24px 위+24px 아래 여백만큼 보정 */
-  align-items:stretch !important;
-}
-
-/* 좌측 패널: sticky 제거, 부모 높이에 100%로 맞추고 내부 스크롤 */
-.mypage-main.is-liked .side-menu-box{
-  position: relative !important;
-  top: auto !important;
-  height: 100% !important;     /* 부모 높이와 동일 */
-  max-width: 320px;
-  width:100%;
-  overflow: hidden;            /* 모서리 깔끔 */
-  display:flex;
-  flex-direction:column;
-}
-
-/* 리스트 영역이 넘칠 때 내부 스크롤 */
-.mypage-main.is-liked .side-menu-box__section{
-  flex:1 1 auto;
-  min-height:0;
-  overflow:auto;               /* 파란 배경이 비치지 않도록 내부 스크롤 */
-}
-
-/* 우측 지도 카드도 부모 높이에 100% */
-.mypage-main.is-liked .map-card{
-  height:100% !important;      /* like-content 높이를 그대로 사용 */
-  padding:0 !important;
-  overflow:hidden !important;
-  border-radius:16px;
-}
-
-/* 지도 캔버스가 컨테이너를 꽉 채우도록 보강 */
-.mypage-main.is-liked .map-viewport{ width:100%; height:100%; position:relative; }
-.mypage-main.is-liked .map-viewport > *,
-.mypage-main.is-liked .map-viewport > div,
-.mypage-main.is-liked .map-viewport canvas{
-  width:100% !important;
-  height:100% !important;
-  display:block;
-}
-
-/* 모바일: 세로 스택으로 전환 */
-@media (max-width: 980px){
-  .mypage-main.is-liked .like-content{
-    height:auto !important;
-    grid-template-columns: 1fr !important;
+  .expand-button {
+    width: 40px;
+    height: 40px;
+    top: 10px;
+    right: 10px;
   }
-  .mypage-main.is-liked .side-menu-box,
-  .mypage-main.is-liked .map-card{
-    height:auto !important;
-    position:static !important;
+}
+
+/* dvh 폴백 */
+@supports not (height: 100dvh) {
+  html, body, #root {
+    min-height: 100vh;
   }
 }
