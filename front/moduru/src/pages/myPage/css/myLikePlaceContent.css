@@ -158,7 +158,6 @@
   height: calc(100vh - 64px);
   display: flex;
   overflow: hidden;           /* 둥근 모서리 클리핑 */
-  position: relative; /* 확대 버튼 등 절대 위치 요소가 정상적으로 보이게 */
 }
 
 /* 지도 뷰포트: 내부 여백/보더 금지, 100% 채우기 */
@@ -240,90 +239,3 @@
 }
 
 .pg-ellipsis { color: #9aa0a6; user-select: none; }
-
-/* ===== MyPage 안에 임베드될 때 꽉 채우기 ===== */
-
-/* mypage-main 안에서는 배경 제거 + 부모 크기 상속 */
-.mypage-main .like-page {
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  width: 100% !important;
-  height: 100% !important;       /* 부모(main) 높이 상속 */
-  display: block;
-}
-
-/* 가운데 래퍼도 제한 제거: 부모(main)를 100% 채움 */
-.mypage-main .like-content {
-  width: 100% !important;
-  max-width: none !important;
-  height: 100% !important;       /* 높이 100% */
-  margin: 0 !important;
-
-  /* 2단 그리드: 좌 320px(원하면 조정), 우 남는 폭 */
-  display: grid !important;
-  grid-template-columns: 320px minmax(0, 1fr) !important;
-  gap: 24px !important;
-  align-items: stretch !important; /* 두 칼럼 동일 높이 */
-}
-
-/* 좌측 패널: sticky 제거, 부모 높이 100%, 내부 스크롤 */
-.mypage-main .side-menu-box {
-  position: relative !important;
-  top: auto !important;
-  height: 100% !important;     /* like-content와 동일 높이 */
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow: hidden;            /* 모서리 깔끔 */
-  display: flex;
-  flex-direction: column;
-}
-
-/* 리스트/본문 영역만 스크롤 */
-.mypage-main .side-menu-box__section {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;              /* 사이드만 스크롤 */
-}
-
-/* 우측 지도 카드: 부모 높이 100%, 내부 여백 제거 */
-.mypage-main .map-card {
-  height: 100% !important;
-  width: 100% !important;
-  padding: 0 !important;
-  min-width: 0;
-  overflow: hidden !important; /* 둥근 모서리 클리핑 */
-  display: block;
-}
-
-/* 지도 뷰포트/캔버스가 컨테이너를 정확히 채우도록 */
-.mypage-main .map-viewport {
-  width: 100% !important;
-  height: 100% !important;
-  position: relative;
-}
-.mypage-main .map-viewport > *,
-.mypage-main .map-viewport > div,
-.mypage-main .map-viewport canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
-
-/* 반응형: 모바일에서는 세로 스택 */
-@media (max-width: 980px) {
-  .mypage-main .like-content {
-    grid-template-columns: 1fr !important;
-    height: auto !important;
-  }
-  .mypage-main .side-menu-box,
-  .mypage-main .map-card {
-    height: auto !important;
-  }
-}
-
-.expand-button {
-  z-index: 1000 !important;
-}
-
-

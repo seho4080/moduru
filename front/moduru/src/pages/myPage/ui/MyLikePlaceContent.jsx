@@ -6,7 +6,7 @@ import "../../../pages/myPage/css/myLikePlaceContent.css";
 // 좋아요 장소 마커 렌더러
 import MyLikedPlaceMarkers from "../../../features/myLikedPlace/ui/MyLikedPlaceMarkers";
 
-export default function MyLikeSpace({ isExpanded, onToggleExpand }) {
+export default function MyLikeSpace() {
   const mapRef = useRef(null);           // Map.jsx forwardRef
   const cardRef = useRef(null);          // .map-card
   const viewportRef = useRef(null);      // .map-viewport
@@ -64,55 +64,22 @@ export default function MyLikeSpace({ isExpanded, onToggleExpand }) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  // NOTE: 확대/축소 상태 변화 시 relayout
-  useEffect(() => {
-    if (onToggleExpand) {
-      // 상태 변화 후 레이아웃 재조정
-      const timer = setTimeout(() => safeRelayout(), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isExpanded]);
-
   return (
-    <div className={`like-content ${isExpanded ? "expanded" : ""}`}>
-      {/* 좌측 사이드 메뉴 (지역 선택 시 setRegionId 호출) - 확대 시 숨김 */}
-      {!isExpanded && <SideMenuBox onChangeRegion={setRegionId} />}
+    <div className="like-page">
+      {/* 가운데 정렬 + 최대폭 제한 래퍼 */}
+      <div className="like-content">
+        {/* 좌측 사이드 메뉴 (지역 선택 시 setRegionId 호출) */}
+        <SideMenuBox onChangeRegion={setRegionId} />
 
-      {/* 우측 지도 카드 */}
-      <section className={`map-card ${isExpanded ? "expanded" : ""}`} ref={cardRef}>
-        {/* 지도 우상단에 "확대" 버튼 */}
-        <div style={{
-          position: "absolute",
-          top: "18px",
-          right: "18px",
-          zIndex: 10,
-          pointerEvents: "auto"
-        }}>
-          {onToggleExpand && !isExpanded && (
-            <button
-              className="expand-button"
-              onClick={onToggleExpand}
-              title="지도 확대"
-              style={{
-                background: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "10px",
-                padding: "8px 16px",
-                fontSize: "1rem",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                cursor: "pointer"
-              }}
-            >
-              확대
-            </button>
-          )}
-        </div>
-        <div className="map-viewport" ref={viewportRef}>
-          <Map ref={mapRef} />
-          {/* 좋아요 장소를 지도에 마커로 표시 */}
-          <MyLikedPlaceMarkers regionId={regionId} mapRef={mapRef} />
-        </div>
-      </section>
+        {/* 우측 지도 카드 */}
+        <section className="map-card" ref={cardRef}>
+          <div className="map-viewport" ref={viewportRef}>
+            <Map ref={mapRef} />
+            {/* 좋아요 장소를 지도에 마커로 표시 */}
+            <MyLikedPlaceMarkers regionId={regionId} mapRef={mapRef} />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
