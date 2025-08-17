@@ -12,6 +12,7 @@ export default function MyTravelSpacePage({ items = [] }) {
   const navigate = useNavigate();
   const [viewTarget, setViewTarget] = useState(null); // ✅ 일정 모달 대상
 
+  // YYYY-MM-DD → 로컬 00:00 Date
   const toLocalDate = (s) => {
     if (!s) return null;
     const [y, m, d] = String(s).split("-").map(Number);
@@ -19,23 +20,20 @@ export default function MyTravelSpacePage({ items = [] }) {
     return new Date(y, m - 1, d, 0, 0, 0, 0);
   };
 
+  // 여행 방 상태 계산
   const statusOf = (it) => {
     const s = (it?.status || "").trim();
     if (s === "진행중") return "ongoing";
     if (s === "완료") return "done";
-    const today = new Date();
-    const end = toLocalDate(it?.endDate);
-    const endDay = end ? new Date(end.getFullYear(), end.getMonth(), end.getDate()) : null;
-    const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    if (endDay && endDay < todayDay) return "done";
-    return "ongoing";
-  };
 
     const today = new Date();
     const end = toLocalDate(it?.endDate);
-    if (end && end < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-      return "done";
-    }
+
+    // 날짜만 비교(시·분 영향 제거)
+    const endDay = end ? new Date(end.getFullYear(), end.getMonth(), end.getDate()) : null;
+    const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    if (endDay && endDay < todayDay) return "done";
     return "ongoing";
   };
 
@@ -75,20 +73,19 @@ export default function MyTravelSpacePage({ items = [] }) {
       if (!card) return;
 
       const vpH = window.innerHeight;                     // 뷰포트 높이
-      const cardTop = card.getBoundingClientRect().top;   // 카드가 화면에서 시작되는 y
+      const cardTop = card.getBoundingClientRect().top;   // 카드 시작 y
       const pagerH = pagerRef.current?.offsetHeight ?? 56;
 
       // 테이블 헤더/첫 행 높이 추정
       const head = card.querySelector(".travel-table-head");
       const firstRow = card.querySelector(".travel-row");
-
       const headH = Math.max(36, head?.offsetHeight ?? 40);
       const rowH = Math.max(48, firstRow?.offsetHeight ?? 64);
 
       // 카드 내부 여백/간격 여유치
       const guard = 24;
 
-      // 실제로 목록이 쓸 수 있는 높이
+      // 실제 목록이 사용할 수 있는 높이
       const usable = Math.max(120, vpH - cardTop - headH - pagerH - guard);
 
       // 들어갈 수 있는 행 수
@@ -159,7 +156,12 @@ export default function MyTravelSpacePage({ items = [] }) {
 
   return (
     <div className="travel-page">
-      <MyTravelToolbar q={q} onChangeQ={setQ} status={status} onChangeStatus={setStatus} />
+      <MyTravelToolbar
+        q={q}
+        onChangeQ={setQ}
+        status={status}
+        onChangeStatus={setStatus}
+      />
 
       {/* 카드: 내부 스크롤 금지, 높이는 내용에 따름 */}
       <div className="travel-card" ref={cardRef}>
@@ -179,6 +181,7 @@ export default function MyTravelSpacePage({ items = [] }) {
               onEnter={handleEnter}
               onDelete={handleDelete}
               onRemove={handleRemove}
+              onViewSchedule={(room) => setViewTarget(room)} // ✅ 일정 조회 연결
             />
           </div>
         )}
@@ -212,6 +215,5 @@ export default function MyTravelSpacePage({ items = [] }) {
         />
       )}
     </div>
-    
   );
 }
