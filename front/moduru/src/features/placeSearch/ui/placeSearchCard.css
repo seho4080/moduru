@@ -15,6 +15,16 @@
   transform: translateY(-4px);
 }
 
+/* 공유된 장소 스타일 */
+.place-card.shared-place {
+  border: 2px solid #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.place-card.shared-place:hover {
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
+}
+
 .place-card-img-wrapper {
   position: relative;
   width: 100%;

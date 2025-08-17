@@ -187,67 +187,66 @@ function SharedPlaceResizablePanel({ children, roomId, onClose }) {
         overflow: "hidden",
       }}
     >
-             <div style={{ flex: 1, overflow: "auto" }}>{children}</div>
+      <div style={{ flex: 1, overflow: "auto" }}>{children}</div>
 
-               {/* 리사이즈 핸들 (드래그만) */}
-        <div
-          onMouseDown={(e) => {
-            const startX = e.clientX;
-            const startWidth = width;
+      {/* 리사이즈 핸들 (드래그만) */}
+      <div
+        onMouseDown={(e) => {
+          const startX = e.clientX;
+          const startWidth = width;
 
-            const handleMouseMove = (moveEvent) => {
-              const newWidth = Math.max(
-                minWidth,
-                Math.min(maxWidth, startWidth + (moveEvent.clientX - startX))
-              );
-              setWidth(newWidth);
-              setIsResizing(true);
-            };
+          const handleMouseMove = (moveEvent) => {
+            const newWidth = Math.max(
+              minWidth,
+              Math.min(maxWidth, startWidth + (moveEvent.clientX - startX))
+            );
+            setWidth(newWidth);
+            setIsResizing(true);
+          };
 
-            const handleMouseUp = () => {
-              setIsResizing(false);
-              document.removeEventListener("mousemove", handleMouseMove);
-              document.removeEventListener("mouseup", handleMouseUp);
-            };
+          const handleMouseUp = () => {
+            setIsResizing(false);
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+          };
 
-            document.addEventListener("mousemove", handleMouseMove);
-            document.addEventListener("mouseup", handleMouseUp);
-          }}
-                     style={{
-             position: "absolute",
-             top: "50%",
-             right: "-4px",
-             transform: "translateY(-50%)",
-             width: "8px",
-             height: "40px",
-             backgroundColor: isResizing ? "#6366f1" : "#e5e7eb",
-             cursor: "col-resize",
-             borderRadius: "4px",
-             transition: "all 0.2s ease",
-             boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-             display: "flex",
-             alignItems: "center",
-             justifyContent: "center",
-             zIndex: 15,
-           }}
-           title="패널 크기 조절"
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                style={{
-                  width: "2px",
-                  height: "2px",
-                  backgroundColor: isResizing ? "white" : "#9ca3af",
-                  borderRadius: "50%",
-                  transition: "background-color 0.2s ease",
-                }}
-              />
-            ))}
-          </div>
+          document.addEventListener("mousemove", handleMouseMove);
+          document.addEventListener("mouseup", handleMouseUp);
+        }}
+        style={{
+          position: "absolute",
+          top: "50%",
+          right: "-4px",
+          transform: "translateY(-50%)",
+          width: "8px",
+          height: "40px",
+          backgroundColor: isResizing ? "#6366f1" : "#e5e7eb",
+          cursor: "col-resize",
+          borderRadius: "4px",
+          transition: "all 0.2s ease",
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 15,
+        }}
+        title="패널 크기 조절"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: "2px",
+                height: "2px",
+                backgroundColor: isResizing ? "white" : "#9ca3af",
+                borderRadius: "50%",
+                transition: "background-color 0.2s ease",
+              }}
+            />
+          ))}
         </div>
-      )}
+      </div>
 
       {/* 끝 버튼(클릭=닫기 / 드래그=리사이즈) */}
       <button

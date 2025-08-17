@@ -20,6 +20,7 @@ export default function SharedToggleButton({
 
   // placeId 정규화 + 숫자 변환
   const normalizedPlaceId = useMemo(() => {
+    if (!placeId) return null;
     const id = normalizePlaceId(placeId);
     return id != null ? Number(id) : null;
   }, [placeId]);
@@ -72,7 +73,7 @@ export default function SharedToggleButton({
       } else {
         // 공유 취소 요청 전송 위해 wantId 찾기
         const matched = sharedPlaces.find(
-          (p) => Number(p.placeId) === normalizedPlaceId
+          (p) => p?.placeId && Number(p.placeId) === normalizedPlaceId
         );
         if (!matched?.wantId) {
           throw new Error("wantId가 없어 공유 취소를 할 수 없습니다.");
@@ -101,9 +102,9 @@ export default function SharedToggleButton({
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className={`wish-add-btn ${pending ? "disabled" : ""}`}
+        className={`wish-add-btn ${pending ? "disabled" : ""} ${optimisticShared ? "shared" : ""}`}
       >
-        {pending ? "처리 중..." : optimisticShared ? "공유 취소" : "공유"}
+        {pending ? "처리 중..." : optimisticShared ? "삭제" : "공유"}
       </button>
 
       {errorMsg && <p style={{ fontSize: 12, color: "red" }}>{errorMsg}</p>}
