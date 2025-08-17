@@ -14,6 +14,7 @@ export default function SharedPlaceList({
   selectedWantIds = [],
   onChangeSelected,
   onRemove,
+  onCardClick,
 }) {
   const sharedPlaces = useSelector((s) => s.sharedPlace.sharedPlaces) || [];
   const daysMap = useSelector((s) => s.itinerary?.days ?? {});
@@ -146,6 +147,7 @@ export default function SharedPlaceList({
                   <SharedPlaceCard
                     place={place}
                     onRemove={() => onRemove?.(place)}
+                    onCardClick={onCardClick}
                     usedInItinerary={isUsed}
                     responsive={true}
                   />

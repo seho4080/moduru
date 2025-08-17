@@ -21,6 +21,10 @@ export default function SharedPlaceCard({
   onConfirmTimes,
   /** ✅ 새로 추가: 일정에 이미 포함되었는지 */
   usedInItinerary = false,
+  /** ✅ 새로 추가: 카드 클릭 시 핀 포커스 */
+  onCardClick,
+  /** ✅ 새로 추가: 선택된 상태 표시 */
+  isSelected = false,
 }) {
   const { placeName, imgUrl, category, address, likeCount, voteCnt } =
     place ?? {};
@@ -107,25 +111,37 @@ export default function SharedPlaceCard({
       }
     : {};
 
+  // 카드 클릭 핸들러
+  const handleCardClick = (e) => {
+    // 드래그 중이거나 삭제/좋아요 버튼 클릭 시 무시
+    if (grabbed || e.target.closest('[data-nodrag]')) return;
+    
+    console.log('SharedPlaceCard clicked:', place);
+    onCardClick?.(place);
+  };
+
   // ✅ 일정 포함 시 강조 스타일
   const usedClasses = usedInItinerary
     ? "border-emerald-300 bg-emerald-50/40 ring-1 ring-emerald-200"
+    : isSelected
+    ? "border-blue-400 bg-blue-50/40 ring-2 ring-blue-200"
     : "border-slate-200";
 
   return (
     <div
-      className={`relative mb-3 flex h-[82px] items-center gap-3 rounded-xl border-[1.5px] bg-white p-2 ${usedClasses}
+      className={`relative mb-2 flex h-[70px] items-center gap-2 rounded-lg border-[1.5px] bg-white p-2 ${usedClasses}
         ${
-          isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-default"
-        }`}
+          isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+        } hover:bg-gray-50 transition-colors`}
       style={{ width: cardWidth ? `${cardWidth}px` : undefined }}
       {...dragProps}
+      onClick={handleCardClick}
       title={
         usedInItinerary
           ? "이미 일정에 포함된 장소입니다."
           : isDraggable
           ? "일정 보드로 드래그해 담을 수 있습니다."
-          : undefined
+          : "클릭하면 지도에서 해당 위치를 확인할 수 있습니다."
       }
       aria-label={usedInItinerary ? "일정 포함됨" : undefined}
     >
@@ -182,7 +198,7 @@ export default function SharedPlaceCard({
         <img
           src={displaySrc}
           alt={placeName ? `${placeName} 이미지` : "장소 이미지"}
-          className="aspect-[4/3] w-[88px] rounded-md object-cover"
+          className="aspect-[4/3] w-[70px] rounded-md object-cover"
           onError={() => setImgError(true)}
           draggable={false}
         />
@@ -202,12 +218,12 @@ export default function SharedPlaceCard({
 
       {/* 텍스트 + 메타 */}
       <div className="flex min-w-0 flex-1 flex-col justify-start pt-[8px]">
-        <span className="text-[14px] font-semibold leading-[1.2] line-clamp-2 break-words">
+        <span className="text-[12px] font-semibold leading-[1.2] line-clamp-2 break-words">
           {placeName ?? "이름 없음"}
         </span>
 
         {/* 카테고리 + 시간 라벨(보드에서만) */}
-        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-600">
+        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-600">
           {category && <span className="truncate">{category}</span>}
           {enableTimePopover && (
             <div className="relative inline-flex items-center" data-nodrag>
@@ -280,8 +296,8 @@ export default function SharedPlaceCard({
 
         {/* 주소 */}
         {showAddress && (
-          <div
-            className="text-[11px] text-slate-500 mt-0.5 truncate"
+                  <div
+          className="text-[10px] text-slate-500 mt-0.5 truncate"
             title={address || ""}
           >
             주소

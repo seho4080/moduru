@@ -29,6 +29,9 @@ const mapSlice = createSlice({
     pinCoords: null,
     center: { lat: 37.5665, lng: 126.9780 }, // NOTE: 기본 중심(서울 시청 근처)
     lastChangedAt: 0,                         // NOTE: 동일 좌표 재지정 트리거용
+    selectedPinId: null,                      // NOTE: 선택된 핀 ID (색깔 변경용)
+    selectedPinImage: null,                   // NOTE: 선택된 핀의 이미지 URL
+    selectedDay: null,                        // NOTE: 선택된 일차 (화살표 표시용)
   },
 
   reducers: {
@@ -89,6 +92,33 @@ const mapSlice = createSlice({
         state.lastChangedAt = Date.now();
       }
     },
+
+    /**
+     * NOTE: 선택된 핀 ID를 설정 (색깔 변경용)
+     * @param {import('immer').Draft} state
+     * @param {import('@reduxjs/toolkit').PayloadAction<string | null>} action
+     */
+    setSelectedPinId: (state, action) => {
+      state.selectedPinId = action.payload;
+    },
+
+    /**
+     * NOTE: 선택된 핀의 이미지를 설정
+     * @param {import('immer').Draft} state
+     * @param {import('@reduxjs/toolkit').PayloadAction<string | null>} action
+     */
+    setSelectedPinImage: (state, action) => {
+      state.selectedPinImage = action.payload;
+    },
+
+    /**
+     * NOTE: 선택된 일차를 설정 (화살표 표시용)
+     * @param {import('immer').Draft} state
+     * @param {import('@reduxjs/toolkit').PayloadAction<string | null>} action
+     */
+    setSelectedDay: (state, action) => {
+      state.selectedDay = action.payload;
+    },
   },
 });
 
@@ -99,10 +129,16 @@ export const {
   setPinCoords,
   clearSelectedPlace,
   setMapCenter,
+  setSelectedPinId,
+  setSelectedPinImage,
+  setSelectedDay,
 } = mapSlice.actions;
 
 // NOTE: 셀렉터
 export const selectMapCenter = (state) => state.map.center;
 export const selectMapTick   = (state) => state.map.lastChangedAt;
+export const selectSelectedPinId = (state) => state.map.selectedPinId;
+export const selectSelectedPinImage = (state) => state.map.selectedPinImage;
+export const selectSelectedDay = (state) => state.map.selectedDay;
 
 export default mapSlice.reducer;

@@ -15,7 +15,7 @@ import { useLocation, useSearchParams, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
 // Redux 액션
-import { setSelectedPlace } from "../../redux/slices/mapSlice";
+import { setSelectedPlace, setMapCenter, setSelectedPinId } from "../../redux/slices/mapSlice";
 import { closeRouteModal } from "../../redux/slices/uiSlice";
 import { setTripRoom } from "../../redux/slices/tripRoomSlice";
 
@@ -114,6 +114,28 @@ export default function TripRoomProvider({ children }) {
     }
   }, [meta.tripRegion, meta.region]);
 
+  // 카드 클릭 시 핀 포커스 핸들러
+  const handleSharedPlaceCardClick = (place) => {
+    console.log('handleSharedPlaceCardClick called with:', place);
+    if (!place) return;
+    
+    const lat = Number(place?.lat ?? place?.latitude ?? place?.y);
+    const lng = Number(place?.lng ?? place?.longitude ?? place?.x);
+    
+    console.log('Coordinates:', { lat, lng });
+    
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      // 지도 중심을 해당 위치로 이동
+      dispatch(setMapCenter({ lat, lng }));
+      
+      // 선택된 핀 ID 설정 (색깔 변경용)
+      const pinId = place.wantId || place.id;
+      if (pinId) {
+        dispatch(setSelectedPinId(pinId));
+      }
+    }
+  };
+
   // 컨텍스트로 노출할 값 구성
   const value = useMemo(
     () => ({
@@ -123,8 +145,9 @@ export default function TripRoomProvider({ children }) {
       dispatch, // 필요 시 외부에서 디스패치 사용
       setSelectedPlace: (p) => dispatch(setSelectedPlace(p)), // 선택 장소 변경 헬퍼
       closeRouteModal: () => dispatch(closeRouteModal()), // 경로 모달 닫기 헬퍼
+      handleSharedPlaceCardClick, // 공유 장소 카드 클릭 핸들러
     }),
-    [dispatch, meta, marker]
+    [dispatch, meta, marker, handleSharedPlaceCardClick]
   );
 
   return (
