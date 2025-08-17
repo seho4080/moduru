@@ -1,7 +1,9 @@
+// src/features/schedule/ui/SchedulePreview.jsx
 import React from "react";
 import useRoomSchedule from "../model/useRoomSchedule";
 
 const fmt = (s) => (s == null ? "" : s);
+const timeRange = (s, e) => [fmt(s), fmt(e)].filter(Boolean).join(" ~ ");
 
 export default function SchedulePreview({ room, onClose }) {
   const roomId = room?.id ?? room?.travelRoomId ?? room?.roomId;
@@ -29,7 +31,7 @@ export default function SchedulePreview({ room, onClose }) {
       aria-modal="true"
       aria-label="일정 조회"
     >
-      <div className="bg-white rounded-xl w-[740px] max-h-[80vh] overflow-auto shadow-xl">
+      <div className="bg-white rounded-xl w-[780px] max-h-[80vh] overflow-auto shadow-xl">
         <header className="sticky top-0 bg-white/90 backdrop-blur px-6 py-4 border-b flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">일정 조회 · {title}</h2>
@@ -50,28 +52,70 @@ export default function SchedulePreview({ room, onClose }) {
         )}
 
         {!loading && !error && (
-          <div className="p-6 space-y-6">
-            {/* 1) 날짜 그룹이 있으면 날짜별로 */}
+          <div className="p-6 space-y-8">
+            {/* 1) 날짜별 events 타임라인 */}
             {Object.keys(days || {}).length > 0 ? (
               Object.entries(days).map(([date, items]) => (
-                <section key={date}>
-                  <h3 className="font-medium mb-2">{date}</h3>
-                  <ul className="divide-y border rounded">
-                    {items.map((it) => (
-                      <li key={it.entryId ?? `${date}-${it.placeId}-${it.eventOrder}`} className="p-3">
-                        <div className="font-medium">{it.placeName}</div>
-                        <div className="text-sm text-gray-500">
-                          {fmt(it.startTime)}{it.startTime && it.endTime ? " ~ " : ""}{fmt(it.endTime)}
-                          {it.category ? ` · ${it.category}` : ""}
-                          {it.address ? ` · ${it.address}` : ""}
-                        </div>
-                      </li>
+                <section key={date} className="space-y-3">
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="font-semibold">{date}</h3>
+                    <span className="text-xs text-gray-500">총 {items.length}개</span>
+                  </div>
+
+                  <ol className="space-y-2">
+                    {items.map((it, idx) => (
+                      <React.Fragment key={it.entryId ?? `${date}-${it.placeId}-${it.eventOrder}`}>
+                        {/* 이벤트 카드 */}
+                        <li className="flex items-start gap-3 p-3 border rounded-lg">
+                          {/* 시간 */}
+                          <div className="w-24 shrink-0 text-sm text-gray-600">
+                            {timeRange(it.startTime, it.endTime) || "-"}
+                          </div>
+
+                          {/* 썸네일 */}
+                          <div className="w-16 h-16 rounded overflow-hidden bg-gray-100 shrink-0">
+                            {it.imageUrl ? (
+                              <img
+                                src={it.imageUrl}
+                                alt={it.placeName || "이미지"}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : null}
+                          </div>
+
+                          {/* 본문 */}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                                #{(it.eventOrder ?? idx) + 1}
+                              </span>
+                              <div className="font-medium truncate">{it.placeName || "(이름 없음)"}</div>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 truncate">
+                              {it.category ? `#${it.category}` : ""}
+                              {it.category && (it.address ? " · " : "")}
+                              {it.address || ""}
+                            </div>
+                          </div>
+                        </li>
+
+                        {/* 이동 시간(다음 이벤트까지) */}
+                        {idx < items.length - 1 && Number(it.nextTravelTime) > 0 && (
+                          <li className="pl-[6rem]">
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span className="inline-block w-6 h-px bg-gray-300" />
+                              <span>🚗 이동 {it.nextTravelTime}분</span>
+                            </div>
+                          </li>
+                        )}
+                      </React.Fragment>
                     ))}
-                  </ul>
+                  </ol>
                 </section>
               ))
             ) : rows?.length > 0 ? (
-              // 2) 날짜가 없으면 장소명/주소 표로 표시 (이번 API 스펙)
+              // 2) 폴백: 장소명/주소 표
               <section>
                 <div className="text-sm text-gray-500 mb-2">
                   장소명/주소 목록 (총 {rows.length}건, shape: {shape})
