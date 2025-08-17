@@ -27,10 +27,7 @@ import { publishSchedule } from "../../webSocket/scheduleSocket";
 import { publishMessage } from "../../webSocket/coreSocket";
 
 // 일정창 열기/닫기 액션
-import {
-  openItineraryPanel,
-  closeItineraryPanel,
-} from "../../../redux/slices/uiSlice";
+import { openItineraryPanel, closeItineraryPanel } from "../../../redux/slices/uiSlice";
 import DateSelectionModal from "../../tripPlan/ui/DateSelectionModal";
 
 /** 날짜 키 포맷 변환 */
@@ -54,14 +51,11 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
   const { status } = ai;
   const daysMap = useSelector((s) => s.itinerary?.days || {});
   const groups = useSelector((s) => s.aiSchedule.groups || {});
-  // 패널/모달 이름 혼용 대비: 우선 패널 키, 없으면 모달 키 사용
-  const isItineraryOpen = useSelector(
-    (s) => s.ui?.isItineraryPanelOpen ?? s.ui?.isItineraryModalOpen ?? false
-  );
+  const isItineraryOpen = useSelector((s) => s.ui.isItineraryModalOpen);
 
   // 화면 모드
   const [viewMode, setViewMode] = useState("shared"); // "shared" | "result" | "newSelection"
-
+  
   // 날짜 선택 모달 상태
   const [showDateModal, setShowDateModal] = useState(false);
 
@@ -217,7 +211,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
         };
         dispatch(
           addPlaceToDay({
-            dateKey, // ✅ dateKey로 통일
+            date: dateKey,
             place: placePayload,
             index: i,
           })
@@ -288,10 +282,10 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
       <div className="px-4 py-3 border-b border-slate-200 bg-white">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
-            <div className="text-[13px] font-bold text-slate-800 tracking-tight truncate">
-              {headerTitle}
-            </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">
+                         <div className="text-[13px] font-bold text-slate-800 tracking-tight truncate">
+               {headerTitle}
+             </div>
+             <div className="text-[10px] text-slate-500 mt-0.5">
               {viewMode === "shared" && `총 ${sharedPlaces.length}개`}
               {viewMode === "result" &&
                 (hasAiResults
@@ -302,22 +296,22 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
             </div>
           </div>
 
-          {/* 일정창 열기/닫기 버튼 */}
-          {viewMode === "shared" && (
-            <button
-              type="button"
-              onClick={handleToggleItinerary}
-              className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
-                isItineraryOpen
-                  ? "border-red-300 text-red-700 hover:bg-red-50 bg-red-50/50"
-                  : "border-blue-300 text-blue-700 hover:bg-blue-50 bg-blue-50/50"
-              }`}
-              title={
-                isItineraryOpen
-                  ? "일정 편집창을 닫습니다"
-                  : "일정 편집창을 엽니다"
-              }
-            >
+                     {/* 일정창 열기/닫기 버튼 */}
+           {viewMode === "shared" && (
+             <button
+               type="button"
+               onClick={handleToggleItinerary}
+               className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors ${
+                 isItineraryOpen
+                   ? "border-red-300 text-red-700 hover:bg-red-50 bg-red-50/50"
+                   : "border-blue-300 text-blue-700 hover:bg-blue-50 bg-blue-50/50"
+               }`}
+               title={
+                 isItineraryOpen
+                   ? "일정 편집창을 닫습니다"
+                   : "일정 편집창을 엽니다"
+               }
+             >
               <svg
                 className="w-3.5 h-3.5"
                 viewBox="0 0 24 24"
@@ -366,7 +360,7 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
         <div className="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-30">
           <div className="bg-white border border-slate-200 shadow-lg rounded-lg p-6 max-w-sm w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
               <div className="text-lg font-semibold text-slate-800">
                 AI가 일정을 구성 중입니다
               </div>
@@ -412,8 +406,6 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
           <AiResultList
             onCancel={handleCancelFromOverlay}
             onApplyDaySchedule={handleApplyDaySchedule}
-            onBackClick={() => setViewMode("shared")}
-            onViewWishPlaces={() => setViewMode("shared")}
           />
         )}
 

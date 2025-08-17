@@ -490,7 +490,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
 
     markOwnRequestAndStart(dateKey);
     
-    // 계산 요청 후 마지막 계산된 교통수단 업데이트
+    // 계산 요청 전에 마지막 계산된 교통수단 업데이트 (중복 방지)
     setLastCalculatedTransport(prev => ({
       ...prev,
       [dateKey]: t
@@ -500,7 +500,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       roomId,
       day,
       date: dateKey,
-      transpot: t, // 서버 스펙에 맞게 필요한 경우 key 수정
+      transport: t, // 오타 수정: transpot -> transport
       events,
     });
   };

@@ -1,31 +1,36 @@
 .wish-add-btn {
   appearance: none;
-  border: 1px solid #3498f1;
+  border: 2px solid #3498f1;
   background: #fff;
   color: #3498f1;
-  font-size: 12px;             
-  font-weight: 500;
+  font-size: 11px;             
+  font-weight: 600;
   font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
-  border-radius: 12px;          
-  padding: 3px 10px;           
-  box-shadow: none;
+  border-radius: 8px;          
+  padding: 4px 8px;           
+  box-shadow: 0 2px 4px rgba(52, 152, 241, 0.2);
   cursor: pointer;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.2px;
   outline: none;
   margin: 0;
   text-align: center;
   transition: 
     background 0.18s,
     color 0.18s,
-    border 0.18s;
+    border 0.18s,
+    box-shadow 0.18s;
   box-sizing: border-box;
   display: inline-block;
+  min-width: 50px;
+  backdrop-filter: blur(4px);
 }
 
 .wish-add-btn:hover {
   background: #eaf4ff;
   color: #2176c7;
   border-color: #3498f1;
+  box-shadow: 0 3px 8px rgba(52, 152, 241, 0.3);
+  transform: translateY(-1px);
 }
 
 .wish-add-btn.disabled,
@@ -34,4 +39,19 @@
   background: #f2f2f2;
   color: #999;
   cursor: not-allowed;
+}
+
+/* 공유된 상태일 때 스타일 */
+.wish-add-btn.shared {
+  border: 2px solid #ef4444;
+  background: #fff;
+  color: #ef4444;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.wish-add-btn.shared:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #ef4444;
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.3);
 }
