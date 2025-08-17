@@ -3,8 +3,8 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 import os
-import gms_api as gms
-import kakao_maps_api as kakao
+import modules.gms_api as gms
+import modules.kakao_maps_api as kakao
 
 conn = psycopg2.connect(
     host=os.getenv("POSTGRES_HOST", "localhost"),

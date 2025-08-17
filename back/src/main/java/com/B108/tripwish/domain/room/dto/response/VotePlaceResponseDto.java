@@ -1,6 +1,7 @@
 package com.B108.tripwish.domain.room.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.*;
 
 @Getter
@@ -8,8 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VotePlaceResponseDto {
-    private Long wantId;
+  private Long wantId;
 
-    @JsonProperty("isVoted")
-    private boolean isVoted;
+  @JsonProperty("isVoted")
+  private boolean isVoted;
 }
