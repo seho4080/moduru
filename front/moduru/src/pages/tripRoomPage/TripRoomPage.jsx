@@ -24,8 +24,10 @@ import ConfirmPlaceModal from "../../features/customPin/ui/ConfirmPlaceModal";
 import { getTripRoomInfo } from "../../features/tripCreate/lib/tripRoomApi";
 
 // NOTE: 지도 중심 이동 (Redux)
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setMapCenter } from "../../redux/slices/mapSlice";
+import { addSharedPlace } from "../../redux/slices/sharedPlaceSlice";
+import { sendSharedPlaceAdd } from "../../features/sharedPlace/lib/sharedPlaceSocket";
 
 // NOTE: 지역 목록 API (위경도 포함)
 import { fetchTopRegions, fetchChildRegions } from "../../features/tripCreate/lib/regionApi";
@@ -147,6 +149,8 @@ function TripRoomView() {
 
   // 저장 인플라이트 플래그(저장 중엔 자동 오픈 금지)
   const [regionSaving, setRegionSaving] = useState(false);
+
+
 
   // roomId가 유효해지면 서버에서 메타를 1회 가져와 region/제목/날짜 확인
   useEffect(() => {
@@ -297,6 +301,8 @@ function TripRoomView() {
               removeMode={removeMode}
               setRemoveMode={setRemoveMode}
               onDeleteConfirm={handleDeleteConfirm}
+              roomId={travelRoomId}
+              mapRef={mapRef}
             />
 
             <KakaoMap

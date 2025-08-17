@@ -29,6 +29,7 @@ export default function DayTotals({
       };
     }
 
+    // 대중교통 요청 시에는 대중교통 또는 도보 데이터만 사용 (운전 데이터 폴백 제거)
     if (requestedTransport === "transit") {
       t = tryTotals("walking");
       if (t) {
@@ -39,16 +40,21 @@ export default function DayTotals({
           updatedAt: t.updatedAt ?? null,
         };
       }
+      // 대중교통과 도보 데이터가 모두 없으면 null 반환 (운전 데이터 사용 안함)
+      return null;
     }
 
-    t = tryTotals("driving");
-    if (t) {
-      return {
-        mode: "driving",
-        totalDurationMinutes: Number(t.totalDurationMinutes ?? 0),
-        totalDistanceMeters: Number(t.totalDistanceMeters ?? 0),
-        updatedAt: t.updatedAt ?? null,
-      };
+    // 운전 요청 시에만 운전 데이터 폴백 사용
+    if (requestedTransport === "driving") {
+      t = tryTotals("driving");
+      if (t) {
+        return {
+          mode: "driving",
+          totalDurationMinutes: Number(t.totalDurationMinutes ?? 0),
+          totalDistanceMeters: Number(t.totalDistanceMeters ?? 0),
+          updatedAt: t.updatedAt ?? null,
+        };
+      }
     }
 
     // totals가 전혀 없을 때 leg 합산 폴백
