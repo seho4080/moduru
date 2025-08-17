@@ -5,7 +5,7 @@
   height: 100vh;
   width: 100%;
   overflow: hidden;
-  padding: 16px 64px 48px;
+  padding: 16px 64px 48px;  
   background: #f6f7fb;
   display: flex;
   flex-direction: column;
@@ -13,56 +13,66 @@
   box-sizing: border-box;
 
   /* 페이지 전체 스크롤바 제거 */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: none;   
+  -ms-overflow-style: none; 
 }
-.travel-page::-webkit-scrollbar { display: none; }
-
+.travel-page::-webkit-scrollbar {
+  display: none;            
+}
 /* ==== 페이지네이션이 잘리는 문제 해결: 페이지 스크롤 허용 + 하단 여백 확보 ==== */
 .travel-page{
-  height: auto !important;
+  height: auto !important;      
   max-height: none !important;
-  min-height: 100vh !important;
-  overflow-y: auto !important;
+  min-height: 100vh !important; 
+  overflow-y: auto !important;   
   overflow-x: hidden !important;
-  padding-bottom: 96px !important;
+  padding-bottom: 96px !important; 
 }
 
 /* NOTE: 카드(빨간 박스 안을 가득 채움) + 높이 조정 + 가운데 정렬 */
 .travel-card {
-  height: auto;
+  height: auto;               
   min-height: 0;
-  max-height: 900px;
-  overflow: visible;
+  max-height: 900px;          
+  overflow: visible;           
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  padding: 32px 40px 24px;
+  padding: 32px 40px 24px;   
   width: 100%;
-  max-width: 1400px;
-  margin: 0 0 48px 0;
+  max-width: 1400px;         
+  margin: 0 0 48px 0; 
   box-sizing: border-box;
 
   scrollbar-width: none;
   -ms-overflow-style: none;
 
-  max-height: 760px !important;
-  overflow: visible !important;
+  max-height: 760px !important;            
+  overflow: visible !important;  
 
-  min-height: 760px !important;
-  overflow: visible !important;
+  min-height: 760px !important;               
+  overflow: visible !important;                
 
   min-height: 600px !important;
   overflow: visible !important;
 
   margin: 0 auto 48px !important;
 }
-.travel-card::-webkit-scrollbar { display: none; }
-
-@media (max-width: 1024px){ .travel-card{ min-height: 640px !important; } }
-@media (max-width: 768px) { .travel-card{ min-height: 520px !important; } }
-@media (max-width: 1024px){ .travel-card{ min-height: 480px !important; } }
-@media (max-width: 768px) { .travel-card{ min-height: 360px !important; } }
+.travel-card::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 1024px){
+  .travel-card{ min-height: 640px !important; }
+}
+@media (max-width: 768px){
+  .travel-card{ min-height: 520px !important; }
+}
+@media (max-width: 1024px){
+  .travel-card{ min-height: 480px !important; }
+}
+@media (max-width: 768px){
+  .travel-card{ min-height: 360px !important; }
+}
 
 /* 필요 시 카드 타이틀 */
 .travel-card-header { margin-bottom: 8px; }
@@ -81,9 +91,9 @@
 /* 헤더 행 */
 .travel-table-head {
   display: grid;
-  grid-template-columns: 2fr 1.2fr 1.6fr 0.12fr auto;
+  grid-template-columns: 2fr 1.2fr 1.6fr 0.8fr auto;
   align-items: center;
-  padding: 6px 8px;
+  padding: 6px 8px;     
   color: #6b7280;
   font-weight: 500;
   font-size: 14px;
@@ -94,14 +104,11 @@
 .travel-divider {
   height: 1px;
   background: #e5e7eb;
-  margin: 2px 0 0px;
+  margin: 2px 0 8px;     
 }
 
 /* 목록 영역 */
 .travel-table-body {
-  position: relative;
-  z-index: 1;
-  overflow: visible !important;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -110,17 +117,15 @@
 /* 행 스타일 */
 .travel-row {
   display: grid;
-  grid-template-columns: 2fr 1.2fr 1.6fr 0.12fr auto;
+  grid-template-columns: 2fr 1.2fr 1.6fr 0.8fr auto;
   align-items: center;
   padding: 14px 8px;
   border-radius: 8px;
-  position: relative;
-  z-index: 1;
 }
 
 /* 행 hover 효과 */
 .travel-row:hover {
-  background: #eaf4ff !important;
+  background: #eaf4ff !important; /* 연한 파란색 배경 */
   transition: background 0.2s ease;
 }
 
@@ -138,14 +143,7 @@
 .col-title { font-weight: 500; }
 .col-region { color: #374151; }
 .col-period { color: #374151; }
-.col-status {
-  font-weight: 500;
-  min-width: 12px;
-  max-width: 24px;
-  text-align: center;
-  padding-left: 0;
-  padding-right: 0;
-}
+.col-status { font-weight: 500; }
 
 /* 지역, 상태 컬럼 글자체 맞춤 */
 .col-region,
@@ -156,7 +154,6 @@
   font-weight: 400;
 }
 
-/* ===== 빈 상태 ===== */
 .travel-empty {
   display: flex;
   flex-direction: column;
@@ -169,55 +166,102 @@
   padding: 0;
   width: 100%;
 }
+
 .empty-illust {
   width: 140px;
   height: 210px;
   object-fit: contain;
-  display: block;
+  display: block;          
   user-select: none;
   -webkit-user-drag: none;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));
 }
+
 .empty-text {
   margin: 0;
   color: #9ca3af;
   font-size: 18px;
   line-height: 1.5;
-  font-weight: 400;
-  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+  font-weight: 400; 
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif; 
 }
+
 .travel-start-msg {
   font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
-  font-size: 1.08rem;
-  font-weight: 400;
+  font-size: 1.08rem;      
+  font-weight: 400;       
   color: #222;
   letter-spacing: -0.5px;
   margin: 0;
   text-align: center;
 }
 
-/* ===== 툴바: travel-card 내부 콘텐츠 폭에 정확히 맞춤 ===== */
+/* ===== 툴바 ===== */
 .travel-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;  /* 좌우 끝으로 벌리기 */
-  gap: 12px;
-
+  justify-content: space-between; /* 양 끝 정렬 */
   width: 100%;
-  max-width: 100%;
-  padding: 0;                       /* 카드의 padding을 그대로 사용 */
-  margin: 0;
+  max-width: 1400px;
+  padding: 0 40px;
+  margin: 0 auto 12px;
   box-sizing: border-box;
 }
 
-/* 좌/우 영역 */
-.toolbar-left  { flex: 1 1 auto; min-width: 0; display: flex; justify-content: flex-start; }
-.toolbar-right { flex: 0 0 auto; margin-left: auto; display: flex; justify-content: flex-end; }
+.travel-toolbar .search-box {
+  flex: 1; /* 검색창을 남는 공간 채우게 */
+  margin-right: 16px; /* 정렬 버튼과 간격 */
+}
 
-/* 검색 입력 */
+.travel-toolbar .filter-select {
+  flex-shrink: 0; /* 오른쪽 버튼 크기 고정 */
+}
+
+@media (min-width: 1536px){
+  .travel-toolbar{ width: calc(100% - 88px); padding: 0 44px !important; }
+}
+@media (max-width: 1024px){
+  .travel-toolbar{ width: calc(100% - 48px); padding: 0 24px !important; } 
+}
+@media (max-width: 768px) {
+  .travel-toolbar{
+    width: calc(100% - 32px);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+
+    padding: 0 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+.toolbar-title {
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #222;
+  letter-spacing: -1px;
+  margin: 0;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.toolbar-left {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: flex-start; /* 왼쪽 끝으로 */
+}
+
+.toolbar-right {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: flex-end;   /* 오른쪽 끝으로 */
+}
+
 .toolbar-search {
-  width: 100%;
-  max-width: 620px;                 /* 너무 길어지지 않도록 상한 */
+  width: clamp(260px, 36vw, 520px);
   height: 38px;
   padding: 0 14px 0 36px;
   border-radius: 8px;
@@ -226,7 +270,7 @@
   outline: none;
   box-shadow: 0 1px 4px rgba(51,153,204,0.06);
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 400;     
   color: #222;
   letter-spacing: -0.3px;
   transition: box-shadow .15s, background .15s, border-color .15s;
@@ -235,24 +279,25 @@
   background-position: 12px center;
 }
 .toolbar-search::placeholder {
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
   font-size: 15px;
   font-weight: 400;
   color: #a3aab3;
   letter-spacing: -0.3px;
 }
 .toolbar-search:focus {
-  border-color: #6d87db;
+  border-color: #3399cc;
   background: #eef6fb;
-  box-shadow: 0 0 0 2px rgba(109,135,219,0.10);
+  box-shadow: 0 0 0 2px rgba(51,153,204,0.10);
 }
 
-/* 드롭다운 */
+.toolbar-right { justify-self: end; }
 .select-wrap {
   position: relative;
   min-width: 120px;
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(109, 135, 219, 0.08);
+  box-shadow: 0 2px 8px rgba(51,153,204,0.08);
   border: 1.2px solid #cfd6e0;
   padding: 2px 0;
   display: flex;
@@ -269,6 +314,7 @@
   padding: 0 36px 0 12px;
   height: 38px;
   width: 100%;
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
   appearance: none;
 }
 .select-wrap::after {
@@ -282,22 +328,11 @@
   border-bottom: 2px solid #9aa3af;
   pointer-events: none;
 }
-
-/* 모바일: 세로 스택 */
-@media (max-width: 768px) {
-  .travel-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-  }
-  .toolbar-left .toolbar-search { width: 100%; max-width: none; }
-  .toolbar-right, .select-wrap { width: 100%; }
+.toolbar-select:focus {
+  border-color: #3399cc;
+  box-shadow: 0 0 0 2px rgba(51,153,204,0.10);
 }
 
-/* 레이아웃 공통 반응형 */
 @media (min-width: 1536px) {
   .travel-page { padding: 56px 96px; }
   .travel-card { min-height: calc(100vh - 112px); padding: 44px 44px 36px; }
@@ -311,6 +346,9 @@
   .travel-card { min-height: calc(100vh - 48px); padding: 20px 16px; }
 
   .toolbar-title { align-self: flex-start; font-size: 20px; }
+  .toolbar-left  { justify-content: stretch; }
+  .toolbar-left .toolbar-search { width: 100%; }
+  .toolbar-right, .select-wrap { width: 100%; }
 
   .travel-table-head,
   .travel-row {
@@ -319,7 +357,7 @@
   }
 
   .travel-empty { padding: 80px 0; min-height: 36vh; }
-  .empty-illust { width: 170px; height: 255px; }
+  .empty-illust { width: 170px; height: 255px; } 
   .empty-text   { font-size: 16px; }
 }
 
@@ -327,7 +365,7 @@
 .travel-pagination{
   width: calc(100% - 80px);
   max-width: calc(1400px - 80px);
-  margin: 24px auto 0;
+  margin: 24px auto 0;        
   padding: 12px 0 0;
   display: flex;
   align-items: center;
@@ -345,13 +383,14 @@
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   background: #fff;
-  color: #6d87db;
+  color: #3399cc;           /* 파란색 글씨 */
   transition: background .15s, box-shadow .15s, border-color .15s, color .15s;
 }
 .pg-btn:hover,
 .pg-num:hover {
-  background: #eaf4ff;
-  color: #6d87db;
+  background: #eaf4ff;     /* 연한 파란색 배경 */
+  color: #2176c7;          /* hover 시 더 진한 파란색 글씨 */
+  box-shadow: 0 1px 3px rgba(51,153,204,.10);
 }
 .pg-btn:disabled {
   opacity: .45;
@@ -360,18 +399,18 @@
   color: #9ca3af;
 }
 .pg-num.is-active {
-  background: #6d87db;
-  color: #fff;
-  border-color: #6d87db;
-  box-shadow: 0 2px 8px rgba(109,135,219,.18);
+  background: #3399cc;      /* 파란색 배경 */
+  color: #fff;              /* 흰색 글씨 */
+  border-color: #3399cc;
+  box-shadow: 0 2px 8px rgba(51,153,204,.18);
 }
 .pg-ellipsis{ padding: 0 6px; color: #9ca3af; user-select: none; }
 @media (max-width: 768px){
   .travel-pagination{ width: calc(100% - 32px); padding-top: 8px; }
   .pg-info{ display:none; }
 }
-.pg-info{ display: none !important; }
-.pg-ellipsis{ display: none !important; }
+.pg-info{ display: none !important; }          
+.pg-ellipsis{ display: none !important; }      
 .travel-pagination{ justify-content: center !important; gap: 10px !important; }
 .travel-pagination .pg-btn:first-child,
 .travel-pagination .pg-btn:last-child{ display: none !important; }
@@ -383,23 +422,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 120px;
-  justify-content: flex-start; /* 버튼이 왼쪽부터 나오게 */
 }
 .action-group{
   display: inline-flex;
-  gap: 0px;
+  gap: 8px;
   margin-right: auto;
-  z-index: 2; /* 버튼이 항상 위에 보이게 */
 }
-
 .row-more {
-  background: none;
-  border: none;
-  padding: 0;
+  background: none;     /* 흰색 배경 제거 */
+  border: none;         /* 테두리 제거 */
+  padding: 0;           /* 여백 제거 */
   margin: 0;
   cursor: pointer;
-  line-height: 1;
+  line-height: 1;       /* 점 3개가 딱 붙어 나오도록 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -407,92 +442,17 @@
 .row-more:hover{ background:#f9fafb; box-shadow:0 1px 3px rgba(0,0,0,.06); }
 .row-more svg{ fill:#6b7280; }
 
-/* 반드시 추가: 더보기 메뉴가 잘리지 않게 모든 부모에 overflow: visible */
-.travel-table-body,
-.travel-row,
-.room-item,
-.more-wrap {
-  position: relative !important;
-  overflow: visible !important;
-  z-index: 10 !important;
-}
-
-/* 더보기 메뉴: 항상 보이게, 충분히 높은 z-index */
-.more-menu {
-  position: fixed !important;      /* 화면 기준으로 고정 */
-  z-index: 99999 !important;       /* 최상위 z-index */
-  min-width: 140px;
-  background: #111827;
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* 더보기 메뉴 안의 버튼도 잘 보이게 */
-.more-item {
-  color: #222 !important;
-  background: transparent !important;
-  padding: 8px 10px !important;
-  border-radius: 8px !important;
-  width: 100% !important;
-  text-align: left !important;
-  border: none !important;
-  cursor: pointer !important;
-}
-
-/* 혹시라도 가려질 수 있는 모든 요소에 z-index 높임 */
-.action-group,
-.col-actions,
-.row-more {
-  z-index: 100 !important;
-  position: relative !important;
-}
-
-.more-menu {
+.more-menu{
   position: absolute;
-  right: 0;
-  top: 44px;
-  z-index: 9999 !important;
+  right: 0; top: calc(100% + 6px);
   min-width: 120px;
-  background: #111827;
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  padding: 6px;
+  z-index: 10;
 }
-
-.more-wrap {
-  position: relative;
-  z-index: 100;
-}
-
-.travel-row,
-.room-item,
-.travel-table-body {
-  overflow: visible !important;
-}
-
-.more-wrap {
-  position: relative;
-  z-index: 100;
-}
-
-.more-menu {
-  position: absolute;
-  right: 0;
-  top: 44px;
-  z-index: 9999 !important;
-  min-width: 120px;
-  background: #111827;
-  color: #fff;
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-}
-
 .more-item{
   width: 100%; height: 36px; border: 0;
   background: transparent; border-radius: 8px;
@@ -512,7 +472,7 @@
   padding: 7px 18px;
   border-radius: 999px;
   border: none;
-  background: #6d87db;
+  background: #3399cc;
   color: #fff;
   font-size: 15px;
   font-weight: 500;
@@ -522,31 +482,104 @@
   transition: background 0.18s, color 0.18s, box-shadow 0.18s;
   margin-right: 8px;
   outline: none;
-  line-height: 1.5;
-  vertical-align: middle;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.row-btn:last-child { margin-right: 0; }
-.row-btn:hover {
-  background: #6d87db;
-  color: #eaf4ff;
-  box-shadow: 0 4px 16px rgba(109,135,219,0.16);
-}
-.btn-schedule {
-  background: #fff;
-  color: #6d87db;
-  border: 1.5px solid #6d87db;
-  box-shadow: 0 2px 8px rgba(51,153,204,0.06);
-}
-.btn-schedule:hover {
-  background: #eaf4ff;
-  color: #6d87db;
-  border-color: #6d87db;
+  line-height: 1.5;           /* 글자 세로 중앙 정렬 */
+  vertical-align: middle;     /* 글자 위치 보정 */
+  display: inline-flex;       /* flex로 중앙 정렬 */
+  align-items: center;        /* 세로 중앙 정렬 */
+  justify-content: center;    /* 가로 중앙 정렬 */
 }
 
-/* 글씨체 Ownglyph_meetme-Rg로 전체 변경 */
+.row-btn:last-child {
+  margin-right: 0;
+}
+
+.row-btn:hover {
+  background: #2176c7;
+  color: #eaf4ff;
+  box-shadow: 0 4px 16px rgba(51,153,204,0.16);
+}
+
+.btn-schedule {
+  background: #fff;
+  color: #3399cc;
+  border: 1.5px solid #3399cc;
+  box-shadow: 0 2px 8px rgba(51,153,204,0.06);
+}
+
+.btn-schedule:hover {
+  background: #eaf4ff;
+  color: #2176c7;
+  border-color: #2176c7;
+}
+
+
+
+/* … 기존 스타일 하단에 추가 */
+
+/* 액션 영역은 메뉴가 넘쳐도 보이게 */
+.col-actions {
+  position: relative;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ... 버튼과 메뉴를 감싸는 기준 */
+.more-wrap {
+  position: relative;
+  display: inline-block;
+  overflow: visible;
+}
+
+/* 드롭다운 메뉴: 흰색 카드 스타일 + 버튼 크기 줄임 */
+.more-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 120px;                /* 더 작게 */
+  z-index: 1200;
+  background: #fff;                /* 흰색 배경 */
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(51,153,204,0.10);
+  border: 1px solid #e5e7eb;
+  padding: 6px 0;
+}
+
+/* 메뉴 항목: pill, hover 파란색 강조, 크기 줄임 */
+.more-item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;               /* 버튼 크기 줄임 */
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  font-size: 14px;                 /* 글씨 크기 줄임 */
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+  color: #2176c7;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin: 2px 0;
+}
+
+.more-item:hover {
+  background: #eaf4ff;
+  color: #1763a6;
+}
+
+.more-item--leave {
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.more-item--leave:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* 글씨체 Ownglyph_meetme-Rg로 전체 변경, 굵기는 평범하게 */
 .travel-card,
 .travel-card-title,
 .travel-table-head,
@@ -567,7 +600,7 @@
 .row-btn,
 .btn-schedule {
   font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', Arial, sans-serif !important;
-  font-weight: 300 !important;
+  font-weight: 300 !important; /* 평범한 두께로 변경 */
   font-size: 1.18rem;
 }
 .col-title,
@@ -575,7 +608,7 @@
 .col-period,
 .col-status {
   font-family: 'Ownglyph_meetme-Rg', 'Noto Sans KR', Arial, sans-serif !important;
-  font-weight: 5 !important;
+  font-weight: 5 !important; /* 얇게 */
   font-size: 1.18rem;
-  color: #444 !important;
+  color: #444 !important;      /* 더 연한 회색으로 */
 }
