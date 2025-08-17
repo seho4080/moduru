@@ -8,6 +8,7 @@ import {
   selectAiRouteProgress,
   selectRouteByDay,
   makeSelectAiRouteBusyForDay,
+  selectAiRoute,
 } from "../../../redux/slices/aiRouteSlice";
 
 /**
@@ -30,17 +31,34 @@ export default function AiRouteDayModalButton({
   const progress = useSelector(selectAiRouteProgress);
   const legsForDay = useSelector(selectRouteByDay(day));
   const busyForDay = useSelector(makeSelectAiRouteBusyForDay(day));
+  
+  // 다른 사람이 계산 중인지 확인 (전체 busy 상태에서 현재 사용자가 요청한 것이 아닌 경우)
+  const aiRoute = useSelector(selectAiRoute);
+  const isOtherUserCalculating = (aiStatus === "STARTED" || aiStatus === "PROGRESS") && 
+    aiRoute?.lastRequestedDay !== day;
+  
+  // 디버깅용 로그
+  console.log('AI Route Debug:', {
+    day,
+    aiStatus,
+    lastRequestedDay: aiRoute?.lastRequestedDay,
+    lastStatusDay: aiRoute?.lastStatusDay,
+    isOtherUserCalculating,
+    busyForDay
+  });
 
   const [open, setOpen] = useState(false);
 
   // 버튼 클릭 → 모달 열고 즉시 실행
   const handleOpenAndRun = async () => {
+    console.log('AI Route button clicked:', { roomId, day, placeList });
     if (!Array.isArray(placeList) || placeList.length < 2) {
       alert("이 일차에 최소 2개 장소가 있어야 경로를 추천할 수 있어요.");
       return;
     }
     setOpen(true);
-    await runAiRoute(day, placeList);
+    const result = await runAiRoute(day, placeList);
+    console.log('AI Route result:', result);
   };
 
   // 모달 닫기(취소): 상태만 리셋
@@ -52,7 +70,7 @@ export default function AiRouteDayModalButton({
   // 적용: 부모에 legs 전달 → 상태 리셋 → 닫기
   const handleApply = () => {
     if (Array.isArray(legsForDay) && legsForDay.length > 0) {
-      onApply?.(legsForDay);
+      onApply?.(legsForDay, day);
     }
     dispatch(resetAiRouteTransient());
     setOpen(false);
@@ -65,20 +83,30 @@ export default function AiRouteDayModalButton({
   // 버튼 라벨/상태
   const buttonLabel = busyForDay
     ? `경로 추천 중...`
-    : `AI 경로 추천 (${day}일차)`;
+    : isOtherUserCalculating
+    ? `다른 사용자 계산 중...`
+    : `AI 경로 추천`;
 
   return (
     <>
       <button
         type="button"
         onClick={handleOpenAndRun}
-        disabled={busyForDay}
+        disabled={busyForDay || isOtherUserCalculating}
         className={`rounded-md px-3 py-1.5 text-sm font-semibold text-white ${
           busyForDay
             ? "bg-slate-400 cursor-not-allowed"
+            : isOtherUserCalculating
+            ? "bg-orange-500 cursor-not-allowed"
             : "bg-black hover:brightness-95 active:brightness-90"
         }`}
-        title="이 일차의 장소들로 AI 경로를 추천합니다"
+        title={
+          busyForDay
+            ? "AI 경로 추천이 진행 중입니다"
+            : isOtherUserCalculating
+            ? "다른 사용자가 AI 경로 추천을 진행 중입니다"
+            : "이 일차의 장소들로 AI 경로를 추천합니다"
+        }
       >
         {buttonLabel}
       </button>
@@ -92,6 +120,7 @@ export default function AiRouteDayModalButton({
         noResultYet={noResultYet}
         onClose={handleClose}
         onApply={handleApply}
+        isOtherUserCalculating={isOtherUserCalculating}
       />
     </>
   );
@@ -108,6 +137,7 @@ function AiRouteResultModal({
   noResultYet,
   onClose,
   onApply,
+  isOtherUserCalculating,
 }) {
   // 접근성: ESC close 등은 상위에서 처리해도 되고 여기서 간단히만
   useEffect(() => {
@@ -197,6 +227,17 @@ function AiRouteResultModal({
             </div>
           )}
 
+          {isOtherUserCalculating && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="text-sm font-medium text-orange-800 mb-1">
+                다른 사용자가 계산 중
+              </div>
+              <div className="text-xs text-orange-700">
+                다른 사용자가 AI 경로 추천을 진행 중입니다. 완료될 때까지 기다려주세요.
+              </div>
+            </div>
+          )}
+
           {isDone && noResultYet && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="text-sm font-medium text-blue-800 mb-1">
@@ -210,6 +251,37 @@ function AiRouteResultModal({
 
           {isDone && Array.isArray(legs) && legs.length > 0 && (
             <div className="space-y-3">
+              {/* 총 이동 정보 */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="text-sm font-semibold text-blue-800 mb-2">
+                  📍 총 이동 정보
+                </div>
+                <div className="flex flex-wrap gap-4 text-xs text-blue-700">
+                  {(() => {
+                    const totalTime = legs
+                      .filter(leg => leg?.nextTravelTime && typeof leg.nextTravelTime === 'string')
+                      .reduce((sum, leg) => {
+                        const timeStr = leg.nextTravelTime;
+                        const minutes = parseInt(timeStr.match(/(\d+)분/)?.[1] || '0');
+                        return sum + minutes;
+                      }, 0);
+                    const totalDistance = legs
+                      .filter(leg => leg?.nextTravelDistance && typeof leg.nextTravelDistance === 'string')
+                      .reduce((sum, leg) => {
+                        const distanceStr = leg.nextTravelDistance;
+                        const km = parseFloat(distanceStr.match(/(\d+\.?\d*)km/)?.[1] || '0');
+                        return sum + km;
+                      }, 0);
+                    
+                    return (
+                      <>
+                        <span>총 이동시간: {totalTime > 0 ? `${totalTime}분` : '정보 없음'}</span>
+                        <span>총 이동거리: {totalDistance > 0 ? `${totalDistance.toFixed(1)}km` : '정보 없음'}</span>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
               {legs.map((leg, idx) => (
                 <div
                   key={`${leg?.wantId ?? "want"}-${idx}`}
@@ -238,13 +310,16 @@ function AiRouteResultModal({
                         {leg?.placeName || "이름 없음"}
                       </div>
                       <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-600">
-                        {leg?.transport && <span>이동: {leg.transport}</span>}
+                        {leg?.transport && <span>🚗 {leg.transport}</span>}
                         {leg?.nextTravelTime && (
-                          <span>다음까지 {leg.nextTravelTime}</span>
+                          <span>⏱️ {leg.nextTravelTime}</span>
+                        )}
+                        {leg?.nextTravelDistance && (
+                          <span>📏 {leg.nextTravelDistance}</span>
                         )}
                         {leg?.lat && leg?.lng && (
                           <span className="text-slate-500">
-                            {leg.lat}, {leg.lng}
+                            📍 {leg.lat}, {leg.lng}
                           </span>
                         )}
                       </div>

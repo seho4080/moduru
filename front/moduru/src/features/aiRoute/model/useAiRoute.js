@@ -31,8 +31,10 @@ export default function useAiRoute(roomId) {
   // WebSocket 구독
   useEffect(() => {
     if (!roomId) return;
+    console.log('Setting up AI Route WebSocket for roomId:', roomId);
     const off = subscribeAiRoute(roomId, {
       onStatus: (msg) => {
+        console.log('AI Route status received:', msg);
         const raw = String(
           msg?.status ?? msg?.type ?? msg?.phase ?? ""
         ).toUpperCase();
@@ -49,6 +51,7 @@ export default function useAiRoute(roomId) {
         }
       },
       onResult: (msg) => {
+        console.log('AI Route result received:', msg);
         // 일부 서버는 DONE 없이 result만 보냄 → 보정
         dispatch(applyRouteResult({ msg }));
         dispatch(applyRouteStatusDone({ msg: { ...msg, status: "DONE" } }));
