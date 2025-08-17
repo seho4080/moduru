@@ -41,11 +41,7 @@ def filter_valid(place_list, query):
                 "role": "system",
                 "content": """
                     You should check the provided place list.
-                    The structure of the place list consists of id, place_name, address_name, 
-                    business_hours(break time and last order time included), 
-                    and description in order. Check the user question and return the ID and place_name only if the 
-                    address_name, business_time, and description provided are recommended based on the user question.
-                    For business_hours, we are not open during break time, so please consider it carefully.
+                    if some place realted with user question. return it.
                     answer format: [place_id1, place_id2, ...]
                 """,
             },
