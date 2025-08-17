@@ -1,11 +1,13 @@
 package com.B108.tripwish.domain.user.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "users")
@@ -14,49 +16,52 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User{
+public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(length = 100, unique = true)
-    private String email;
+  @Column(unique = true, nullable = false, updatable = false)
+  private UUID uuid;
 
-    @Column
-    private String password;
+  @Column(length = 100, unique = true)
+  private String email;
 
-    @Column(nullable = false)
-    private String provider;
+  @Column private String password;
 
-    @Column(length = 50, nullable = false)
-    private String nickname;
+  @Column(nullable = false)
+  private String provider;
 
-    @Column(columnDefinition = "TEXT")
-    private String profileImg;
+  @Column(length = 50, nullable = false)
+  private String nickname;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+  @Column(columnDefinition = "TEXT", nullable = true)
+  private String profileImg;
 
-    private LocalDate birth;
+  @Enumerated(EnumType.STRING)
+  private Gender gender;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+  private LocalDate birth;
 
-    @Column
-    private String phone;
+  @CreationTimestamp
+  @Column(nullable = false)
+  private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private Role role;
+  @Column private String phone;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "role", nullable = false)
+  private Role role;
 
-    public enum Gender {
-        M, F, O
-    }
+  public enum Gender {
+    M,
+    F,
+    O
+  }
 
-    public enum Role {
-        ROLE_USER, ROLE_ADMIN
-    }
-
+  public enum Role {
+    ROLE_USER,
+    ROLE_ADMIN
+  }
 }

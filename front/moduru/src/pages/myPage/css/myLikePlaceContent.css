@@ -1,0 +1,329 @@
+/* NOTE: 전체 페이지 배경과 여백 */
+.like-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #fff3ee;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 32px 24px; /* 상하 32px → 높이 계산에 사용됨 */
+}
+
+/* NOTE: 좌측 사이드 + 우측 지도 배치 */
+.like-content {
+  width: 100%;
+  max-width: 1360px;      /* 지도 살짝 축소, 좌측은 살짝 확대된 상태 */
+  display: flex;
+  align-items: stretch;   /* 좌/우 동일 높이 */
+  gap: 24px;
+  box-sizing: border-box;
+}
+
+/* === 좌측: 흰색 박스(사이드 메뉴: 드롭다운 전용) === */
+.side-menu-box {
+  width: 280px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.06);
+  padding: 20px 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  gap: 12px;
+  position: sticky;
+  top: 32px;
+}
+
+/* 전체 글씨체와 두께 개선 */
+.like-page,
+.side-menu-box,
+.dropdown,
+.dropdown-toggle,
+.dropdown-label,
+.dropdown-item,
+.dropdown-empty,
+.map-card {
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+  font-weight: 400;
+  color: #222;
+  letter-spacing: -0.2px;
+}
+
+/* NOTE: 드롭다운 */
+.dropdown { position: relative; }
+
+/* 드롭다운 토글: pill 형태, 그림자 강조, 더 넓은 패딩 */
+.dropdown-toggle {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 999px;           /* pill 형태 */
+  background: #f7f9fd;
+  box-shadow: 0 2px 10px rgba(51,153,204,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  cursor: pointer;
+  transition: box-shadow .15s, background .15s;
+  font-size: 15px;
+}
+
+.dropdown-toggle:hover {
+  background: #ffe9e0;
+  box-shadow: 0 4px 16px rgba(255,111,60,0.10);
+}
+
+/* 드롭다운 라벨 */
+.dropdown-label {
+  font-size: 15px;
+  color: #888;
+  font-weight: 400;
+}
+.dropdown-label.has-value { color: #222; font-weight: 500; }
+
+/* 드롭다운 화살표 */
+.dropdown-caret {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  background: none;
+  border: none;
+  color: #a5adb7;
+  transition: color .2s;
+}
+.dropdown-caret::before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  background: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 5L6 8L9 5' stroke='%23a5adb7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+.dropdown.open .dropdown-caret::before { transform: rotate(180deg); }
+.dropdown-toggle:hover .dropdown-caret { color: #8f97a2; }
+
+/* 드롭다운 메뉴 */
+.dropdown-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #fff;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(51,153,204,0.13);
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 8px 0;
+  z-index: 10;
+  display: none;
+}
+.dropdown.open .dropdown-menu { display: block; }
+
+.dropdown-item {
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 400;
+  color: #222;
+  cursor: pointer;
+  background: none;
+  transition: background 0.15s, color 0.15s;
+  margin: 2px 0;
+}
+.dropdown-item:hover { background: #f7f9fd; color: #3399cc; }
+.dropdown-item.selected { background: #3399cc; color: #fff; font-weight: 500; }
+
+.dropdown-empty {
+  padding: 12px 24px;
+  font-size: 14px;
+  color: #aaa;
+  text-align: center;
+}
+
+/* === 우측: 지도 박스 === */
+/* ⚠ 지도 캔버스가 정확히 채워지도록 padding 제거 + overflow로 모서리만 적용 */
+.map-card {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  padding: 0;                 /* ✅ padding 제거: 오른쪽 빈 띠 방지 */
+  box-sizing: border-box;
+  min-width: 0;
+  height: calc(100vh - 64px);
+  display: flex;
+  overflow: hidden;           /* 둥근 모서리 클리핑 */
+  position: relative; /* 확대 버튼 등 절대 위치 요소가 정상적으로 보이게 */
+}
+
+/* 지도 뷰포트: 내부 여백/보더 금지, 100% 채우기 */
+.map-viewport {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  /* padding/border 절대 금지 */
+}
+
+/* 지도 하위 노드가 반드시 꽉 차도록 */
+.map-viewport > * { width: 100%; height: 100%; display: block; }
+/* 일부 환경에서 캔버스/타일 div가 크기를 덜 따라갈 때 안전장치 */
+.map-viewport > div,
+.map-viewport canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* NOTE: 반응형 */
+@media (max-width: 980px) {
+  .like-content { flex-direction: column; max-width: 100%; }
+  .side-menu-box, .map-card { width: 100%; height: auto; position: static; }
+  .map-card { min-height: 360px; }
+}
+
+/* MyLikedPlaceList.css */
+.mlp-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* 리스트 + 페이지네이션 영역을 세로 배치 */
+.side-menu-box__section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 빈 상태 */
+.mlp-empty {
+  padding: 16px 8px;
+  font-size: 14px;
+  color: #9aa0a6;
+  text-align: center;
+}
+
+/* 하단 중앙 페이지네이션 */
+.side-pagination {
+  margin-top: auto;             /* 항상 하단 고정 느낌 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 2px;
+}
+
+.pg-btn {
+  min-width: 28px;
+  height: 28px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+.pg-btn:hover { background: #f7f7f7; }
+.pg-btn:disabled { opacity: 0.5; cursor: default; }
+.pg-btn.is-active {
+  background: #ff6f3c;          /* 포인트 컬러 */
+  color: #fff;
+  border-color: #ff6f3c;
+}
+
+.pg-ellipsis { color: #9aa0a6; user-select: none; }
+
+/* ===== MyPage 안에 임베드될 때 꽉 채우기 ===== */
+
+/* mypage-main 안에서는 배경 제거 + 부모 크기 상속 */
+.mypage-main .like-page {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;       /* 부모(main) 높이 상속 */
+  display: block;
+}
+
+/* 가운데 래퍼도 제한 제거: 부모(main)를 100% 채움 */
+.mypage-main .like-content {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;       /* 높이 100% */
+  margin: 0 !important;
+
+  /* 2단 그리드: 좌 320px(원하면 조정), 우 남는 폭 */
+  display: grid !important;
+  grid-template-columns: 320px minmax(0, 1fr) !important;
+  gap: 24px !important;
+  align-items: stretch !important; /* 두 칼럼 동일 높이 */
+}
+
+/* 좌측 패널: sticky 제거, 부모 높이 100%, 내부 스크롤 */
+.mypage-main .side-menu-box {
+  position: relative !important;
+  top: auto !important;
+  height: 100% !important;     /* like-content와 동일 높이 */
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden;            /* 모서리 깔끔 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 리스트/본문 영역만 스크롤 */
+.mypage-main .side-menu-box__section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;              /* 사이드만 스크롤 */
+}
+
+/* 우측 지도 카드: 부모 높이 100%, 내부 여백 제거 */
+.mypage-main .map-card {
+  height: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+  min-width: 0;
+  overflow: hidden !important; /* 둥근 모서리 클리핑 */
+  display: block;
+}
+
+/* 지도 뷰포트/캔버스가 컨테이너를 정확히 채우도록 */
+.mypage-main .map-viewport {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative;
+}
+.mypage-main .map-viewport > *,
+.mypage-main .map-viewport > div,
+.mypage-main .map-viewport canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* 반응형: 모바일에서는 세로 스택 */
+@media (max-width: 980px) {
+  .mypage-main .like-content {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+  .mypage-main .side-menu-box,
+  .mypage-main .map-card {
+    height: auto !important;
+  }
+}
+
+.expand-button {
+  z-index: 1000 !important;
+}
+
+

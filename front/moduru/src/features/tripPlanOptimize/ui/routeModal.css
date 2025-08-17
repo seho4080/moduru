@@ -1,0 +1,63 @@
+.route-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent; /* 다른 UI와 상호작용 가능하게 함 */
+  z-index: 9999;
+  pointer-events: none; /* 오버레이는 클릭 방해하지 않음 */
+}
+
+.route-modal {
+  position: absolute;
+  left: calc(50% - 400px);
+  top: calc(50% - 250px);
+  width: 800px;
+  height: 500px;
+  background: #f9f9f9;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: auto; /* 모달은 클릭 가능 */
+}
+
+.route-modal-text {
+  font-size: 20px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+/* 닫기 버튼 */
+.route-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #888;
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-modal-close:hover {
+  color: #333;
+}
+
+/* 드래그 가능한 헤더 */
+.route-modal-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  cursor: move;
+  z-index: 10;
+}
