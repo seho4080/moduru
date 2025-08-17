@@ -64,17 +64,18 @@ public class AuthController {
   @PostMapping("/login")
   public LoginResponseDto login(
       @RequestBody LoginRequestDto login,
-      HttpServletResponse response,
-      HttpServletRequest request // ★ 추가
-      ) {
+      HttpServletRequest request,
+      HttpServletResponse response) {
     String email = login.getEmail();
     String password = login.getPassword();
-    JwtToken jwtToken = authService.login(email, password, response, request); // ★ 수정
+    JwtToken jwtToken = authService.login(email, password, response, request);
     log.info(
         "jwtToken accessToken = {}, refreshToken = {}",
         jwtToken.getAccessToken(),
         jwtToken.getRefreshToken());
-    return new LoginResponseDto(jwtToken.getAccessToken(), jwtToken.getRefreshToken());
+    return new LoginResponseDto(
+        jwtToken.getAccessToken(), jwtToken.getRefreshToken()); // 개발 중 응답 확인용
+    //    return ResponseEntity.ok(new CommonResponse("LOGIN_SUCCESS", "로그인이 완료되었습니다.");
   }
 
   @Operation(
@@ -107,10 +108,12 @@ public class AuthController {
       throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
     }
 
+    // 서비스 호출
     authService.logout(accessToken);
 
+    // 쿠키 삭제 처리
     Cookie accessTokenCookie = new Cookie("access_token", null);
-    accessTokenCookie.setMaxAge(0);
+    accessTokenCookie.setMaxAge(0); // 즉시 만료
     accessTokenCookie.setPath("/");
     accessTokenCookie.setHttpOnly(true);
     accessTokenCookie.setSecure(false); // 배포 시 true
@@ -157,7 +160,7 @@ public class AuthController {
     if (refreshToken == null) {
       throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
     }
-    JwtToken token = authService.reissue(refreshToken, response, request); // ★ 수정
+    JwtToken token = authService.reissue(refreshToken, response, request);
 
     return new ReissueResponseDto(token.getAccessToken(), token.getRefreshToken());
   }
@@ -178,19 +181,12 @@ public class AuthController {
   @PostMapping("/email/send")
   public ResponseEntity<CommonResponse> sendAuthCode(@RequestBody EmailRequestDto requestDto) {
     long start = System.currentTimeMillis();
-    log.info(
-        "MAIL CHECK → user={}, pw.len={}, pw='{}'",
-        env.getProperty("spring.mail.username"),
-        env.getProperty("spring.mail.password", "").length(),
-        env.getProperty("spring.mail.password"));
     log.info("[AUTH][EMAIL][SEND] >> request email={}", requestDto.getEmail());
     try {
-      Long key = (long) requestDto.getEmail().hashCode();
-      authMailService.sendCodeEmail(requestDto.getEmail(), key);
-      log.info(
-          "[AUTH][EMAIL][SEND] << dispatched (async) key={} in {}ms",
-          key,
-          System.currentTimeMillis() - start);
+      // ❌ hashCode 키 넘기지 말고, 서비스가 키/TTL/정규화를 모두 책임지게
+      authMailService.sendCodeEmail(requestDto.getEmail());
+
+      log.info("[AUTH][EMAIL][SEND] << dispatched in {}ms", System.currentTimeMillis() - start);
       return ResponseEntity.ok(new CommonResponse("CODE_SENT", "인증번호가 발송되었습니다."));
     } catch (Exception e) {
       log.error(
@@ -199,6 +195,7 @@ public class AuthController {
     }
   }
 
+  // 이메일 인증 확인
   @Operation(
       summary = "이메일 인증 코드 검증",
       description = "사용자가 입력한 인증 코드가 이메일에 발송된 코드와 일치하는지 확인합니다.",

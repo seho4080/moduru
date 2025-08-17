@@ -1,58 +1,57 @@
 // src/features/sharedPlace/ui/SharedPlacePanel.jsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SharedPlaceList from "./SharedPlaceList";
 import { useRemoveSharedPlace } from "../model/useRemoveSharedPlace";
 
-// 일정표/여행정보 모달
+// AI 추천 상태/요청
 import {
-  openItineraryModal,
-  openTripForm,
-} from "../../../redux/slices/uiSlice";
-
-// ✅ AI 일정 추천
-import {
-  openAiModal,
+  startNewRecommendation,
   applyAiStarted,
 } from "../../../redux/slices/aiScheduleSlice";
 import { requestAiSchedule } from "../../aiSchedule/lib/aiScheduleApi";
 
-// ✅ 소켓 구독
-import useAiSchedule from "@/features/aiSchedule/model/useAiSchedule";
+// AI 소켓 구독
+import useAiSchedule from "../../aiSchedule/model/useAiSchedule";
 
-// ✅ 항상 마운트
-import AiScheduleModal from "@/features/aiSchedule/ui/AiScheduleModal";
+// 결과 리스트
+import AiResultList from "./AiResultList";
 
-// ✅ 여행방 API (내 여행방 목록 조회)
-import { getUserTravelRooms } from "../../travelSpace/lib/roomApi";
+// 보드 반영에 필요한 액션과 발행
+import {
+  addPlaceToDay,
+  setOrderForDate,
+  removeItem,
+} from "../../../redux/slices/itinerarySlice";
+import { publishSchedule } from "../../webSocket/scheduleSocket";
+import { publishMessage } from "../../webSocket/coreSocket";
 
-const PANEL_WIDTH = 280; // SidebarPanel의 공유 패널 고정폭과 일치
+/** 날짜 키 포맷 변환 */
+function toDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
 
 export default function SharedPlacePanel({ roomId }) {
   const dispatch = useDispatch();
   const { removeSharedPlace } = useRemoveSharedPlace();
 
-  // 🔔 여기서 단 한 번만 소켓 구독됨
+  // 소켓 구독은 마운트 시 1회
   useAiSchedule(roomId);
 
-  // 제목에 총 개수 표시용
   const sharedPlaces = useSelector((s) => s.sharedPlace.sharedPlaces) || [];
-
-  // 여행방(스토어)
   const trip = useSelector((s) => s.tripRoom);
+  const ai = useSelector((s) => s.aiSchedule);
+  const { status } = ai;
+  const daysMap = useSelector((s) => s.itinerary?.days || {});
+  const groups = useSelector((s) => s.aiSchedule.groups || {});
 
-  // 스토어 기준 날짜 유무
-  const hasDatesInStore = !!(trip?.startDate && trip?.endDate);
+  // 화면 모드
+  const [viewMode, setViewMode] = useState("shared"); // "shared" | "result" | "newSelection"
 
-  // 로컬에서도 캐싱(서버 조회 후 true로 전환 가능)
-  const [hasDates, setHasDates] = useState(hasDatesInStore);
-  const [checkingDates, setCheckingDates] = useState(false);
-
-  useEffect(() => {
-    setHasDates(hasDatesInStore);
-  }, [hasDatesInStore]);
-
-  // 여행일수 계산
+  // 여행일수
   const travelDays = useMemo(() => {
     if (!trip?.startDate || !trip?.endDate) return 1;
     const s = new Date(trip.startDate);
@@ -62,78 +61,53 @@ export default function SharedPlacePanel({ roomId }) {
     return Math.max(1, Math.floor((e - s) / 86400000) + 1);
   }, [trip?.startDate, trip?.endDate]);
 
-  // ✅ 선택 모드 토글 (버튼 눌러야 활성화)
-  const [selectMode, setSelectMode] = useState(false);
-
-  // 선택 상태는 패널이 소유(리스트는 Controlled)
+  // 새 추천 선택 상태
   const [selectedWantIds, setSelectedWantIds] = useState([]);
-
   const minCount = travelDays * 1;
   const maxCount = travelDays * 10;
   const count = selectedWantIds.length;
   const inRange = count >= minCount && count <= maxCount;
 
+  // 기존 결과 존재 여부 및 통계
+  const hasAiResults = useMemo(() => Object.keys(groups).length > 0, [groups]);
+  const totalAiPlaces = useMemo(
+    () =>
+      Object.values(groups).reduce(
+        (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
+        0
+      ),
+    [groups]
+  );
+
+  // 진행 시작되면 결과 화면을 보여주되, 오버레이는 AiResultList에서 띄운다
+  useEffect(() => {
+    if (status === "STARTED" || status === "PROGRESS") {
+      setViewMode("result");
+    }
+  }, [status]);
+
+  // 제거
   const handleRemove = (place) => {
-    if (!place?.wantId) return;
-    removeSharedPlace(roomId, place.wantId);
+    if (place?.wantId) removeSharedPlace(roomId, place.wantId);
   };
 
-  /**
-   * 날짜가 없으면 서버에서 최신 방 정보를 조회해 있는지 확인.
-   * 여전히 없으면 여행정보 설정 폼을 열고 false 반환.
-   * 날짜가 확보되면 true 반환.
-   */
-  const ensureTripDates = async () => {
-    // 스토어에 이미 있으면 패스
-    if (hasDates) return true;
-
-    // roomId가 없으면 더 진행 불가
-    if (!roomId) return false;
-
-    setCheckingDates(true);
-    try {
-      const rooms = await getUserTravelRooms();
-      const current =
-        rooms?.find(
-          (r) =>
-            String(r?.id) === String(roomId) ||
-            String(r?.roomId) === String(roomId)
-        ) || null;
-
-      const start = current?.startDate;
-      const end = current?.endDate;
-
-      if (start && end) {
-        // 서버에 있으면 로컬 플래그 true로 전환(스토어 동기화는 별도 흐름에서 처리)
-        setHasDates(true);
-        return true;
-      }
-
-      // 서버에도 없으면 날짜 설정 폼 오픈
-      dispatch(openTripForm());
-      return false;
-    } catch (e) {
-      // API 실패 시에도 폼 열어 사용자에게 설정 기회 제공
-      dispatch(openTripForm());
-      return false;
-    } finally {
-      setCheckingDates(false);
-    }
+  // 희망장소 → 새 추천
+  const handleStartSelect = () => {
+    setViewMode("newSelection");
+    setSelectedWantIds([]);
   };
 
-  // 일정표 담기 버튼 클릭
-  const handleOpenItinerary = async () => {
-    // 날짜 확보 시에만 일정표 오픈
-    const ok = await ensureTripDates();
-    if (ok) {
-      dispatch(openItineraryModal());
-    }
+  // 새 추천 화면에서 취소
+  const handleCancelSelect = () => {
+    setSelectedWantIds([]);
+    setViewMode("shared");
   };
 
+  // 새 추천 실행
   const handleRunAi = async () => {
     if (!roomId || !inRange) return;
 
-    // ✅ 낙관적 STARTED 노출 + 모달 오픈
+    dispatch(startNewRecommendation());
     dispatch(
       applyAiStarted({
         msg: {
@@ -143,9 +117,9 @@ export default function SharedPlacePanel({ roomId }) {
         },
       })
     );
-    dispatch(openAiModal());
 
-    // ✅ 실제 추천 요청
+    setViewMode("result"); // 결과 화면으로 전환, 오버레이는 내부에서 표시
+
     try {
       await requestAiSchedule(roomId, selectedWantIds, travelDays);
     } catch (e) {
@@ -153,150 +127,340 @@ export default function SharedPlacePanel({ roomId }) {
     }
   };
 
-  // AI 버튼 클릭 동작
-  const handleAiButtonClick = () => {
-    // 선택 모드가 아니면 모드만 켬 (선택 시작)
-    if (!selectMode) {
-      setSelectMode(true);
-      return;
-    }
-    // 선택 모드고, 개수 충족 시 실제 실행
-    if (inRange) {
-      handleRunAi();
-    }
-  };
-
-  // 선택 취소
-  const handleCancelSelect = () => {
+  // 결과 헤더의 다시 받기 버튼
+  const handleRetryFromResult = () => {
     setSelectedWantIds([]);
-    setSelectMode(false);
+    setViewMode("newSelection");
   };
 
-  const aiButtonDisabled = selectMode ? !inRange || !roomId : false;
+  // 기존 AI 결과 보기 버튼
+  const handleViewExistingResults = () => {
+    setViewMode("result");
+  };
+
+  // 진행 오버레이의 취소
+  const handleCancelFromOverlay = () => {
+    if (!roomId) return;
+    publishMessage(roomId, "ai-schedule", "cancel", { roomId });
+    // 취소 후 희망장소 화면으로 복귀
+    setViewMode("shared");
+  };
+
+  // Day 번호를 dateKey로
+  const getDateKeyForDay = useCallback(
+    (dayNumber) => {
+      const d = Number(dayNumber);
+      if (!Number.isFinite(d) || d < 1) return null;
+
+      if (trip?.startDate) {
+        const base = new Date(trip.startDate);
+        base.setDate(base.getDate() + (d - 1));
+        return toDateKey(base);
+      }
+
+      const keys = Object.keys(daysMap || {}).sort((a, b) =>
+        String(a).localeCompare(String(b))
+      );
+      return keys[d - 1] || null;
+    },
+    [trip?.startDate, daysMap]
+  );
+
+  // Day 적용 버튼 콜백 - 기존 장소 모두 제거 후 AI 추천으로 교체
+  const handleApplyDaySchedule = useCallback(
+    (dayNumber, legs) => {
+      if (!roomId) return;
+      if (!Array.isArray(legs) || legs.length === 0) return;
+
+      const dateKey = getDateKeyForDay(dayNumber);
+      if (!dateKey) {
+        alert("적용할 날짜를 찾을 수 없습니다. 여행 날짜를 먼저 설정하세요.");
+        return;
+      }
+
+      const current = daysMap[dateKey] || [];
+
+      // 1. 기존 장소들 모두 제거
+      for (let i = current.length - 1; i >= 0; i--) {
+        const entryId = current[i]?.entryId;
+        if (entryId != null) {
+          dispatch(removeItem({ dateKey, entryId }));
+        }
+      }
+
+      // 2. AI 추천 장소들 순서대로 추가
+      const ordered = [...legs].sort(
+        (a, b) => (a?.eventOrder ?? 0) - (b?.eventOrder ?? 0)
+      );
+
+      ordered.forEach((leg, i) => {
+        const placePayload = {
+          wantId: leg.wantId,
+          placeName: leg.placeName || "",
+          imgUrl: leg.placeImg || undefined,
+          category: leg.category || "",
+          address: leg.address || "",
+        };
+        dispatch(
+          addPlaceToDay({
+            date: dateKey,
+            place: placePayload,
+            index: i,
+          })
+        );
+      });
+
+      // 3. 순서 확정 및 웹소켓 브로드캐스트
+      const wantOrderIds = ordered
+        .map((l) => Number(l.wantId))
+        .filter((n) => Number.isFinite(n));
+
+      if (wantOrderIds.length > 0) {
+        dispatch(setOrderForDate({ dateKey, wantOrderIds }));
+
+        // 웹소켓으로 다른 사용자들에게 전체 교체 알림
+        publishSchedule({
+          roomId,
+          type: "REPLACE_DAY",
+          dateKey,
+          events: wantOrderIds.map((id, idx) => ({
+            wantId: id,
+            eventOrder: idx + 1,
+          })),
+        });
+      }
+
+      if (window?.toast?.success) {
+        window.toast.success(
+          `Day ${dayNumber} 일정을 AI 추천으로 교체했습니다.`
+        );
+      }
+    },
+    [roomId, daysMap, getDateKeyForDay, dispatch]
+  );
+
+  // 헤더 타이틀
+  const headerTitle =
+    viewMode === "shared"
+      ? "희망장소"
+      : viewMode === "result"
+      ? "AI 추천 결과"
+      : "새 AI 일정 추천";
+
+  // 진행 중인지 확인
+  const isLoading = status === "STARTED" || status === "PROGRESS";
 
   return (
-    <div
-      className="flex h-full flex-col"
-      style={{ width: PANEL_WIDTH, minWidth: PANEL_WIDTH }}
-    >
-      {/* ✅ 항상 마운트 → STARTED 수신 즉시 모달 노출 */}
-      <AiScheduleModal />
-
-      {/* ───────── 헤더 ───────── */}
-      <div className="bg-white border-b border-slate-200 px-4 py-3">
+    <div className="flex h-full flex-col bg-white">
+      {/* 헤더 */}
+      <div className="px-4 py-3 border-b border-slate-200 bg-white">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-[15px] font-bold text-slate-800 tracking-tight">
-              희망장소
+          <div className="min-w-0">
+            <div className="text-[15px] font-bold text-slate-800 tracking-tight truncate">
+              {headerTitle}
             </div>
             <div className="text-[11px] text-slate-500 mt-0.5">
-              총 {sharedPlaces.length}개
+              {viewMode === "shared" && `총 ${sharedPlaces.length}개`}
+              {viewMode === "result" &&
+                (hasAiResults
+                  ? "추천받은 일정을 확인하세요"
+                  : "추천 결과가 준비되는 동안 기다려주세요")}
+              {viewMode === "newSelection" &&
+                `선택 개수: ${count}개 · 최소 ${minCount}개, 최대 ${maxCount}개`}
             </div>
           </div>
-        </div>
 
-        {/* 선택 모드 안내 배너 */}
-        {selectMode && (
-          <div className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-[12px] text-amber-800 border border-amber-100">
-            일정 추천에 포함할 장소를 선택하세요.
-          </div>
-        )}
-      </div>
-
-      {/* ───────── 리스트 영역 ───────── */}
-      <div className="flex-1 overflow-y-auto px-0 pt-2">
-        <SharedPlaceList
-          selectMode={selectMode}
-          selectedWantIds={selectedWantIds}
-          onChangeSelected={setSelectedWantIds}
-          onRemove={handleRemove}
-        />
-      </div>
-
-      {/* ───────── 하단 액션 풋터 ───────── */}
-      <div className="border-t border-slate-200 px-4 py-3 bg-white sticky bottom-0">
-        {/* 선택 모드일 때만 카운트 표시 */}
-        {selectMode && (
-          <div className="mb-2 text-xs text-slate-700">
-            선택: <b>{count}</b>개
-            <div className="text-[11px] text-slate-500">
-              (필요: {minCount}~{maxCount}개)
-            </div>
-          </div>
-        )}
-
-        <div
-          className={`${
-            selectMode ? "grid grid-cols-3" : "grid grid-cols-2"
-          } gap-2`}
-        >
-          {/* 일정표 담기 (상시 노출)
-              - 날짜 없으면 서버 확인 → 없으면 여행정보 폼 오픈
-              - 날짜 있으면 일정표 모달 오픈 */}
-          <button
-            type="button"
-            onClick={handleOpenItinerary}
-            disabled={!roomId || checkingDates}
-            className="rounded-lg bg-[#4169e1] px-2 py-2 text-xs font-semibold text-white hover:brightness-95 active:brightness-90 disabled:opacity-50"
-            title={
-              !roomId
-                ? "여행방 정보가 없습니다"
-                : !hasDates
-                ? "여행 날짜 미설정 시 설정 화면이 열립니다"
-                : undefined
-            }
-          >
-            <span className="flex flex-col items-center leading-tight">
-              <span>일정표</span>
-              <span>담기</span>
-            </span>
-          </button>
-
-          {selectMode ? (
-            <>
-              {/* 선택 취소 */}
-              <button
-                type="button"
-                onClick={handleCancelSelect}
-                className="rounded-lg border border-slate-300 bg-white px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                title="선택을 모두 취소하고 선택 모드를 종료합니다"
-              >
-                <span className="flex flex-col items-center leading-tight">
-                  <span>선택</span>
-                  <span>취소</span>
-                </span>
-              </button>
-
-              {/* 일정 추천 시작 */}
-              <button
-                type="button"
-                onClick={handleAiButtonClick}
-                disabled={aiButtonDisabled}
-                className="rounded-lg bg-black px-2 py-2 text-xs font-semibold text-white hover:brightness-95 active:brightness-90 disabled:opacity-50"
-                title={
-                  !inRange ? `선택 개수: ${minCount}~${maxCount}개` : undefined
-                }
-              >
-                <span className="flex flex-col items-center leading-tight">
-                  <span>일정 추천</span>
-                  <span>시작</span>
-                </span>
-              </button>
-            </>
-          ) : (
-            // 평상시: AI 일정 추천
+          {viewMode === "result" && (
             <button
               type="button"
-              onClick={handleAiButtonClick}
-              className="rounded-lg bg-black px-2 py-2 text-xs font-semibold text-white hover:brightness-95 active:brightness-90"
+              onClick={handleRetryFromResult}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
+              title="장소를 선택해서 새 AI 일정을 추천받습니다"
             >
-              <span className="flex flex-col items-center leading-tight">
-                <span>AI 일정</span>
-                <span>추천</span>
-              </span>
+              <svg
+                className="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 10-8 8"
+                />
+              </svg>
+              AI 일정 추천 다시 받기
             </button>
           )}
         </div>
+      </div>
+
+      {/* 로딩 오버레이 */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center z-30">
+          <div className="bg-white border border-slate-200 shadow-lg rounded-lg p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="text-lg font-semibold text-slate-800">
+                AI가 일정을 구성 중입니다
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <div className="w-full bg-slate-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-300 animate-pulse"
+                  style={{ width: "70%" }}
+                />
+              </div>
+            </div>
+
+            <div className="text-sm text-slate-600 text-center mb-4">
+              최적의 여행 경로를 분석하고 있어요...
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCancelFromOverlay}
+              className="w-full px-4 py-2 text-sm font-medium text-slate-600 border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 바디 */}
+      <div className="flex-1 overflow-y-auto px-0">
+        {viewMode === "shared" && (
+          <SharedPlaceList
+            selectMode={false}
+            selectedWantIds={[]}
+            onChangeSelected={() => {}}
+            onRemove={handleRemove}
+          />
+        )}
+
+        {viewMode === "result" && (
+          <AiResultList
+            onCancel={handleCancelFromOverlay}
+            onApplyDaySchedule={handleApplyDaySchedule}
+          />
+        )}
+
+        {viewMode === "newSelection" && (
+          <SharedPlaceList
+            selectMode={true}
+            selectedWantIds={selectedWantIds}
+            onChangeSelected={setSelectedWantIds}
+            onRemove={handleRemove}
+          />
+        )}
+      </div>
+
+      {/* 풋터 */}
+      <div className="border-t border-slate-200 px-3 py-3 sm:px-4 sm:py-4 bg-gradient-to-r from-slate-50 to-white">
+        {viewMode === "shared" && (
+          <div className="space-y-2">
+            {/* 기존 AI 결과가 있는 경우 보기 버튼 추가 */}
+            {hasAiResults && (
+              <button
+                type="button"
+                onClick={handleViewExistingResults}
+                className="w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:from-green-800 active:to-emerald-800 text-white px-4 py-2.5 text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                title="이전에 받은 AI 추천 일정을 확인합니다"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span>이전 AI 추천 일정 보기</span>
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                  {totalAiPlaces}곳
+                </span>
+              </button>
+            )}
+
+            {/* 새 AI 일정 추천 버튼 */}
+            <button
+              type="button"
+              onClick={handleStartSelect}
+              className="w-full rounded-lg bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-gray-700 active:from-gray-900 active:to-gray-800 text-white px-4 py-3 text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              title="AI가 장소들을 분석해 일정을 추천합니다"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              <span>{hasAiResults ? "새 AI 일정 추천" : "AI 일정 추천"}</span>
+              {hasAiResults && (
+                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                  NEW
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+
+        {viewMode === "result" && (
+          <button
+            type="button"
+            onClick={() => setViewMode("shared")}
+            className="w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 active:from-green-800 active:to-emerald-800 text-white px-4 py-3 text-sm font-semibold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+            title="희망장소 목록으로 돌아갑니다"
+          >
+            희망장소 보기
+          </button>
+        )}
+
+        {viewMode === "newSelection" && (
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={handleCancelSelect}
+              className="rounded-lg border-2 border-slate-300 bg-white px-3 py-3 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100 transition-all duration-200"
+              title="선택을 모두 취소하고 희망장소로 돌아갑니다"
+            >
+              선택 취소
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRunAi}
+              disabled={!inRange || !roomId}
+              className="rounded-lg bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-gray-700 active:from-gray-900 active:to-gray-800 text-white px-3 py-3 text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              title={
+                !inRange
+                  ? `선택 개수는 최소 ${minCount}개, 최대 ${maxCount}개입니다`
+                  : "선택한 장소로 AI 일정 추천을 시작합니다"
+              }
+            >
+              <span>AI 추천</span>
+              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">
+                {count}개 선택
+              </span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
