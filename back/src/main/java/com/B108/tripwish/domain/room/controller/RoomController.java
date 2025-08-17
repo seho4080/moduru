@@ -23,9 +23,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/rooms")
 public class RoomController {
 
@@ -201,12 +203,13 @@ public class RoomController {
         @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content)
       })
   @PostMapping("/{roomId}/votes/{wantId}")
-  public ResponseEntity<CommonResponse> votePlace(
+  public ResponseEntity<VotePlaceResponseDto> votePlace(
       @AuthenticationPrincipal CustomUserDetails user,
       @PathVariable Long roomId,
       @PathVariable Long wantId) {
-    wantPlaceService.toggleVotePlace(user, roomId, wantId);
-    CommonResponse response = new CommonResponse("VOTE_SUCCESS", "장소 투표가 완료되었습니다.");
+    VotePlaceResponseDto response = wantPlaceService.toggleVotePlace(user, roomId, wantId);
+    log.info(
+        "📤 [votePlace] API 응답: wantId={}, isVoted={}", response.getWantId(), response.isVoted());
     return ResponseEntity.ok(response);
   }
 

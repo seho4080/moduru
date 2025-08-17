@@ -30,7 +30,7 @@ public class AiRouteController {
       @PathVariable Long roomId,
       @RequestBody AiRouteRequestDto req) {
     // 방 락
-    if (!roomLockService.acquireScheduleLock(roomId)) {
+    if (!roomLockService.acquireRouteLock(roomId, req.getDay())) {
       return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "이미 일정 추천이 진행 중입니다."));
     }
     String jobId = aiRouteService.enqueue(roomId, req);

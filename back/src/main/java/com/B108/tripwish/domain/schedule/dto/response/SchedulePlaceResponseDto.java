@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SchedulePlaceResponseDto {
+  private Long placeId;
+  private Long categoryId;
   private String placeName;
   private String address;
 }

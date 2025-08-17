@@ -6,6 +6,7 @@ export default function TransportRadio({
   onChange,
   disabled,
   name = "transport",
+  onTransportChange,
 }) {
   return (
     <div className="flex items-center gap-2 text-xs">
@@ -15,7 +16,10 @@ export default function TransportRadio({
           name={name}
           value="driving"
           checked={value === "driving"}
-          onChange={() => onChange?.("driving")}
+          onChange={() => {
+            onChange?.("driving");
+            onTransportChange?.("driving");
+          }}
           disabled={disabled}
         />
         <span>운전</span>
@@ -26,7 +30,10 @@ export default function TransportRadio({
           name={name}
           value="transit"
           checked={value === "transit"}
-          onChange={() => onChange?.("transit")}
+          onChange={() => {
+            onChange?.("transit");
+            onTransportChange?.("transit");
+          }}
           disabled={disabled}
         />
         <span>대중교통</span>

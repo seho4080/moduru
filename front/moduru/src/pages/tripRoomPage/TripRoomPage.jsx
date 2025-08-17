@@ -124,6 +124,7 @@ function TripRoomView() {
 
     setSelectedPlace,
     closeRouteModal,
+    handleSharedPlaceCardClick,
   } = useTripRoom();
 
   // 지역 모달 오픈은 페이지에서 제어
@@ -262,6 +263,7 @@ function TripRoomView() {
         }}
         roomId={travelRoomId}
         region={region}
+        onSharedPlaceCardClick={handleSharedPlaceCardClick}
       />
 
       {/* 우측 지도/컨트롤 영역 */}

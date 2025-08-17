@@ -9,7 +9,9 @@ export default function SortableItineraryCard({
   dateKey,
   onRemove,
   onConfirmTimes,
+  onCardClick,
   cardWidth = 240,
+  isSelected = false,
 }) {
   const {
     attributes,
@@ -48,6 +50,8 @@ export default function SortableItineraryCard({
         endTime={item?.endTime ?? ""}
         onConfirmTimes={(s, e) => onConfirmTimes?.(s, e)}
         onRemove={onRemove}
+        onCardClick={onCardClick}
+        isSelected={isSelected}
         cardWidth={cardWidth}
       />
     </div>
