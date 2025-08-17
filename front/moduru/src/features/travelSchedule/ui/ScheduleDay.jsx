@@ -2,7 +2,7 @@ import React from "react";
 import { FaBus, FaArrowDown } from "react-icons/fa";
 import SharedPlaceCard from "../../sharedPlace/ui/SharedPlaceCard";
 
-export default function ScheduleDay({ items = [], onRemovePlace }) {
+export default function ScheduleDay({ items = [], onRemovePlace, onCardClick }) {
   return (
     <div className="w-[200px]">
       {/* 상단 라벨 */}
@@ -25,6 +25,7 @@ export default function ScheduleDay({ items = [], onRemovePlace }) {
               <SharedPlaceCard
                 place={place}
                 onRemove={onRemovePlace}
+                onCardClick={onCardClick}
                 className="w-full"
                 compact
               />

@@ -8,6 +8,7 @@ export default function SidebarContainer({
   onTabChange,
   roomId,
   setHoveredCoords,
+  onSharedPlaceCardClick,
 }) {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -52,6 +53,7 @@ export default function SidebarContainer({
           onOpenPanel={handleOpenPanel}
           roomId={roomId}
           setHoveredCoords={setHoveredCoords}
+          onSharedPlaceCardClick={onSharedPlaceCardClick}
         />
       </div>
 
