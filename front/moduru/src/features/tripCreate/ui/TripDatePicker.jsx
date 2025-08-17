@@ -12,7 +12,7 @@ function normalizeDate(date) {
 
 export default function TripDatePicker({ value, onChange }) {
   const [range, setRange] = useState(value || [null, null]);
-  
+
   // NOTE: 외부에서 날짜 값이 바뀔 경우 내부 상태를 동기화함
   useEffect(() => {
     setRange(value);
