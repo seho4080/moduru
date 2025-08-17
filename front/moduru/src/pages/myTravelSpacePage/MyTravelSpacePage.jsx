@@ -6,11 +6,12 @@ import "./myTravelSpacePage.css";
 import TravelRoomsTable from "../../features/myTravelSpace/ui/TravelRoomsTable";
 import useTravelRooms from "../../features/myTravelSpace/model/useTravelRooms";
 import MyTravelToolbar from "../../features/myTravelSpace/ui/MyTravelToolbar";
+import SchedulePreview from "../../features/itinerary/ui/SchedulePreview"; // ✅ 추가
 
 export default function MyTravelSpacePage({ items = [] }) {
   const navigate = useNavigate();
+  const [viewTarget, setViewTarget] = useState(null); // ✅ 일정 모달 대상
 
-  // 날짜 유틸
   const toLocalDate = (s) => {
     if (!s) return null;
     const [y, m, d] = String(s).split("-").map(Number);
@@ -30,7 +31,14 @@ export default function MyTravelSpacePage({ items = [] }) {
     return "ongoing";
   };
 
-  // 데이터 훅
+    const today = new Date();
+    const end = toLocalDate(it?.endDate);
+    if (end && end < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+      return "done";
+    }
+    return "ongoing";
+  };
+
   const { rooms, loading, error, reload, leaveRoom, removeRoom } = useTravelRooms({
     endpoint: "/users/travel-rooms",
     useToken: false,
@@ -50,7 +58,9 @@ export default function MyTravelSpacePage({ items = [] }) {
       const key = `${it.title ?? ""} ${it.region ?? ""}`.toLowerCase();
       return key.includes(q.trim().toLowerCase());
     };
-    return (source || []).filter((it) => (status === "all" || statusOf(it) === status) && byQuery(it));
+    return (source || []).filter(
+      (it) => (status === "all" || statusOf(it) === status) && byQuery(it)
+    );
   }, [source, q, status]);
 
   // ===== 스크롤 없이 화면에 꽉 채우는 pageSize 계산 =====
@@ -136,6 +146,7 @@ export default function MyTravelSpacePage({ items = [] }) {
     if (!window.confirm("정말로 이 여행 방을 삭제할까요? 되돌릴 수 없습니다.")) return;
     try {
       await removeRoom(id, { optimistic: true });
+      // 필요 시 서버 재동기화: await reload();
     } catch (e) {
       const status = e?.response?.status;
       const message =
@@ -148,12 +159,7 @@ export default function MyTravelSpacePage({ items = [] }) {
 
   return (
     <div className="travel-page">
-      <MyTravelToolbar
-        q={q}
-        onChangeQ={setQ}
-        status={status}
-        onChangeStatus={setStatus}
-      />
+      <MyTravelToolbar q={q} onChangeQ={setQ} status={status} onChangeStatus={setStatus} />
 
       {/* 카드: 내부 스크롤 금지, 높이는 내용에 따름 */}
       <div className="travel-card" ref={cardRef}>
@@ -197,7 +203,14 @@ export default function MyTravelSpacePage({ items = [] }) {
           <button className="pg-btn" onClick={() => setPage(pageCount)} disabled={page === pageCount} aria-label="마지막 페이지">»</button>
         </div>
       )}
-      
+
+      {/* ✅ 일정 조회 모달 */}
+      {viewTarget && (
+        <SchedulePreview
+          room={viewTarget}
+          onClose={() => setViewTarget(null)}
+        />
+      )}
     </div>
     
   );

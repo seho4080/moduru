@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
-import { searchPlacesByKeyword } from "../lib/keywordSearchApi";
+// import { searchPlacesByKeyword } from "../lib/keywordSearchApi";
+import { searchPlacesByKeyword, searchPlacesByKeywordAI } from "../lib/keywordSearchApi";
 
 /**
  * NOTE: 키워드 검색 상태/동작 제공
@@ -41,6 +42,20 @@ export function useKeywordSearch(roomId) {
     },
     [roomId, keyword]
   );
+  // 🤖 로봇(AI) 제출
+  const onAiSubmit = useCallback(
+    async (forceKeyword) => {
+      const kw = String(forceKeyword ?? keyword).trim();
+      if (!kw.length) return;
+      setLoading(true); setError("");
+      const { success, places, error: err } =
+        await searchPlacesByKeywordAI(roomId, kw);
+      setLoading(false);
+      if (!success) { setResults([]); setError(err ?? "검색 중 오류가 발생했습니다."); return; }
+      setResults(places);
+    },
+    [roomId, keyword]
+  );
 
   const clear = useCallback(() => {
     setKeyword("");
@@ -56,6 +71,7 @@ export function useKeywordSearch(roomId) {
     error,
     onChange,
     onSubmit,
+    onAiSubmit,
     clear,
   };
 }

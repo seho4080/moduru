@@ -1,5 +1,3 @@
-// src/features/itinerary/ui/dndUtils.js
-
 /** 드래그 중인 카드의 세로 중앙 Y 좌표 */
 export function getActiveCenterY(active) {
   const r = active?.rect?.current;
@@ -13,7 +11,8 @@ export function getActiveCenterY(active) {
 /** 컬럼 내 포인터(Y) 기준 삽입 인덱스 계산 */
 export function computeInsertIndexInColumn(dateKey, pointerY) {
   const container = document.querySelector(`[data-col="${dateKey}"]`);
-  const nodes = container?.querySelectorAll(
+  if (!container) return 0;
+  const nodes = container.querySelectorAll(
     `[data-entry="card"][data-date="${dateKey}"]`
   );
   const len = nodes?.length ?? 0;
