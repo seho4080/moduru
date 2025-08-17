@@ -1,5 +1,10 @@
-// src/features/itinerary/ui/ItineraryBoard.jsx
-import React, { useMemo, useState, useEffect, forwardRef } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  forwardRef,
+  useCallback,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addPlaceToDay,
@@ -8,6 +13,7 @@ import {
   removeItem,
   setTimes,
   replaceDayFromServer,
+  setOrderForDate,
 } from "../../../redux/slices/itinerarySlice";
 import { setDraftVersion } from "../../../redux/slices/scheduleDraftSlice";
 
@@ -27,24 +33,16 @@ import {
 } from "@dnd-kit/sortable";
 
 import SharedPlaceCard from "../../sharedPlace/ui/SharedPlaceCard";
-
-// 코어 소켓: 공통 구독/발행 어댑터
 import { connectWebSocket, unsubscribeKeys } from "../../webSocket/coreSocket";
-
-// 경로 계산: 발행/결과 구독
 import {
   publishTravel,
   subscribeTravel,
   getLastRequestedTransport,
 } from "../../webSocket/travelSocket";
-
-// ETA 업서트 액션
+import { publishSchedule } from "../../webSocket/scheduleSocket";
 import { upsertDayEtas, upsertDayTotals } from "../../../redux/slices/etaSlice";
-
-// 상태/타임아웃 관리 훅 (travel/status 단일 토픽 구독)
 import useCalcStatusByDate from "./useCalcStatusByDate";
 
-// 분리된 컴포넌트 & 유틸
 import ColumnDroppable from "./components/ColumnDroppable";
 import SortableItineraryCard from "./components/SortableItineraryCard";
 import LegETA from "./components/LegETA";
@@ -52,10 +50,9 @@ import DayTotals from "./components/DayTotals";
 import TransportRadio from "./components/TransportRadio";
 import { computeInsertIndexInColumn, getActiveCenterY } from "./dndUtils";
 
-/* ---------------- constants / helpers ---------------- */
-const CARD_WIDTH = 240;
-const BOARD_COL_WIDTH = 280;
+import AiRouteDayModalButton from "../../aiRoute/ui/AiRouteDayModalButton";
 
+/* ---------------- constants / helpers ---------------- */
 const SCHEDULE_HANDLER = "schedule";
 const EMPTY_OBJ = Object.freeze({});
 const EMPTY_ARR = Object.freeze([]);
@@ -70,7 +67,13 @@ function notify(type, message) {
 /* ===================================================== */
 
 const ItineraryBoard = forwardRef(function ItineraryBoard(
-  { transport = "driving", showEta = true },
+  {
+    transport = "driving",
+    showEta = true,
+    boardWidth = 280, // 🔸 보드 폭 prop 추가
+    visibleBoards = 3, // 🔸 표시할 보드 수 prop 추가
+    panelType = "side", // 🔸 패널 타입 prop 추가
+  },
   ref
 ) {
   const dispatch = useDispatch();
@@ -79,6 +82,16 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
   const endDate = useSelector((s) => s.tripRoom?.endDate);
   const roomId = useSelector((s) => s.tripRoom?.id ?? s.tripRoom?.roomId);
   const daysMap = useSelector((s) => s.itinerary?.days) || EMPTY_OBJ;
+
+  // 🔸 보드 크기에 따른 카드 크기 계산
+  const cardWidth = useMemo(() => {
+    return Math.max(200, boardWidth - 40); // 패딩 고려한 카드 크기
+  }, [boardWidth]);
+
+  // 🔸 보드 컬럼 폭 계산
+  const boardColWidth = useMemo(() => {
+    return Math.max(240, boardWidth);
+  }, [boardWidth]);
 
   /* ---------- 날짜 배열 ---------- */
   const dates = useMemo(() => {
@@ -154,7 +167,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     const fromDate = from.dateKey;
     const toDate = to.dateKey;
 
-    // 같은 컬럼: 빈공간 드롭 → 포인터 기준 삽입
     if (fromDate === toDate && to.isContainer) {
       const pointerY = getActiveCenterY(active);
       const insertPos =
@@ -174,7 +186,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       return;
     }
 
-    // 같은 컬럼: 카드 위로 드롭
     if (fromDate === toDate) {
       let toIndex = to.index;
       if (over?.rect && active?.rect && !to.isContainer) {
@@ -194,7 +205,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       return;
     }
 
-    // 다른 컬럼으로 이동
     const pointerY = getActiveCenterY(active);
     let insertIndex;
     if (to.isContainer) {
@@ -236,19 +246,18 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     });
   }, [dates, transport]);
 
-  /* ---------- 계산 상태/에러/타임아웃 (status 구독은 훅이 담당) ---------- */
+  /* ---------- 계산 상태/에러/타임아웃 ---------- */
   const {
     loadingByDate,
     errorByDate,
     markOwnRequestAndStart,
-    markResolvedFromResult, // ✅ DONE 누락 대비
+    markResolvedFromResult,
   } = useCalcStatusByDate(roomId, dates, { notify });
 
   /* ---------- travel/result 구독 + schedule 동기화 ---------- */
   useEffect(() => {
     if (!roomId) return;
 
-    // 1) travel/result → etaSlice 반영
     const offResult = subscribeTravel(
       roomId,
       (body) => {
@@ -266,7 +275,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
         const dayNum = Number(day);
         if (!Number.isFinite(dayNum)) return;
 
-        // transport: 응답값 → 마지막 요청 모드 → transit
         let t =
           (typeof transport === "string" && transport) ||
           getLastRequestedTransport(roomId, dayNum) ||
@@ -274,7 +282,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
         t = String(t).toLowerCase();
         if (t === "driver") t = "driving";
 
-        // legs 반영
         if (Array.isArray(legs) && legs.length > 0) {
           const items = legs.map((l) => ({
             fromWantId: Number(l.fromWantId ?? l.fromId),
@@ -286,7 +293,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
           dispatch(upsertDayEtas({ day: dayNum, transport: t, items }));
         }
 
-        // totals만 와도 반영
         if (
           typeof totalDistanceMeters === "number" &&
           typeof totalDurationMinutes === "number"
@@ -302,13 +308,11 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
           );
         }
 
-        // ✅ DONE 누락 대비: result 수신만으로도 로딩 해제
         markResolvedFromResult(body);
       },
       { key: "travel-result/board" }
     );
 
-    // 2) schedule 동기화
     const scheduleKey = `itinerary-board|${roomId}|${SCHEDULE_HANDLER}`;
     connectWebSocket(roomId, [
       {
@@ -377,20 +381,85 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       endTime: it.endTime || undefined,
     }));
 
-    // 내 요청 표시 + 낙관적 로딩 + 타임아웃 시작
     markOwnRequestAndStart(dateKey);
 
-    // 발행
     publishTravel({
       roomId,
       day,
       date: dateKey,
-      transpot: t, // 서버 레거시 호환 키
+      transpot: t,
       events,
     });
   };
 
+  /* ---------- 날짜키 계산 ---------- */
+  const getDateKeyForDayNumber = useCallback(
+    (dayNumber) => {
+      const d = Number(dayNumber);
+      if (!Number.isFinite(d) || d < 1) return null;
+      return dates[d - 1] || null;
+    },
+    [dates]
+  );
+
+  /* ---------- 일차 교체 적용: 기존 장소 제거 후 새 장소 채움 ---------- */
+  const replaceDayWithPlaces = useCallback(
+    (dateKey, legs) => {
+      if (!dateKey || !Array.isArray(legs)) return;
+
+      const current = board.byDate[dateKey] || EMPTY_ARR;
+
+      for (let i = current.length - 1; i >= 0; i--) {
+        const entryId = current[i]?.entryId;
+        if (entryId != null) {
+          dispatch(removeItem({ dateKey, entryId }));
+        }
+      }
+
+      const ordered = [...legs].sort(
+        (a, b) => (a?.eventOrder ?? 0) - (b?.eventOrder ?? 0)
+      );
+
+      ordered.forEach((leg, i) => {
+        const placePayload = {
+          wantId: leg.wantId,
+          placeName: leg.placeName || "",
+          imgUrl: leg.placeImg || undefined,
+          category: leg.category || "",
+          address: leg.address || "",
+        };
+        dispatch(
+          addPlaceToDay({
+            date: dateKey,
+            place: placePayload,
+            index: i,
+          })
+        );
+      });
+
+      const wantOrderIds = ordered
+        .map((l) => Number(l.wantId))
+        .filter((n) => Number.isFinite(n));
+      if (wantOrderIds.length > 0) {
+        dispatch(setOrderForDate({ dateKey, wantOrderIds }));
+        publishSchedule({
+          roomId,
+          type: "REPLACE_DAY",
+          dateKey,
+          events: wantOrderIds.map((id, idx) => ({
+            wantId: id,
+            eventOrder: idx + 1,
+          })),
+        });
+      }
+    },
+    [board.byDate, dispatch, roomId]
+  );
+
   const activeItem = activeId ? board.idToMeta.get(activeId)?.item : null;
+
+  // 🔸 모든 날짜를 표시하되, visibleBoards는 레이아웃 계산용으로만 사용
+  const allDates = dates;
 
   /* ---------- render ---------- */
   return (
@@ -398,6 +467,12 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       ref={ref}
       id="itinerary-board-root"
       className="flex gap-4 overflow-x-auto p-2"
+      style={{
+        // 🔸 보드 컨테이너 최소 폭 설정 (모든 날짜 고려)
+        minWidth: `${
+          boardColWidth * dates.length + 16 * (dates.length - 1) + 32
+        }px`,
+      }}
     >
       <DndContext
         sensors={sensors}
@@ -405,17 +480,51 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {dates.map((dateKey, idx) => {
+        {allDates.map((dateKey, idx) => {
           const items = board.byDate[dateKey] || EMPTY_ARR;
           const t = transportByDate[dateKey] || "driving";
           const loading = !!loadingByDate[dateKey];
           const errMsg = errorByDate[dateKey];
 
+          // 🔸 useMemo를 map 밖으로 이동하여 Hook 순서 문제 해결
+          const placeList = items
+            .map((it) => Number(it?.wantId ?? it?.placeId))
+            .filter((n) => Number.isFinite(n));
+
+          const applyRouteForThisDate = (legs, targetDayNumber) => {
+            if (!Array.isArray(legs) || legs.length === 0) return;
+            if (!roomId) return;
+
+            let targetKey = dateKey;
+            if (Number.isFinite(Number(targetDayNumber))) {
+              const dk = getDateKeyForDayNumber(Number(targetDayNumber));
+              if (dk) targetKey = dk;
+            } else {
+              const input = window.prompt(
+                `적용할 일차를 입력하세요 (1 ~ ${dates.length})`,
+                String(idx + 1)
+              );
+              const num = Number(input);
+              const dk = Number.isFinite(num)
+                ? getDateKeyForDayNumber(num)
+                : null;
+              if (!dk) {
+                notify("error", "유효한 일차가 아닙니다.");
+                return;
+              }
+              targetKey = dk;
+            }
+
+            replaceDayWithPlaces(targetKey, legs);
+            const appliedIdx = dates.indexOf(targetKey);
+            notify("success", `Day ${appliedIdx + 1} 일정으로 교체했습니다.`);
+          };
+
           return (
             <section
               key={dateKey}
               className="flex-shrink-0 rounded-lg border border-slate-200 bg-white"
-              style={{ width: BOARD_COL_WIDTH }}
+              style={{ width: boardColWidth }} // 🔸 동적 폭 적용
               aria-label={`Day ${idx + 1} ${dateKey}`}
               onDragOver={(e) => {
                 e.preventDefault();
@@ -427,6 +536,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
               onDrop={(e) => {
                 e.preventDefault();
                 const data = parseDropData(e);
+
                 if (data?.type === "PLACE" && data?.place) {
                   const clientY = e.clientY ?? null;
                   let insertIndex = items.length;
@@ -440,6 +550,95 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                       index: insertIndex,
                     })
                   );
+
+                  // 🔥 단일 장소 드래그도 웹소켓 공유
+                  const wantId = Number(data.place.wantId);
+                  if (Number.isFinite(wantId)) {
+                    // 약간의 딜레이를 두고 현재 상태 기반으로 웹소켓 발행
+                    setTimeout(() => {
+                      const currentItems = board.byDate[dateKey] || [];
+                      const events = currentItems
+                        .map((it, i) => ({
+                          wantId: Number(it.wantId ?? it.placeId),
+                          eventOrder: i + 1,
+                        }))
+                        .filter((e) => Number.isFinite(e.wantId));
+
+                      if (events.length > 0) {
+                        publishSchedule({
+                          roomId,
+                          type: "ADD_PLACE",
+                          dateKey,
+                          events,
+                        });
+                      }
+                    }, 50);
+                  }
+                  return;
+                }
+
+                if (
+                  data?.type === "DAY_SCHEDULE" &&
+                  Array.isArray(data?.places)
+                ) {
+                  const places = data.places
+                    .filter((p) => p?.type === "PLACE" && p?.place)
+                    .map((p) => p.place);
+
+                  if (places.length > 0) {
+                    const clientY = e.clientY ?? null;
+                    let insertIndex = items.length;
+                    if (clientY != null) {
+                      insertIndex = computeInsertIndexInColumn(
+                        dateKey,
+                        clientY
+                      );
+                    }
+
+                    places.forEach((place, index) => {
+                      dispatch(
+                        addPlaceToDay({
+                          date: dateKey,
+                          place: place,
+                          index: insertIndex + index,
+                        })
+                      );
+                    });
+
+                    // 🔥 AI 하루 일정 드래그도 웹소켓 공유
+                    const wantOrderIds = places
+                      .map((p) => Number(p.wantId))
+                      .filter((id) => Number.isFinite(id));
+
+                    if (wantOrderIds.length > 0) {
+                      // 약간의 딜레이를 두고 전체 상태 기반으로 웹소켓 발행
+                      setTimeout(() => {
+                        const currentItems = board.byDate[dateKey] || [];
+                        const events = currentItems
+                          .map((it, i) => ({
+                            wantId: Number(it.wantId ?? it.placeId),
+                            eventOrder: i + 1,
+                          }))
+                          .filter((e) => Number.isFinite(e.wantId));
+
+                        if (events.length > 0) {
+                          publishSchedule({
+                            roomId,
+                            type: "ADD_AI_SCHEDULE",
+                            dateKey,
+                            aiDay: data.day,
+                            events,
+                          });
+                        }
+                      }, 50);
+                    }
+
+                    notify(
+                      "success",
+                      `${data.day}일차 AI 추천 일정 ${places.length}곳을 ${dateKey}에 추가했습니다.`
+                    );
+                  }
+                  return;
                 }
               }}
             >
@@ -452,6 +651,18 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {/* 일차별 AI 경로 추천 모달 버튼 */}
+                    <AiRouteDayModalButton
+                      roomId={roomId}
+                      day={idx + 1}
+                      placeList={placeList}
+                      onApply={(legs, targetDayNumber) =>
+                        applyRouteForThisDate(legs, targetDayNumber)
+                      }
+                    />
+
+                    <div className="h-5 w-px bg-slate-200 mx-1" />
+
                     <TransportRadio
                       name={`transport-${dateKey}`}
                       value={t}
@@ -495,26 +706,34 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                   >
                     {items.map((it, itemIdx) => (
                       <React.Fragment key={it._id}>
-                        <SortableItineraryCard
-                          item={it}
-                          dateKey={dateKey}
-                          cardWidth={CARD_WIDTH}
-                          onRemove={() =>
-                            dispatch(
-                              removeItem({ dateKey, entryId: it.entryId })
-                            )
-                          }
-                          onConfirmTimes={(s, e) =>
-                            dispatch(
-                              setTimes({
-                                dateKey,
-                                entryId: it.entryId,
-                                startTime: s,
-                                endTime: e,
-                              })
-                            )
-                          }
-                        />
+                        {/* 드래그 정확도를 위한 카드 래퍼 데이터 속성 및 포인터 */}
+                        <div
+                          data-entry="card"
+                          data-date={dateKey}
+                          className="cursor-grab active:cursor-grabbing"
+                          style={{ width: cardWidth }} // 🔸 동적 카드 폭 적용
+                        >
+                          <SortableItineraryCard
+                            item={it}
+                            dateKey={dateKey}
+                            cardWidth={cardWidth} // 🔸 동적 카드 폭 전달
+                            onRemove={() =>
+                              dispatch(
+                                removeItem({ dateKey, entryId: it.entryId })
+                              )
+                            }
+                            onConfirmTimes={(s, e) =>
+                              dispatch(
+                                setTimes({
+                                  dateKey,
+                                  entryId: it.entryId,
+                                  startTime: s,
+                                  endTime: e,
+                                })
+                              )
+                            }
+                          />
+                        </div>
 
                         {/* 카드 사이 ETA */}
                         {showEta && items[itemIdx + 1] && (
@@ -526,7 +745,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                               items[itemIdx + 1].wantId ??
                               items[itemIdx + 1].placeId
                             }
-                            cardWidth={CARD_WIDTH}
+                            cardWidth={cardWidth} // 🔸 동적 카드 폭 전달
                           />
                         )}
                       </React.Fragment>
@@ -541,7 +760,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                       <DayTotals
                         day={idx + 1}
                         requestedTransport={t}
-                        cardWidth={CARD_WIDTH}
+                        cardWidth={cardWidth} // 🔸 동적 카드 폭 전달
                       />
                     )}
                 </div>
@@ -552,14 +771,16 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
 
         <DragOverlay>
           {activeItem ? (
-            <div className="relative" style={{ width: CARD_WIDTH }}>
+            <div className="relative" style={{ width: cardWidth }}>
+              {" "}
+              {/* 🔸 동적 폭 적용 */}
               <SharedPlaceCard
                 place={activeItem}
                 showVote={false}
                 showAddress={false}
                 isDraggable={false}
                 enableTimePopover={false}
-                cardWidth={CARD_WIDTH}
+                cardWidth={cardWidth} // 🔸 동적 카드 폭 전달
               />
             </div>
           ) : null}

@@ -3,68 +3,42 @@ import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import ItineraryBoard from "./ItineraryBoard";
 import "./ItineraryPanel.css";
-import { openTripForm } from "../../../redux/slices/uiSlice";
+import "./ItineraryEditor.css";
 
 import ScheduleSaveButton from "./ScheduleSaveButton";
 import useAiRoute from "../../aiRoute/model/useAiRoute";
-import { setOrderForDate, setDays } from "../../../redux/slices/itinerarySlice"; // ← setDays 리듀서 필요
-// alias(@) 미사용: 상대경로로 안전하게
+import { setOrderForDate, setDays } from "../../../redux/slices/itinerarySlice";
 import { publishSchedule } from "../../webSocket/scheduleSocket";
 
 import useUnsavedGuard from "./useUnsavedGuard";
-// hydration 훅은 lib로 이동
 import useRoomHydration from "../lib/useRoomHydration";
 
-// 내보내기
 import ExportImageButton from "./ExportImageButton";
 import { exportScheduleAsImage } from "../lib/exportScheduleImage";
+import {
+  selectAiRouteStatus,
+  selectRouteByDay,
+} from "../../../redux/slices/aiRouteSlice";
 
 const EMPTY_OBJ = Object.freeze({});
-
-/** 컴팩트 헤더/버튼 공통 스타일 */
-const BTN_BASE = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  height: 26,
-  padding: "0 8px",
-  fontSize: 12,
-  lineHeight: 1,
-  borderRadius: 6,
-  textAlign: "center",
-  whiteSpace: "nowrap",
-};
-const BTN_ICON = {
-  ...BTN_BASE,
-  width: 26,
-  padding: 0,
-};
-const SELECT_SM = {
-  height: 26,
-  padding: "2px 8px",
-  fontSize: 12,
-  borderRadius: 6,
-  lineHeight: 1,
-};
 
 export default function ItineraryEditorView({
   onClose,
   headerRef,
   lockScroll = false,
+  containerRef, // 외부 컨테이너 ref (인라인 패널에서 전달)
+  hideClose = false, // 인라인 패널에서 닫기 버튼 숨김
 }) {
   const dispatch = useDispatch();
   const roomId = useSelector((s) => s.tripRoom?.roomId);
 
-  // 일정 보드 데이터
   const daysMap = useSelector(
     (s) => s.itinerary?.days || EMPTY_OBJ,
     shallowEqual
   );
 
-  // 방 입장/새로고침 시 서버 데이터로 복원 (비어있을 때만)
   useRoomHydration(roomId);
 
-  // Day 옵션 목록
   const dayOptions = useMemo(() => {
     const entries = Object.entries(daysMap);
     if (entries.length === 0) return [];
@@ -84,7 +58,7 @@ export default function ItineraryEditorView({
     dayOptions.length ? dayOptions[0].day : 1
   );
 
-  // ✅ 배열 자체 의존: 기존 선택 유지/없으면 첫째날
+  // 배열 자체 의존: 기존 선택 유지/없으면 첫째날
   useEffect(() => {
     if (!dayOptions.length) return;
     setSelectedDay((prev) =>
@@ -101,7 +75,7 @@ export default function ItineraryEditorView({
     [dayOptions, selectedDay]
   );
 
-  /* ===================== 변경 감지(dirty) & 저장 반영 ===================== */
+  /* 변경 감지(dirty) & 저장 반영 */
   const lastSavedSig = useRef("");
   const [dirty, setDirty] = useState(false);
 
@@ -157,12 +131,11 @@ export default function ItineraryEditorView({
   // 페이지 이탈/닫기 가드
   useUnsavedGuard(dirty);
 
-  /* ===================== AI 경로 추천 ===================== */
+  /* AI 경로 추천 */
   const { runAiRoute } = useAiRoute(roomId);
-  const routeState = useSelector((s) => s.aiRoute);
-  const aiStatus = routeState?.status ?? "IDLE";
+  const aiStatus = useSelector(selectAiRouteStatus);
   const legsForSelectedDay = useSelector(
-    (s) => s.aiRoute?.routesByDay?.[selectedDay] ?? []
+    useMemo(() => selectRouteByDay(selectedDay), [selectedDay])
   );
   const placeListForSelectedDay = useMemo(
     () =>
@@ -226,7 +199,7 @@ export default function ItineraryEditorView({
     );
   }, [legsForSelectedDay, currentDate, roomId, dispatch]);
 
-  /* ===================== 날짜 저장 후 재매핑 ===================== */
+  /* 날짜 저장 후 재매핑 */
   const remapDaysByNewDates = useCallback((oldMap, newDates) => {
     const sortedOld = Object.entries(oldMap)
       .sort(([a], [b]) => String(a).localeCompare(String(b)))
@@ -253,22 +226,21 @@ export default function ItineraryEditorView({
       window.removeEventListener("trip:dates:changed", onDatesChanged);
   }, [roomId, daysMap, dispatch, remapDaysByNewDates]);
 
-  /* ===================== 이미지 내보내기 ===================== */
-  // 보드 DOM 참조 (래퍼에 부착해서 스케일 포함 영역을 캡처)
+  /* 이미지 내보내기 */
   const boardRef = useRef(null);
-  // (선택) 내부 보드 ref가 필요하면 유지
   const innerBoardRef = useRef(null);
-
-  // 저장 성공 시에만 내보내기 버튼 "무장(armed)"
   const [exportArmed, setExportArmed] = useState(false);
 
-  // ScheduleSaveButton이 onSaved 콜백을 지원할 경우
-  const handleSavedOk = useCallback(() => {
-    // 서버 커밋 성공 시 별도 이벤트도 오지만, 버튼 자체 콜백이 있으면 바로 무장
-    setExportArmed(true);
-  }, []);
+  const handleSavedOk = useCallback(() => setExportArmed(true), []);
 
-  // 실제 내보내기: 캡처 전에 100%로 복원 → 캡처 후 배율 되돌림
+  useEffect(() => {
+    const onCommitOk = (e) => {
+      if (!roomId || e?.detail?.roomId === roomId) setExportArmed(true);
+    };
+    window.addEventListener("schedule:commit:ok", onCommitOk);
+    return () => window.removeEventListener("schedule:commit:ok", onCommitOk);
+  }, [roomId]);
+
   const handleExportImage = useCallback(async () => {
     const root = boardRef.current;
     if (!root) {
@@ -276,33 +248,129 @@ export default function ItineraryEditorView({
       return;
     }
     const allDates = Object.keys(daysMap).sort();
-    // ⬇️ 여기서 날짜 문자열의 '-' 를 제거해서 파일명에 YYYYMMDD로 사용(“날짜 자르는 부분”)
+    // 날짜 문자열의 '-' 를 제거해서 파일명에 YYYYMMDD로 사용
     const a = (allDates[0] || "start").split("-").join("");
     const b = (allDates[allDates.length - 1] || "end").split("-").join("");
     const filename = `schedule_${roomId || "room"}_${a}-${b}.png`;
 
-    // 배율 임시 해제
-    const prevTransform = root.style.transform;
-    const prevWidth = root.style.width;
-    const prevOrigin = root.style.transformOrigin;
-
-    root.style.transform = "";
-    root.style.transformOrigin = "";
-    root.style.width = "";
-
     try {
       await exportScheduleAsImage(root, { filename });
-    } finally {
-      // 복원
-      root.style.transform = prevTransform;
-      root.style.transformOrigin = prevOrigin;
-      root.style.width = prevWidth;
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("이미지 내보내기에 실패했습니다.");
     }
   }, [boardRef, daysMap, roomId]);
 
-  /* ===================== ESC 닫기 + 스크롤 락 ===================== */
+  /* 날짜 변경 모달 */
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState("");
+  const [tempEndDate, setTempEndDate] = useState("");
+  const [selectingEndDate, setSelectingEndDate] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const tripDates = useSelector((s) => s.tripRoom?.tripDates);
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose?.();
+    if (tripDates) {
+      setTempStartDate(tripDates.startDate || "");
+      setTempEndDate(tripDates.endDate || "");
+    }
+  }, [tripDates]);
+
+  const getDaysInMonth = useCallback((date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    const days = [];
+    for (let i = 0; i < startingDayOfWeek; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+    return days;
+  }, []);
+
+  const formatDateString = useCallback((date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const handleDateSelect = useCallback(
+    (date) => {
+      const dateStr = formatDateString(date);
+      if (!dateStr) return;
+      if (!selectingEndDate) {
+        setTempStartDate(dateStr);
+        setTempEndDate("");
+        setSelectingEndDate(true);
+      } else {
+        if (new Date(dateStr) < new Date(tempStartDate)) {
+          setTempStartDate(dateStr);
+          setTempEndDate("");
+          setSelectingEndDate(true);
+        } else {
+          setTempEndDate(dateStr);
+          setSelectingEndDate(false);
+        }
+      }
+    },
+    [selectingEndDate, tempStartDate, formatDateString]
+  );
+
+  const isInRange = useCallback(
+    (date) => {
+      if (!tempStartDate || !tempEndDate || !date) return false;
+      const dateStr = formatDateString(date);
+      return dateStr >= tempStartDate && dateStr <= tempEndDate;
+    },
+    [tempStartDate, tempEndDate, formatDateString]
+  );
+
+  const isStartDate = useCallback(
+    (date) => tempStartDate && date && formatDateString(date) === tempStartDate,
+    [tempStartDate, formatDateString]
+  );
+
+  const isEndDate = useCallback(
+    (date) => tempEndDate && date && formatDateString(date) === tempEndDate,
+    [tempEndDate, formatDateString]
+  );
+
+  const handleDateChange = useCallback(() => {
+    if (!tempStartDate || !tempEndDate) {
+      alert("시작일과 종료일을 모두 선택해주세요.");
+      return;
+    }
+    dispatch({
+      type: "tripRoom/updateDates",
+      payload: { startDate: tempStartDate, endDate: tempEndDate, roomId },
+    });
+    if (roomId) {
+      publishSchedule({
+        roomId,
+        type: "UPDATE_DATES",
+        startDate: tempStartDate,
+        endDate: tempEndDate,
+      });
+    }
+    setShowDateModal(false);
+    setSelectingEndDate(false);
+  }, [tempStartDate, tempEndDate, roomId, dispatch]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        if (showDateModal) {
+          setShowDateModal(false);
+        } else {
+          onClose?.();
+        }
+      }
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     if (lockScroll) document.body.style.overflow = "hidden";
@@ -310,187 +378,271 @@ export default function ItineraryEditorView({
       document.removeEventListener("keydown", onKey);
       if (lockScroll) document.body.style.overflow = prev;
     };
-  }, [onClose, lockScroll]);
+  }, [onClose, lockScroll, showDateModal]);
+
+  const tripDuration = useMemo(() => {
+    if (!tempStartDate || !tempEndDate) return 0;
+    return Math.ceil(
+      (new Date(tempEndDate) - new Date(tempStartDate)) /
+        (1000 * 60 * 60 * 24) +
+        1
+    );
+  }, [tempStartDate, tempEndDate]);
 
   return (
-    <>
-      {/* 헤더 (컴팩트 버전) */}
-      <div
-        className="itin-header"
+    <div
+      className="itinerary-editor"
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* 헤더 - 고정 높이 */}
+      <header
         ref={headerRef}
+        className="itinerary-editor__header itinerary-editor__header--compact"
         style={{
-          padding: "4px 8px",
-          gap: 6,
-          alignItems: "center",
-          minHeight: "36px",
+          height: "60px", // 고정 높이 설정
+          minHeight: "60px",
+          maxHeight: "60px",
+          flexShrink: 0, // 축소 방지
           display: "flex",
-          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 16px",
+          borderBottom: "1px solid #e5e7eb",
+          backgroundColor: "white",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
         }}
       >
-        {/* 왼쪽: 제목 + Day 선택 */}
         <div
-          className="itin-title"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-          }}
+          className="itinerary-editor__header-left"
+          style={{ display: "flex", alignItems: "center" }}
         >
-          <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1 }}>
-            일정 편집
-          </span>
-          <select
-            value={selectedDay}
-            onChange={(e) => setSelectedDay(Number(e.target.value))}
-            title="날짜 선택"
-            style={SELECT_SM}
+          <h2
+            className="itinerary-editor__title"
+            style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}
           >
-            {dayOptions.map((d) => (
-              <option key={d.day} value={d.day}>
-                {`D${d.day} ${d.date}`}
-              </option>
-            ))}
-          </select>
+            일정 편집
+          </h2>
         </div>
 
-        {/* 가운데: 툴바 (AI + 저장 + 이미지 내보내기) */}
         <div
-          className="itin-toolbar"
-          style={{
-            display: "inline-flex",
-            gap: 6,
-            alignItems: "center",
-            flexWrap: "wrap",
-            marginLeft: "auto",
-          }}
+          className="itinerary-editor__header-center"
+          style={{ display: "flex", alignItems: "center", gap: "8px" }}
         >
-          {/* AI */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-            }}
+          <ScheduleSaveButton
+            small
+            onSaved={handleSavedOk}
+            customStyle="itinerary-editor__button itinerary-editor__button--compact"
+          />
+          <ExportImageButton
+            small
+            armed={exportArmed}
+            onExport={handleExportImage}
+            onDisarm={() => setExportArmed(false)}
+            customStyle="itinerary-editor__button itinerary-editor__button--compact"
+          />
+        </div>
+
+        <div
+          className="itinerary-editor__header-right"
+          style={{ display: "flex", alignItems: "center", gap: "8px" }}
+        >
+          <button
+            type="button"
+            onClick={() => setShowDateModal(true)}
+            className="itinerary-editor__button itinerary-editor__button--ghost itinerary-editor__button--compact"
           >
+            📅
+          </button>
+          {!hideClose && (
             <button
               type="button"
-              className="btn"
-              onClick={onRunAiRoute}
-              disabled={routeBusy || placeListForSelectedDay.length < 2}
-              title="이 일차의 장소들로 AI 경로를 추천"
-              style={BTN_BASE}
+              aria-label="닫기"
+              onClick={onClose}
+              className="itinerary-editor__button itinerary-editor__button--icon itinerary-editor__button--compact"
+              title="닫기 (ESC)"
             >
-              {routeBusy ? "AI 생성…" : "AI 추천"}
+              ✕
             </button>
+          )}
+        </div>
+      </header>
 
-            {aiStatus === "DONE" && legsForSelectedDay.length > 0 && (
+      {/* 날짜 변경 모달 */}
+      {showDateModal && (
+        <div
+          className="itinerary-editor__modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDateModal(false);
+              setSelectingEndDate(false);
+            }
+          }}
+        >
+          <div className="itinerary-editor__modal">
+            <div className="itinerary-editor__modal-header">
+              <h3>여행 날짜 변경</h3>
               <button
                 type="button"
-                className="btn ghost"
-                onClick={onApplyRoute}
-                title="추천 결과를 이 일차에 적용"
-                style={BTN_BASE}
+                onClick={() => {
+                  setShowDateModal(false);
+                  setSelectingEndDate(false);
+                }}
+                className="itinerary-editor__button itinerary-editor__button--icon"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="itinerary-editor__modal-body">
+              <div className="itinerary-editor__date-picker">
+                <div className="itinerary-editor__calendar-header">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentMonth(
+                        new Date(
+                          currentMonth.getFullYear(),
+                          currentMonth.getMonth() - 1
+                        )
+                      )
+                    }
+                    className="itinerary-editor__button itinerary-editor__button--ghost"
+                  >
+                    ‹
+                  </button>
+                  <span className="itinerary-editor__month-year">
+                    {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}
+                    월
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentMonth(
+                        new Date(
+                          currentMonth.getFullYear(),
+                          currentMonth.getMonth() + 1
+                        )
+                      )
+                    }
+                    className="itinerary-editor__button itinerary-editor__button--ghost"
+                  >
+                    ›
+                  </button>
+                </div>
+
+                <div className="itinerary-editor__calendar-grid">
+                  <div className="itinerary-editor__weekdays">
+                    {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
+                      <div key={day} className="itinerary-editor__weekday">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="itinerary-editor__days">
+                    {getDaysInMonth(currentMonth).map((date, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        className={`itinerary-editor__day ${
+                          !date ? "itinerary-editor__day--empty" : ""
+                        } ${
+                          isStartDate(date)
+                            ? "itinerary-editor__day--start"
+                            : ""
+                        } ${
+                          isEndDate(date) ? "itinerary-editor__day--end" : ""
+                        } ${
+                          isInRange(date)
+                            ? "itinerary-editor__day--in-range"
+                            : ""
+                        }`}
+                        onClick={() => date && handleDateSelect(date)}
+                        disabled={!date}
+                      >
+                        {date ? date.getDate() : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="itinerary-editor__date-summary">
+                <div className="itinerary-editor__selected-dates">
+                  <div>
+                    <strong>시작일:</strong> {tempStartDate || "미선택"}
+                  </div>
+                  <div>
+                    <strong>종료일:</strong> {tempEndDate || "미선택"}
+                  </div>
+                  {tripDuration > 0 && (
+                    <div>
+                      <strong>기간:</strong> {tripDuration}일
+                    </div>
+                  )}
+                </div>
+
+                <div className="itinerary-editor__date-status">
+                  {selectingEndDate
+                    ? "종료일을 선택해주세요"
+                    : "시작일을 선택해주세요"}
+                </div>
+              </div>
+            </div>
+
+            <div className="itinerary-editor__modal-footer">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDateModal(false);
+                  setSelectingEndDate(false);
+                }}
+                className="itinerary-editor__button itinerary-editor__button--ghost"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleDateChange}
+                className="itinerary-editor__button itinerary-editor__button--primary"
+                disabled={!tempStartDate || !tempEndDate}
               >
                 적용
               </button>
-            )}
-          </div>
-
-          {/* 저장 + 이미지 내보내기 */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              paddingLeft: 6,
-              marginLeft: 4,
-              borderLeft: "1px solid #e5e7eb",
-            }}
-          >
-            {/* 저장 성공시 onSaved로 무장 */}
-            <div style={{ display: "inline-flex", alignItems: "center" }}>
-              <ScheduleSaveButton small onSaved={handleSavedOk} />
-            </div>
-
-            {/* 저장 성공시에만 활성화, 내보내기 완료 후 자동 비활성화 */}
-            <div style={{ display: "inline-flex", alignItems: "center" }}>
-              <ExportImageButton
-                small
-                armed={exportArmed}
-                onExport={handleExportImage}
-                onDisarm={() => setExportArmed(false)}
-              />
             </div>
           </div>
-
-          {/* 보기 배율(줌) — 주석 처리 */}
-          {/*
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              paddingLeft: 6,
-              marginLeft: 4,
-              borderLeft: "1px solid #e5e7eb",
-            }}
-            title="보드 보기 배율"
-          >
-            <span style={{ fontSize: 12, lineHeight: 1 }}>줌</span>
-            <select
-              value={String(Math.round(boardScale * 100))}
-              onChange={(e) => changeScale(Number(e.target.value) / 100)}
-              style={SELECT_SM}
-            >
-              <option value="70">70%</option>
-              <option value="80">80%</option>
-              <option value="90">90%</option>
-              <option value="100">100%</option>
-            </select>
-          </div>
-          */}
         </div>
+      )}
 
-        {/* 오른쪽: 날짜 변경 / 닫기 */}
-        <div
-          className="itin-actions"
-          style={{ display: "inline-flex", gap: 6, marginLeft: 8 }}
-        >
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={() => dispatch(openTripForm())}
-            style={BTN_BASE}
-          >
-            날짜 변경
-          </button>
-          <button
-            type="button"
-            className="btn icon"
-            aria-label="닫기"
-            onClick={onClose}
-            style={BTN_ICON}
-            title="닫기"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-
-      <div className="itin-body">
-        {/* 보드 래퍼 */}
+      {/* 보드 영역 - 헤더 높이만큼 여백 확보 */}
+      <div
+        className="itinerary-editor__body"
+        style={{
+          overflow: "hidden",
+          height: "calc(100vh - 60px)", // 헤더 높이만큼 빼기
+          flex: 1,
+        }}
+      >
         <div
           ref={boardRef}
+          className="itinerary-editor__board-container"
           style={{
-            // transform: `scale(${boardScale})`,
-            // transformOrigin: "top left",
-            // width: `${100 / boardScale}%`,
+            overflow: "auto",
           }}
         >
-          {/* 내부 보드 ref가 필요한 경우 대비 */}
-          <ItineraryBoard ref={innerBoardRef} showEta />
+          <ItineraryBoard
+            ref={innerBoardRef}
+            showEta
+          />
         </div>
       </div>
-    </>
+    </div>
   );
 }

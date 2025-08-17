@@ -1,9 +1,11 @@
-//aiSchedule/model/useAiSchedule.js
+// ============================================================================
+// 2. Hook: src/features/aiSchedule/model/useAiSchedule.js
+// ============================================================================
+
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { subscribeAiSchedule } from "../lib/aiScheduleSocket";
 import {
-  openAiModal,
   applyAiStatusStarted,
   applyAiStatusProgress,
   applyAiStatusDone,
@@ -14,7 +16,7 @@ import {
 
 /**
  * 상태/결과 소켓 구독 → Redux 반영
- * (모달 오픈은 이벤트 수신 시마다 보장)
+ * ✅ 모달 오픈 제거, 상태만 업데이트
  */
 export default function useAiSchedule(roomId) {
   const dispatch = useDispatch();
@@ -25,34 +27,39 @@ export default function useAiSchedule(roomId) {
     const off = subscribeAiSchedule(roomId, {
       onStatus: (msg) => {
         console.log("📩 [AI STATUS 수신]", msg); // 수신 로그
-        const s = (msg?.status || "").toUpperCase();
+        const s = String(msg?.status ?? msg?.type ?? "").toUpperCase();
+
         if (s === "STARTED") {
+          console.log("▶️ [Hook] Dispatching STARTED");
           dispatch(applyAiStatusStarted({ msg }));
-          dispatch(openAiModal());
         } else if (s === "PROGRESS") {
+          console.log("⏳ [Hook] Dispatching PROGRESS");
           dispatch(applyAiStatusProgress({ msg }));
-          dispatch(openAiModal());
         } else if (s === "DONE") {
+          console.log("✅ [Hook] Dispatching DONE");
           dispatch(applyAiStatusDone({ msg }));
-          dispatch(openAiModal());
         } else if (s === "ERROR") {
+          console.log("❌ [Hook] Dispatching ERROR");
           dispatch(applyAiStatusError({ msg }));
-          dispatch(openAiModal());
         } else if (s === "INVALIDATED") {
+          console.log("🚫 [Hook] Dispatching INVALIDATED");
           dispatch(applyAiStatusInvalidated({ msg }));
-          dispatch(openAiModal());
         } else {
-          // Unknown status: 무시하거나 로그 남기기
-          // console.warn("[AI SCHEDULE] Unknown status:", msg);
+          console.warn("❓ [Hook] Unknown status:", msg);
         }
       },
       onResult: (msg) => {
         console.log("📩 [AI RESULT 수신]", msg); // 수신 로그
+        console.log("🎯 [Hook] Dispatching RESULT");
         dispatch(applyAiResult({ msg }));
-        dispatch(openAiModal());
       },
     });
 
-    return () => off();
+    console.log("✅ [Hook] Subscription created");
+
+    return () => {
+      console.log("🔌 [Hook] Cleaning up subscription");
+      off();
+    };
   }, [roomId, dispatch]);
 }
