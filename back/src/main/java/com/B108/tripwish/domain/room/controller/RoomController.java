@@ -2,6 +2,7 @@ package com.B108.tripwish.domain.room.controller;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -163,35 +164,6 @@ public class RoomController {
     return ResponseEntity.ok(response);
   }
 
-  //    @GetMapping("/{roomId}/members")
-  //    public ResponseEntity<TravelMemberListResponseDto> getTravelMembers(@PathVariable Long
-  // roomId) {
-  //
-  //      // 더미 데이터 예시
-  //      TravelMemberDto member1 =
-  //          TravelMemberDto.builder()
-  //              .userId(1L)
-  //              .nickname("여행덕후123")
-  //              .profileImg("\"profile_basic.png\"")
-  //              .isFriend(false)
-  //              .isOwner(true)
-  //              .build();
-  //
-  //      TravelMemberDto member2 =
-  //          TravelMemberDto.builder()
-  //              .userId(2L)
-  //              .nickname("빵순이")
-  //              .profileImg("\"profile_basic.png\"")
-  //              .isFriend(true)
-  //              .isOwner(false)
-  //              .build();
-  //
-  //      TravelMemberListResponseDto response =
-  //          TravelMemberListResponseDto.builder().members(List.of(member1, member2)).build();
-  //
-  //      return ResponseEntity.ok(response);
-  //    }
-
   @Operation(
       summary = "동행자 강퇴",
       description = "여행방의 방장만 특정 사용자를 강퇴할 수 있습니다.",
@@ -294,5 +266,28 @@ public class RoomController {
   public ResponseEntity<List<RegionResponseDto>> getRegions(
       @RequestParam(required = false) Long parentId) {
     return ResponseEntity.ok(roomService.getRegions(parentId));
+  }
+
+  @Operation(
+          summary = "여행방 정보 조회",
+          description = """
+    여행방 ID를 기반으로 해당 여행방의 기본 정보를 조회합니다.
+    조회 가능한 정보는 방 제목, 지역, 여행 시작일과 종료일입니다.
+    """,
+          parameters = {
+                  @Parameter(name = "roomId", description = "여행 방 ID", required = true, example = "1")
+          },
+          responses = {
+                  @ApiResponse(responseCode = "200", description = "조회 성공",
+                          content = @Content(schema = @Schema(implementation = TravelRoomResponseDto.class))),
+                  @ApiResponse(responseCode = "404", description = "여행 방을 찾을 수 없음",
+                          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+          }
+  )
+  @GetMapping("/{roomId}/info")
+  public ResponseEntity<TravelRoomResponseDto> getTravelRoomInfo(@AuthenticationPrincipal CustomUserDetails user,
+                                                                 @PathVariable Long roomId){
+    TravelRoomResponseDto response = roomService.getRoomInfo(roomId);
+    return ResponseEntity.ok(response);
   }
 }

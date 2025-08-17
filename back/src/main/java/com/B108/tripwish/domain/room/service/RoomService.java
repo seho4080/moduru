@@ -33,4 +33,6 @@ public interface RoomService {
 
   // 지역 목록 조회(시·도 or 시·군)
   java.util.List<RegionResponseDto> getRegions(Long parentId);
+
+  TravelRoomResponseDto getRoomInfo(Long roomId);
 }

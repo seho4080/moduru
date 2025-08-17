@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TripNameInput from './TripNameInput';
 import RegionDropdown from './RegionDropdown';
 import TripDatePicker from './TripDatePicker';
-import { updateTripRoomRegion } from '../lib/tripRoomApi';
+import { updateTripRoomRegion, getTripRoomInfoForModal } from '../lib/tripRoomApi';
 import './tripCreateForm.css';
 
 /* 로컬 타임존 기준 YYYY-MM-DD */
@@ -36,6 +36,44 @@ export default function TripCreateForm({
 }) {
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState('');
+  const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // 모달이 열릴 때마다 최신 방 정보를 조회하여 상태 업데이트
+  useEffect(() => {
+    if (!roomId) return;
+
+    const fetchLatestRoomInfo = async () => {
+      setIsLoadingData(true);
+      try {
+        const roomInfo = await getTripRoomInfoForModal(roomId);
+        
+        // 제목 업데이트
+        if (roomInfo.title) {
+          setTripName(roomInfo.title);
+        }
+        
+        // 지역 업데이트
+        if (roomInfo.region) {
+          setRegion(roomInfo.region);
+        }
+        
+        // 날짜 업데이트
+        if (roomInfo.startDate && roomInfo.endDate) {
+          const startDate = new Date(roomInfo.startDate);
+          const endDate = new Date(roomInfo.endDate);
+          setDates([startDate, endDate]);
+        }
+      } catch (error) {
+        console.error('방 정보 조회 실패:', error);
+        setErrorText('방 정보를 불러오는데 실패했습니다.');
+        // 에러가 발생해도 기존 값들을 유지
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchLatestRoomInfo();
+  }, [roomId, setTripName, setRegion, setDates]);
 
   const handleSave = async () => {
     if (!region || !region.trim()) {
@@ -80,29 +118,39 @@ export default function TripCreateForm({
         {/* 우상단 닫기(X) */}
         <button className="close-btn" onClick={onClose} aria-label="닫기">×</button>
 
-        {/* 여행방 이름 */}
-        <TripNameInput value={tripName ?? ''} onChange={setTripName} />
-
-        {/* 지역(필수) */}
-        <RegionDropdown value={region} onChange={setRegion} />
-
-        {/* 날짜: 미선택 시 오늘로 자동 대체 */}
-        <TripDatePicker value={dates} onChange={setDates} />
-
-        {errorText && (
-          <div style={{ color: '#d32f2f', marginTop: 8, fontSize: 13 }}>
-            {errorText}
+        {isLoadingData ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: '16px', color: '#666', marginBottom: '10px' }}>
+              방 정보를 불러오는 중...
+            </div>
           </div>
-        )}
+        ) : (
+          <>
+            {/* 여행방 이름 */}
+            <TripNameInput value={tripName ?? ''} onChange={setTripName} />
 
-        <button
-          onClick={handleSave}
-          className="submit-btn"
-          disabled={loading}
-          style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
-        >
-          {loading ? '저장 중...' : '저장'}
-        </button>
+            {/* 지역(필수) */}
+            <RegionDropdown value={region} onChange={setRegion} />
+
+            {/* 날짜: 미선택 시 오늘로 자동 대체 */}
+            <TripDatePicker value={dates} onChange={setDates} />
+
+            {errorText && (
+              <div style={{ color: '#d32f2f', marginTop: 8, fontSize: 13 }}>
+                {errorText}
+              </div>
+            )}
+
+            <button
+              onClick={handleSave}
+              className="submit-btn"
+              disabled={loading}
+              style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+            >
+              {loading ? '저장 중...' : '저장'}
+            </button>
+          </>
+        )}
       </div>
     </>
   );
