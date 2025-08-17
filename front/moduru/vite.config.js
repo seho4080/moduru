@@ -30,7 +30,6 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [react()],
   server: {
     proxy: {
       // /api로 시작하는 요청을 백엔드로 프록시
