@@ -28,8 +28,9 @@ public class VotePlaceSubscriber implements MessageListener {
 
       // 1. 전체 방에 브로드캐스트 (voteCnt만)
       String broadcastDest = "/topic/room/" + parsed.getRoomId() + "/place-vote";
-      VotePlaceBroadCastResponseDto broadcastMsg = new VotePlaceBroadCastResponseDto(
-          parsed.getWantId(), parsed.getVoteCnt(), parsed.getSenderId());
+      VotePlaceBroadCastResponseDto broadcastMsg =
+          new VotePlaceBroadCastResponseDto(
+              parsed.getWantId(), parsed.getVoteCnt(), parsed.getSenderId());
 
       log.info("📤 [VotePlaceSubscriber] 브로드캐스트 전송: {} -> {}", broadcastDest, broadcastMsg);
       messagingTemplate.convertAndSend(broadcastDest, broadcastMsg);
