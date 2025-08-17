@@ -3,7 +3,7 @@ import React from "react";
 import SharedPlaceCard from "./SharedPlaceCard";
 
 /**
- * AI 추천 결과의 leg 데이터를 SharedPlaceCard에서 사용할 수 있는 place 형태로 변환
+ * 추천 결과의 leg 데이터를 SharedPlaceCard에서 사용할 수 있는 place 형태로 변환
  */
 function transformLegToPlace(leg) {
   return {
@@ -11,9 +11,9 @@ function transformLegToPlace(leg) {
     imgUrl: leg.placeImg || null,
     category: leg.category || null,
     address: leg.address || null,
-    likeCount: 0, // AI 추천에서는 좋아요 수 없음
+         likeCount: 0, // 추천에서는 좋아요 수 없음
     voteCnt: 0,
-    // AI 추천 고유 정보
+         // 추천 고유 정보
     wantId: leg.wantId,
     eventOrder: leg.eventOrder,
     nextTravelTime: leg.nextTravelTime,
@@ -34,7 +34,7 @@ export default function AiPlaceCard({
 
   return (
     <div className="relative">
-      {/* AI 추천 전용 정보 표시 */}
+             {/* 추천 전용 정보 표시 */}
       <div className="flex items-center gap-2 mb-2">
         {showOrder && (
           <div className="flex items-center gap-1.5">
@@ -71,12 +71,12 @@ export default function AiPlaceCard({
       {/* SharedPlaceCard 재사용 */}
       <SharedPlaceCard
         place={place}
-        showVote={false} // AI 추천에서는 좋아요 기능 비활성화
+                 showVote={false} // 추천에서는 좋아요 기능 비활성화
         showAddress={true}
         isDraggable={false} // 개별 카드는 드래그 비활성화
         usedInItinerary={usedInItinerary}
         responsive={responsive}
-        onRemove={null} // AI 추천에서는 삭제 버튼 비활성화
+                 onRemove={null} // 추천에서는 삭제 버튼 비활성화
         {...sharedPlaceCardProps}
       />
 

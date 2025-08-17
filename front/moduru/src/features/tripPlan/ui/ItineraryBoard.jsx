@@ -96,7 +96,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
   }, [daysMap]);
 
   const cardWidth = useMemo(() => Math.max(180, boardWidth - 60), [boardWidth]);
-  
+
   // 컬럼 너비는 고정, 높이는 카드 개수에 따라 조정
   const columnWidth = useMemo(() => Math.max(240, boardWidth), [boardWidth]);
 
@@ -208,18 +208,18 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     if (activeIdStr.startsWith('col:')) {
       const fromDate = activeIdStr.slice(4);
       const toDate = overIdStr.startsWith('col:') ? overIdStr.slice(4) : null;
-      
+
       if (toDate && fromDate !== toDate) {
         // 컬럼 순서 변경 (날짜 순서 변경)
         const fromIndex = dates.indexOf(fromDate);
         const toIndex = dates.indexOf(toDate);
-        
+
         if (fromIndex !== -1 && toIndex !== -1) {
           // 날짜 배열에서 순서 변경
           const newDates = [...dates];
           const [movedDate] = newDates.splice(fromIndex, 1);
           newDates.splice(toIndex, 0, movedDate);
-          
+
           // 여기서는 단순히 알림만 표시 (실제 날짜 순서 변경은 복잡하므로)
           notify("info", "컬럼 순서 변경은 현재 지원되지 않습니다.");
         }
@@ -397,7 +397,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
         }
 
         markResolvedFromResult(body);
-        
+
         // 계산 완료 시 마지막 계산된 교통수단 업데이트
         const resultDayNum = Number(body?.day);
         if (Number.isFinite(resultDayNum) && resultDayNum > 0) {
@@ -453,7 +453,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     try {
       json = e.dataTransfer?.getData("application/json");
       if (!json) json = e.dataTransfer?.getData("text/plain");
-    } catch {}
+    } catch { }
     if (!json) return null;
     try {
       return JSON.parse(json);
@@ -472,13 +472,13 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     }
     const t = transportByDate[dateKey] || "driving";
     const lastCalculated = lastCalculatedTransport[dateKey];
-    
+
     // 이미 같은 교통수단으로 계산된 경우 중복 계산 방지
     if (lastCalculated === t) {
       console.log(`Already calculated for ${t} on ${dateKey}, skipping...`);
       return;
     }
-    
+
     const day = dates.indexOf(dateKey) + 1;
 
     const events = items.map((it, i) => ({
@@ -489,7 +489,7 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     }));
 
     markOwnRequestAndStart(dateKey);
-    
+
     // 계산 요청 전에 마지막 계산된 교통수단 업데이트 (중복 방지)
     setLastCalculatedTransport(prev => ({
       ...prev,
@@ -580,9 +580,8 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       id="itinerary-board-root"
       className="flex gap-4 overflow-x-auto p-2"
       style={{
-        minWidth: `${
-          columnWidth * dates.length + 16 * (dates.length - 1) + 32
-        }px`,
+        minWidth: `${columnWidth * dates.length + 16 * (dates.length - 1) + 32
+          }px`,
       }}
     >
       <DndContext
@@ -593,264 +592,263 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       >
         <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
           {dates.map((dateKey, idx) => {
-          const items = board.byDate[dateKey] || EMPTY_ARR;
-          const t = transportByDate[dateKey] || "driving";
-          const loading = !!loadingByDate[dateKey];
-          const errMsg = errorByDate[dateKey];
+            const items = board.byDate[dateKey] || EMPTY_ARR;
+            const t = transportByDate[dateKey] || "driving";
+            const loading = !!loadingByDate[dateKey];
+            const errMsg = errorByDate[dateKey];
 
-          const placeList = items
-            .map((it) => Number(it?.wantId ?? it?.placeId))
-            .filter((n) => Number.isFinite(n));
+            const placeList = items
+              .map((it) => Number(it?.wantId ?? it?.placeId))
+              .filter((n) => Number.isFinite(n));
 
-          const applyRouteForThisDate = (legs) => {
-            if (!Array.isArray(legs) || legs.length === 0) return;
-            if (!roomId) return;
+            const applyRouteForThisDate = (legs) => {
+              if (!Array.isArray(legs) || legs.length === 0) return;
+              if (!roomId) return;
 
-            // 해당 날짜에 바로 적용
-            replaceDayWithPlaces(dateKey, legs);
-            notify("success", `Day ${idx + 1} 일정으로 교체했습니다.`);
-          };
+              // 해당 날짜에 바로 적용
+              replaceDayWithPlaces(dateKey, legs);
+              notify("success", `Day ${idx + 1} 일정으로 교체했습니다.`);
+            };
 
-          return (
-            <SortableColumn
-              key={dateKey}
-              id={`col:${dateKey}`}
-              width={columnWidth}
-              itemCount={items.length}
-              onCardClick={onCardClick}
-              selectedPinId={selectedPinId}
-              isSelected={selectedDay === dateKey}
-              onDaySelect={() => dispatch(setSelectedDay(dateKey))}
-              aria-label={`Day ${idx + 1} ${dateKey}`}
-
-            >
-              {/* 헤더 */}
-              <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-1.5">
-                <div className="flex flex-col gap-1">
-                  {/* Day와 날짜 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="text-sm font-semibold text-slate-800">Day {idx + 1}</div>
-                      <div className="text-xs text-slate-500">{dateKey}</div>
-                    </div>
-                  </div>
-
-                  {/* 버튼들 */}
-                  <div
-                    className="flex items-center justify-between gap-2"
-                    data-html2canvas-ignore="true"
-                  >
-                    <AiRouteDayModalButton
-                      roomId={roomId}
-                      day={idx + 1}
-                      placeList={placeList}
-                      onApply={(legs) => applyRouteForThisDate(legs)}
-                    />
-
-                    <div className="flex items-center gap-2">
-                      <TransportRadio
-                        name={`transport-${dateKey}`}
-                        value={t}
-                        disabled={loading}
-                        onChange={(val) =>
-                          setTransportByDate((prev) => ({
-                            ...prev,
-                            [dateKey]: val,
-                          }))
-                        }
-                        onTransportChange={(val) => {
-                          // 교통수단 변경 시 마지막 계산된 교통수단 리셋
-                          console.log(`Transport changed to ${val} for ${dateKey}`);
-                          setLastCalculatedTransport(prev => {
-                            const newState = { ...prev };
-                            delete newState[dateKey]; // 해당 날짜의 계산 기록 삭제
-                            return newState;
-                          });
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className={`text-xs rounded border px-2 py-1 ${
-                          loading
-                            ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
-                            : "bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700"
-                        }`}
-                        onClick={() => requestCalcForDate(dateKey)}
-                        disabled={loading}
-                        aria-busy={loading}
-                      >
-                        {loading ? "계산 중..." : "계산"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {errMsg ? (
-                  <div className="mt-1 text-[11px] text-red-600">{errMsg}</div>
-                ) : null}
-              </header>
-
-              <ColumnDroppable 
-                dateKey={dateKey} 
-                width={columnWidth} 
+            return (
+              <SortableColumn
+                key={dateKey}
+                id={`col:${dateKey}`}
+                width={columnWidth}
                 itemCount={items.length}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  try {
-                    const json = e.dataTransfer?.getData("application/json");
-                    if (json) e.dataTransfer.dropEffect = "copy";
-                  } catch {}
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const data = parseDropData(e);
+                onCardClick={onCardClick}
+                selectedPinId={selectedPinId}
+                isSelected={selectedDay === dateKey}
+                onDaySelect={() => dispatch(setSelectedDay(dateKey))}
+                aria-label={`Day ${idx + 1} ${dateKey}`}
 
-                  // 단일 장소 드롭
-                  if (data?.type === "PLACE" && data?.place) {
-                    const clientY = e.clientY ?? null;
-                    let insertIndex = items.length;
-                    if (clientY != null) {
-                      insertIndex = computeInsertIndexInColumn(dateKey, clientY);
-                    }
-                    dispatch(
-                      addPlaceToDay({
-                        date: dateKey,
-                        place: data.place,
-                        index: insertIndex,
-                      })
-                    );
+              >
+                {/* 헤더 */}
+                <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-3 py-1.5">
+                  <div className="flex flex-col gap-1">
+                    {/* Day와 날짜 */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-semibold text-slate-800">Day {idx + 1}</div>
+                        <div className="text-xs text-slate-500">{dateKey}</div>
+                      </div>
+                    </div>
 
-                    const wantId = Number(data.place.wantId);
-                    if (Number.isFinite(wantId)) {
-                      setTimeout(() => {
-                        publishSnapshotForDate(dateKey, "ADD_PLACE");
-                        fireDirty();
-                      }, 0);
-                    }
-                    return;
-                  }
+                    {/* 버튼들 */}
+                    <div
+                      className="flex items-center justify-between gap-2"
+                      data-html2canvas-ignore="true"
+                    >
+                      <AiRouteDayModalButton
+                        roomId={roomId}
+                        day={idx + 1}
+                        placeList={placeList}
+                        onApply={(legs) => applyRouteForThisDate(legs)}
+                      />
 
-                  // AI 하루 일정 드롭
-                  if (
-                    data?.type === "DAY_SCHEDULE" &&
-                    Array.isArray(data?.places)
-                  ) {
-                    const places = data.places
-                      .filter((p) => p?.type === "PLACE" && p?.place)
-                      .map((p) => p.place);
+                      <div className="flex items-center gap-2">
+                        <TransportRadio
+                          name={`transport-${dateKey}`}
+                          value={t}
+                          disabled={loading}
+                          onChange={(val) =>
+                            setTransportByDate((prev) => ({
+                              ...prev,
+                              [dateKey]: val,
+                            }))
+                          }
+                          onTransportChange={(val) => {
+                            // 교통수단 변경 시 마지막 계산된 교통수단 리셋
+                            console.log(`Transport changed to ${val} for ${dateKey}`);
+                            setLastCalculatedTransport(prev => {
+                              const newState = { ...prev };
+                              delete newState[dateKey]; // 해당 날짜의 계산 기록 삭제
+                              return newState;
+                            });
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className={`text-xs rounded border px-2 py-1 ${loading
+                              ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                              : "bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700"
+                            }`}
+                          onClick={() => requestCalcForDate(dateKey)}
+                          disabled={loading}
+                          aria-busy={loading}
+                        >
+                          {loading ? "계산 중..." : "계산"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
-                    if (places.length > 0) {
+                  {errMsg ? (
+                    <div className="mt-1 text-[11px] text-red-600">{errMsg}</div>
+                  ) : null}
+                </header>
+
+                <ColumnDroppable
+                  dateKey={dateKey}
+                  width={columnWidth}
+                  itemCount={items.length}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    try {
+                      const json = e.dataTransfer?.getData("application/json");
+                      if (json) e.dataTransfer.dropEffect = "copy";
+                    } catch { }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const data = parseDropData(e);
+
+                    // 단일 장소 드롭
+                    if (data?.type === "PLACE" && data?.place) {
                       const clientY = e.clientY ?? null;
                       let insertIndex = items.length;
                       if (clientY != null) {
-                        insertIndex = computeInsertIndexInColumn(
-                          dateKey,
-                          clientY
+                        insertIndex = computeInsertIndexInColumn(dateKey, clientY);
+                      }
+                      dispatch(
+                        addPlaceToDay({
+                          date: dateKey,
+                          place: data.place,
+                          index: insertIndex,
+                        })
+                      );
+
+                      const wantId = Number(data.place.wantId);
+                      if (Number.isFinite(wantId)) {
+                        setTimeout(() => {
+                          publishSnapshotForDate(dateKey, "ADD_PLACE");
+                          fireDirty();
+                        }, 0);
+                      }
+                      return;
+                    }
+
+                    // AI 하루 일정 드롭
+                    if (
+                      data?.type === "DAY_SCHEDULE" &&
+                      Array.isArray(data?.places)
+                    ) {
+                      const places = data.places
+                        .filter((p) => p?.type === "PLACE" && p?.place)
+                        .map((p) => p.place);
+
+                      if (places.length > 0) {
+                        const clientY = e.clientY ?? null;
+                        let insertIndex = items.length;
+                        if (clientY != null) {
+                          insertIndex = computeInsertIndexInColumn(
+                            dateKey,
+                            clientY
+                          );
+                        }
+
+                        places.forEach((place, index) => {
+                          dispatch(
+                            addPlaceToDay({
+                              date: dateKey,
+                              place: place,
+                              index: insertIndex + index,
+                            })
+                          );
+                        });
+
+                        setTimeout(() => {
+                          publishSnapshotForDate(dateKey, "ADD_AI_SCHEDULE", {
+                            aiDay: data.day,
+                          });
+                          fireDirty();
+                        }, 0);
+
+                        notify(
+                          "success",
+                          `${data.day}일차 추천 일정 ${places.length}곳을 ${dateKey}에 추가했습니다.`
                         );
                       }
-
-                      places.forEach((place, index) => {
-                        dispatch(
-                          addPlaceToDay({
-                            date: dateKey,
-                            place: place,
-                            index: insertIndex + index,
-                          })
-                        );
-                      });
-
-                      setTimeout(() => {
-                        publishSnapshotForDate(dateKey, "ADD_AI_SCHEDULE", {
-                          aiDay: data.day,
-                        });
-                        fireDirty();
-                      }, 0);
-
-                      notify(
-                        "success",
-                        `${data.day}일차 AI 추천 일정 ${places.length}곳을 ${dateKey}에 추가했습니다.`
-                      );
+                      return;
                     }
-                    return;
-                  }
-                }}
-              >
-                <div
-                  className="p-2 flex flex-col items-center gap-2 min-h-[80px]"
-                  data-col={dateKey}
-                  style={{ width: columnWidth }}
+                  }}
                 >
-                  <SortableContext
-                    items={items.map((it) => it._id)}
-                    strategy={verticalListSortingStrategy}
+                  <div
+                    className="p-2 flex flex-col items-center gap-2 min-h-[80px]"
+                    data-col={dateKey}
+                    style={{ width: columnWidth }}
                   >
-                    {items.map((it, itemIdx) => (
-                      <React.Fragment key={it._id}>
-                        <SortableItineraryCard
-                          item={it}
-                          dateKey={dateKey}
-                          cardWidth={cardWidth}
-                          onCardClick={onCardClick}
-                          isSelected={selectedPinId === (it.wantId || it.id)}
-                          onRemove={() => {
-                            dispatch(
-                              removeItem({ dateKey, entryId: it.entryId })
-                            );
-                            setTimeout(() => {
-                              const itemsNow =
-                                daysRef.current?.[dateKey] || [];
-                              const isEmpty = itemsNow.length === 0;
-                              publishSnapshotForDate(
-                                dateKey,
-                                isEmpty ? "CLEAR_DAY" : "UPDATE_ORDER"
+                    <SortableContext
+                      items={items.map((it) => it._id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {items.map((it, itemIdx) => (
+                        <React.Fragment key={it._id}>
+                          <SortableItineraryCard
+                            item={it}
+                            dateKey={dateKey}
+                            cardWidth={cardWidth}
+                            onCardClick={onCardClick}
+                            isSelected={selectedPinId === (it.wantId || it.id)}
+                            onRemove={() => {
+                              dispatch(
+                                removeItem({ dateKey, entryId: it.entryId })
+                              );
+                              setTimeout(() => {
+                                const itemsNow =
+                                  daysRef.current?.[dateKey] || [];
+                                const isEmpty = itemsNow.length === 0;
+                                publishSnapshotForDate(
+                                  dateKey,
+                                  isEmpty ? "CLEAR_DAY" : "UPDATE_ORDER"
+                                );
+                                fireDirty();
+                              }, 0);
+                            }}
+                            onConfirmTimes={(s, e) => {
+                              dispatch(
+                                setTimes({
+                                  dateKey,
+                                  entryId: it.entryId,
+                                  startTime: s,
+                                  endTime: e,
+                                })
                               );
                               fireDirty();
-                            }, 0);
-                          }}
-                          onConfirmTimes={(s, e) => {
-                            dispatch(
-                              setTimes({
-                                dateKey,
-                                entryId: it.entryId,
-                                startTime: s,
-                                endTime: e,
-                              })
-                            );
-                            fireDirty();
-                          }}
-                        />
-
-                        {showEta && items[itemIdx + 1] && (
-                          <LegETA
-                            day={idx + 1}
-                            requestedTransport={t}
-                            fromId={it.wantId ?? it.placeId}
-                            toId={
-                              items[itemIdx + 1].wantId ??
-                              items[itemIdx + 1].placeId
-                            }
-                            cardWidth={cardWidth}
+                            }}
                           />
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </SortableContext>
 
-                  {showEta &&
-                    items.filter((x) =>
-                      Number.isFinite(Number(x.wantId ?? x.placeId ?? x.id))
-                    ).length >= 2 && (
-                      <DayTotals
-                        day={idx + 1}
-                        requestedTransport={t}
-                        cardWidth={cardWidth}
-                      />
-                    )}
-                </div>
-              </ColumnDroppable>
-            </SortableColumn>
-          );
-        })}
+                          {showEta && items[itemIdx + 1] && (
+                            <LegETA
+                              day={idx + 1}
+                              requestedTransport={t}
+                              fromId={it.wantId ?? it.placeId}
+                              toId={
+                                items[itemIdx + 1].wantId ??
+                                items[itemIdx + 1].placeId
+                              }
+                              cardWidth={cardWidth}
+                            />
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </SortableContext>
+
+                    {showEta &&
+                      items.filter((x) =>
+                        Number.isFinite(Number(x.wantId ?? x.placeId ?? x.id))
+                      ).length >= 2 && (
+                        <DayTotals
+                          day={idx + 1}
+                          requestedTransport={t}
+                          cardWidth={cardWidth}
+                        />
+                      )}
+                  </div>
+                </ColumnDroppable>
+              </SortableColumn>
+            );
+          })}
         </SortableContext>
 
         <DragOverlay>

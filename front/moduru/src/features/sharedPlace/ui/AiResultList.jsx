@@ -83,7 +83,7 @@ export default function AiResultList({
       <div className="text-sm text-slate-600 font-medium mb-2">
         아직 추천받은 일정이 없습니다
       </div>
-      <div className="text-xs text-slate-500">AI 일정 추천을 받아보세요</div>
+      <div className="text-xs text-slate-500">일정 추천을 받아보세요</div>
     </div>
   );
 
@@ -112,7 +112,7 @@ export default function AiResultList({
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            전체 AI 일정 적용하기
+            전체 일정 적용하기
             <span className="text-xs bg-white/20 px-2 py-1 rounded-full">
               {dayKeys.length}일{" "}
               {dayKeys.reduce(
@@ -130,71 +130,101 @@ export default function AiResultList({
         {dayKeys.length === 0
           ? renderEmpty()
           : dayKeys.map((day) => {
-              const legs = groups[day] ?? [];
-              const driving = getTotals(day, "driving");
-              const transit = getTotals(day, "transit");
+            const legs = groups[day] ?? [];
+            const driving = getTotals(day, "driving");
+            const transit = getTotals(day, "transit");
 
-              return (
-                <div
-                  key={day}
-                  className={`bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 ${
-                    draggedDay === day ? "opacity-50 scale-95 rotate-1" : ""
+            return (
+              <div
+                key={day}
+                className={`bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 ${draggedDay === day ? "opacity-50 scale-95 rotate-1" : ""
                   }`}
-                  draggable={true}
-                  onDragStart={(e) => {
-                    setDraggedDay(day);
-                    const payload = {
-                      type: "DAY_SCHEDULE",
-                      day: day,
-                      places: legs.map((leg) => ({
-                        type: "PLACE",
-                        place: {
-                          placeName: leg.placeName || "이름 없음",
-                          imgUrl: leg.placeImg || null,
-                          category: leg.category || null,
-                          address: leg.address || null,
-                          likeCount: 0,
-                          voteCnt: 0,
-                          wantId: leg.wantId,
-                          eventOrder: leg.eventOrder,
-                          nextTravelTime: leg.nextTravelTime,
-                        },
-                      })),
-                    };
-                    const body = JSON.stringify(payload);
-                    e.dataTransfer.setData("application/json", body);
-                    e.dataTransfer.setData("text/plain", body);
-                    e.dataTransfer.effectAllowed = "copy";
+                draggable={true}
+                onDragStart={(e) => {
+                  setDraggedDay(day);
+                  const payload = {
+                    type: "DAY_SCHEDULE",
+                    day: day,
+                    places: legs.map((leg) => ({
+                      type: "PLACE",
+                      place: {
+                        placeName: leg.placeName || "이름 없음",
+                        imgUrl: leg.placeImg || null,
+                        category: leg.category || null,
+                        address: leg.address || null,
+                        likeCount: 0,
+                        voteCnt: 0,
+                        wantId: leg.wantId,
+                        eventOrder: leg.eventOrder,
+                        nextTravelTime: leg.nextTravelTime,
+                      },
+                    })),
+                  };
+                  const body = JSON.stringify(payload);
+                  e.dataTransfer.setData("application/json", body);
+                  e.dataTransfer.setData("text/plain", body);
+                  e.dataTransfer.effectAllowed = "copy";
 
-                    const dragImage = e.currentTarget.cloneNode(true);
-                    dragImage.style.transform = "rotate(2deg)";
-                    dragImage.style.opacity = "0.8";
-                    dragImage.style.pointerEvents = "none";
-                    dragImage.style.position = "absolute";
-                    dragImage.style.top = "-1000px";
-                    dragImage.style.left = "-1000px";
-                    dragImage.style.width = e.currentTarget.offsetWidth + "px";
-                    document.body.appendChild(dragImage);
+                  const dragImage = e.currentTarget.cloneNode(true);
+                  dragImage.style.transform = "rotate(2deg)";
+                  dragImage.style.opacity = "0.8";
+                  dragImage.style.pointerEvents = "none";
+                  dragImage.style.position = "absolute";
+                  dragImage.style.top = "-1000px";
+                  dragImage.style.left = "-1000px";
+                  dragImage.style.width = e.currentTarget.offsetWidth + "px";
+                  document.body.appendChild(dragImage);
 
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const offsetX = rect.width / 2;
-                    const offsetY = rect.height / 2;
-                    e.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const offsetX = rect.width / 2;
+                  const offsetY = rect.height / 2;
+                  e.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
 
-                    setTimeout(() => {
-                      if (document.body.contains(dragImage)) {
-                        document.body.removeChild(dragImage);
-                      }
-                    }, 0);
-                  }}
-                  onDragEnd={() => setDraggedDay(null)}
-                  title="일정 보드로 드래그해서 하루 전체 일정을 추가할 수 있습니다"
-                >
-                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-slate-200">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-3">
+                  setTimeout(() => {
+                    if (document.body.contains(dragImage)) {
+                      document.body.removeChild(dragImage);
+                    }
+                  }, 0);
+                }}
+                onDragEnd={() => setDraggedDay(null)}
+                title="일정 보드로 드래그해서 하루 전체 일정을 추가할 수 있습니다"
+              >
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-slate-200">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <svg
+                        className="w-4 h-4 text-slate-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
+                      <h3 className="text-base font-semibold text-slate-800">
+                        {day}일차
+                      </h3>
+                      <span className="text-xs text-slate-600 bg-white px-2 py-1 rounded-full">
+                        {legs.length}곳
+                      </span>
+                    </div>
+
+                    {onApplyDaySchedule && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onApplyDaySchedule(day, legs);
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                        title="이 날 일정만 적용"
+                      >
                         <svg
-                          className="w-4 h-4 text-slate-400"
+                          className="w-3.5 h-3.5"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -203,122 +233,91 @@ export default function AiResultList({
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M4 8h16M4 16h16"
+                            d="M12 4v16m8-8H4"
                           />
                         </svg>
-                        <h3 className="text-base font-semibold text-slate-800">
-                          {day}일차
-                        </h3>
-                        <span className="text-xs text-slate-600 bg-white px-2 py-1 rounded-full">
-                          {legs.length}곳
-                        </span>
-                      </div>
+                        적용
+                      </button>
+                    )}
 
-                      {onApplyDaySchedule && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onApplyDaySchedule(day, legs);
-                          }}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
-                          title="이 날 일정만 적용"
-                        >
+                    <div className="flex flex-wrap items-center gap-2">
+                      {driving && (
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white border border-slate-200">
                           <svg
                             className="w-3.5 h-3.5"
+                            viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
-                            viewBox="0 0 24 24"
                           >
                             <path
+                              strokeWidth="1.8"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
+                              d="M3 13l2-5.5A2 2 0 017 6h10a2 2 0 011.9 1.4L21 13m-2 4h-1a2 2 0 01-2-2v0H8v0a2 2 0 01-2 2H5m3-3h8"
                             />
                           </svg>
-                          적용
-                        </button>
+                          <span>
+                            {formatMinutes(driving.totalDurationMinutes) ||
+                              "-"}
+                          </span>
+                          <span className="text-slate-400">·</span>
+                          <span>
+                            {formatKm(driving.totalDistanceMeters) || "-"}
+                          </span>
+                        </span>
                       )}
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        {driving && (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white border border-slate-200">
-                            <svg
-                              className="w-3.5 h-3.5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3 13l2-5.5A2 2 0 017 6h10a2 2 0 011.9 1.4L21 13m-2 4h-1a2 2 0 01-2-2v0H8v0a2 2 0 01-2 2H5m3-3h8"
-                              />
-                            </svg>
-                            <span>
-                              {formatMinutes(driving.totalDurationMinutes) ||
-                                "-"}
-                            </span>
-                            <span className="text-slate-400">·</span>
-                            <span>
-                              {formatKm(driving.totalDistanceMeters) || "-"}
-                            </span>
+                      {transit && (
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white border border-slate-200">
+                          <svg
+                            className="w-3.5 h-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 16V6a3 3 0 013-3h6a3 3 0 013 3v10M6 12h12M7 19h2m6 0h2M6 16h12v1a2 2 0 01-2 2H8a2 2 0 01-2-2v-1z"
+                            />
+                          </svg>
+                          <span>
+                            {formatMinutes(transit.totalDurationMinutes) ||
+                              "-"}
                           </span>
-                        )}
-                        {transit && (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white border border-slate-200">
-                            <svg
-                              className="w-3.5 h-3.5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 16V6a3 3 0 013-3h6a3 3 0 013 3v10M6 12h12M7 19h2m6 0h2M6 16h12v1a2 2 0 01-2 2H8a2 2 0 01-2-2v-1z"
-                              />
-                            </svg>
-                            <span>
-                              {formatMinutes(transit.totalDurationMinutes) ||
-                                "-"}
-                            </span>
-                            <span className="text-slate-400">·</span>
-                            <span>
-                              {formatKm(transit.totalDistanceMeters) || "-"}
-                            </span>
+                          <span className="text-slate-400">·</span>
+                          <span>
+                            {formatKm(transit.totalDistanceMeters) || "-"}
                           </span>
-                        )}
-                      </div>
+                        </span>
+                      )}
                     </div>
                   </div>
-
-                  <div className="p-4 space-y-3">
-                    {legs.length === 0 ? (
-                      <div className="text-center text-sm text-slate-500 py-8">
-                        이 날에는 추천된 장소가 없습니다
-                      </div>
-                    ) : (
-                      legs.map((leg, idx) => (
-                        <AiPlaceCard
-                          key={`${leg?.wantId ?? "want"}-${idx}`}
-                          leg={leg}
-                          dayNumber={day}
-                          showOrder={true}
-                          showTravelTime={idx < legs.length - 1}
-                          onAddToItinerary={onAddToItinerary}
-                          usedInItinerary={isPlaceUsed(leg)}
-                          responsive={true}
-                        />
-                      ))
-                    )}
-                  </div>
                 </div>
-              );
-            })}
+
+                <div className="p-4 space-y-3">
+                  {legs.length === 0 ? (
+                    <div className="text-center text-sm text-slate-500 py-8">
+                      이 날에는 추천된 장소가 없습니다
+                    </div>
+                  ) : (
+                    legs.map((leg, idx) => (
+                      <AiPlaceCard
+                        key={`${leg?.wantId ?? "want"}-${idx}`}
+                        leg={leg}
+                        dayNumber={day}
+                        showOrder={true}
+                        showTravelTime={idx < legs.length - 1}
+                        onAddToItinerary={onAddToItinerary}
+                        usedInItinerary={isPlaceUsed(leg)}
+                        responsive={true}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
       </div>
 
       {/* 에러/무효화 표시는 결과가 전혀 없을 때만 중간 안내로 노출한다 */}

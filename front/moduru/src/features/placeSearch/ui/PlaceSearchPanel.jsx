@@ -144,14 +144,14 @@ const PlaceSearchPanel = ({ roomId }) => {
           </button>
         </div>
         {/* 🤖 AI 버튼 */}
-        <button
-          className="ai-robot-btn"
-          title="AI 추천"
-          type="button"
-          onClick={handleAiClick}
-          disabled={!keyword.trim() || keywordLoading}
-          aria-label="AI 추천"
-        >
+                  <button
+            className="ai-robot-btn"
+            title="추천"
+            type="button"
+            onClick={handleAiClick}
+            disabled={!keyword.trim() || keywordLoading}
+            aria-label="추천"
+          >
           <FaRobot />
         </button>
       </div>

@@ -163,7 +163,7 @@ export default function SharedPlaceList({
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggle(wantId)}
-                      title="AI 추천에 포함"
+                      title="추천에 포함"
                       data-nodrag
                       className="rounded"
                     />
