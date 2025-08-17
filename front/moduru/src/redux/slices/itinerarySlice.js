@@ -1,0 +1,232 @@
+// src/redux/slices/itinerarySlice.js
+import { createSlice, nanoid } from "@reduxjs/toolkit";
+
+const initialState = {
+  // days['YYYY-MM-DD'] = [{ entryId, wantId?, placeId, placeName, category, startTime?, endTime?, eventOrder(0-based) }, ...]
+  days: {},
+};
+
+const toNum = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+const renumberDay = (arr = []) => {
+  arr.forEach((it, idx) => {
+    it.eventOrder = idx; // ✅ 0-based
+  });
+  return arr;
+};
+
+const normalizeWantOrder = (arr) =>
+  (Array.isArray(arr) ? arr : []).map((v) => toNum(v)).filter((v) => v != null);
+
+const itinerarySlice = createSlice({
+  name: "itinerary",
+  initialState,
+  reducers: {
+    /** days 맵 전체 교체: { 'YYYY-MM-DD': Event[] } */
+    setDays(state, action) {
+      const incoming = action.payload;
+      if (
+        !incoming ||
+        typeof incoming !== "object" ||
+        Array.isArray(incoming)
+      ) {
+        state.days = {};
+        return;
+      }
+      const next = {};
+      for (const [dateKey, events] of Object.entries(incoming)) {
+        const arr = Array.isArray(events)
+          ? events.map((ev, idx) => {
+              const wantIdNum = toNum(ev?.wantId ?? ev?.id ?? ev?.placeId);
+              return {
+                ...ev,
+                entryId:
+                  ev?.entryId ?? `${wantIdNum ?? "ev"}:${idx}:${nanoid()}`,
+                wantId: wantIdNum,
+                eventOrder: toNum(ev?.eventOrder) ?? idx, // 0-based 보정
+              };
+            })
+          : [];
+        next[dateKey] = renumberDay(arr);
+      }
+      state.days = next;
+    },
+
+    // 장소 추가: index가 있으면 그 위치에 삽입, 없으면 끝에 추가
+    addPlaceToDay: {
+      reducer(state, action) {
+        const { dateKey, place, index } = action.payload;
+        if (!state.days[dateKey]) state.days[dateKey] = [];
+        const arr = state.days[dateKey];
+        const insertAt =
+          typeof index === "number" && index >= 0 && index <= arr.length
+            ? index
+            : arr.length;
+        arr.splice(insertAt, 0, place);
+        renumberDay(arr);
+      },
+      prepare({ date, place, index }) {
+        const placeId =
+          place.placeId ?? place.id ?? String(place.name ?? place.title ?? "");
+        const placeName =
+          place.placeName ?? place.name ?? place.title ?? "이름 없음";
+        const wantIdNum = toNum(place.wantId ?? place.id ?? place.placeId);
+        return {
+          payload: {
+            dateKey: date,
+            index,
+            place: {
+              entryId: nanoid(),
+              wantId: wantIdNum,
+              placeId,
+              placeName,
+              category: place.category ?? place.type ?? "",
+              startTime: place.startTime ?? null,
+              endTime: place.endTime ?? null,
+              ...place,
+            },
+          },
+        };
+      },
+    },
+
+    // 같은 날짜 내 순서 변경
+    moveItemWithin(state, action) {
+      const { dateKey, fromIdx, toIdx } = action.payload;
+      const arr = state.days[dateKey];
+      if (!arr) return;
+      if (fromIdx === toIdx) return;
+      if (fromIdx < 0 || fromIdx >= arr.length) return;
+
+      // 목표 인덱스 경계 보정 (배열 길이까지 허용 → 맨끝 삽입)
+      let target = typeof toIdx === "number" ? toIdx : arr.length - 1;
+      if (target < 0) target = 0;
+      if (target > arr.length) target = arr.length;
+
+      const [moved] = arr.splice(fromIdx, 1);
+      // from < target 였다면, 제거로 인해 실제 삽입 위치 한 칸 앞으로 당겨짐
+      if (fromIdx < target) target -= 1;
+      if (target < 0) target = 0;
+      if (target > arr.length) target = arr.length;
+
+      arr.splice(target, 0, moved);
+      renumberDay(arr);
+    },
+
+    // 다른 날짜로 이동
+    moveItemAcross(state, action) {
+      const { fromDate, toDate, fromIdx, toIdx } = action.payload;
+      if (!fromDate || !toDate) return;
+      if (fromDate === toDate) return;
+
+      const fromArr = state.days[fromDate];
+      if (!fromArr || fromIdx < 0 || fromIdx >= fromArr.length) return;
+
+      const [moved] = fromArr.splice(fromIdx, 1);
+      renumberDay(fromArr);
+
+      if (!state.days[toDate]) state.days[toDate] = [];
+      const toArr = state.days[toDate];
+
+      let insertAt =
+        typeof toIdx === "number" && toIdx >= 0 && toIdx <= toArr.length
+          ? toIdx
+          : toArr.length;
+      toArr.splice(insertAt, 0, moved);
+      renumberDay(toArr);
+    },
+
+    // 시간 설정 (wantId 우선 매칭)
+    setTimes(state, action) {
+      const { dateKey, entryId, wantId, startTime, endTime } = action.payload;
+      const list = state.days[dateKey];
+      if (!list) return;
+
+      const wantIdNum = toNum(wantId);
+      let t = null;
+
+      if (wantIdNum != null) {
+        t = list.find((p) => toNum(p.wantId) === wantIdNum);
+      } else if (entryId != null) {
+        t = list.find((p) => p.entryId === entryId);
+      }
+
+      if (!t) return;
+      t.startTime = startTime ?? null;
+      t.endTime = endTime ?? null;
+    },
+
+    // 삭제
+    removeItem(state, action) {
+      const { dateKey, entryId } = action.payload;
+      const list = state.days[dateKey];
+      if (!list) return;
+      state.days[dateKey] = list.filter((p) => p.entryId !== entryId);
+      renumberDay(state.days[dateKey]);
+    },
+
+    // 서버 이벤트로 해당 날짜 전체 교체 (eventOrder 0-based)
+    replaceDayFromServer(state, action) {
+      const { dateKey, events } = action.payload || {};
+      if (!dateKey || !Array.isArray(events)) return;
+
+      state.days[dateKey] = events
+        .slice()
+        .sort((a, b) => (toNum(a.eventOrder) ?? 0) - (toNum(b.eventOrder) ?? 0))
+        .map((ev, idx) => {
+          const wantIdNum = toNum(ev.wantId ?? ev.id);
+          return {
+            entryId: `${ev.wantId ?? "ev"}:${ev.eventOrder ?? idx}:${nanoid()}`,
+            wantId: wantIdNum,
+            placeId:
+              ev.wantId ?? ev.placeId ?? ev.id ?? String(ev.placeName ?? ""),
+            placeName: ev.placeName ?? "이름 없음",
+            category: ev.category ?? "",
+            startTime: ev.startTime ?? null,
+            endTime: ev.endTime ?? null,
+            lat: ev.lat,
+            lng: ev.lng,
+            imgUrl: ev.placeImg ?? ev.imgUrl,
+            eventOrder: toNum(ev.eventOrder) ?? idx, // ✅ 0-based
+          };
+        });
+    },
+
+    // AI/수신 순서 적용 (wantId 배열)
+    setOrderForDate(state, action) {
+      const { dateKey, wantOrderIds } = action.payload || {};
+      const list = state.days[dateKey];
+      if (!dateKey || !Array.isArray(list)) return;
+
+      const order = normalizeWantOrder(wantOrderIds);
+      const rank = new Map();
+      order.forEach((id, i) => rank.set(id, i));
+
+      const decorated = list.map((item, i) => {
+        const wid = toNum(item.wantId);
+        const r = rank.has(wid) ? rank.get(wid) : Number.POSITIVE_INFINITY;
+        return { item, i, r };
+      });
+
+      decorated.sort((a, b) => a.r - b.r || a.i - b.i);
+      state.days[dateKey] = decorated.map((d) => d.item);
+      renumberDay(state.days[dateKey]);
+    },
+  },
+});
+
+export const {
+  setDays,
+  addPlaceToDay,
+  moveItemWithin,
+  moveItemAcross,
+  setTimes,
+  removeItem,
+  replaceDayFromServer,
+  setOrderForDate,
+} = itinerarySlice.actions;
+
+export default itinerarySlice.reducer;

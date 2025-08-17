@@ -1,0 +1,223 @@
+/* ===== 기본 레이아웃 ===== */
+.profile-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: 'Ownglyph_meetme-Rg', sans-serif;
+}
+
+.profile-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  width: 100%;
+  max-width: none;                /* 최대 너비 제한 해제 */
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* ===== 카드 헤더 ===== */
+.profile-card-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.profile-card-header h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #6d87db;
+  margin-bottom: 0.5rem;
+}
+
+.profile-card-header p {
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ===== 로딩 상태 ===== */
+.loading-state {
+  text-align: center;
+  color: #6c757d;
+  font-size: 1rem;
+  padding: 2rem 0;
+}
+
+/* ===== 아바타 ===== */
+.profile-avatar-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.avatar-wrapper {
+  position: relative;
+}
+
+.avatar-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e0e6f6;
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #e0e6f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 600;
+  color: #6d87db;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #6d87db;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: background 0.2s ease;
+}
+
+.avatar-edit-btn:hover {
+  background: #556cd6;
+}
+
+/* ===== 정보 영역 ===== */
+.profile-info-section {
+  margin-bottom: 2rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2열로 늘려서 넓게 */
+  gap: 2rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.4rem;
+}
+
+.info-value {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-input,
+.info-select {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.info-input:focus,
+.info-select:focus {
+  outline: none;
+  border-color: #6d87db;
+  box-shadow: 0 0 0 2px rgba(109, 135, 219, 0.25);
+}
+
+.info-input.readonly {
+  background: #f1f3f5;
+  color: #868e96;
+  cursor: not-allowed;
+}
+
+.info-input.editable,
+.info-select.editable {
+  background: #ffffff;
+}
+
+.readonly-note {
+  font-size: 0.75rem;
+  color: #adb5bd;
+  margin-top: 0.25rem;
+}
+
+/* ===== 액션 버튼 ===== */
+.profile-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn {
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* 수정 버튼 */
+.btn-edit {
+  background: #6d87db;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #556cd6;
+}
+
+/* 저장 버튼 */
+.btn-save {
+  background: #6d87db;
+  color: white;
+}
+
+.btn-save:hover {
+  background: #6d87db;
+}
+
+/* 취소 버튼 */
+.btn-cancel {
+  background: #dee2e6;
+  color: #495057;
+}
+
+.btn-cancel:hover {
+  background: #ced4da;
+}
+
+@media (max-width: 900px) {
+  .info-grid {
+    grid-template-columns: 1fr;   /* 모바일에서는 1열 */
+    gap: 1.2rem;
+  }
+}

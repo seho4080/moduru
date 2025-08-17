@@ -1,0 +1,69 @@
+.festival-detail {
+  line-height: 1.6;
+  --emoji-y: 3px;
+  --emoji-globe-y: 5px;
+}
+
+/* 행: 아이콘 고정열 + 본문열 */
+.festival-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  column-gap: 8px;
+  align-items: start;
+  margin: 2px 0;
+}
+
+/* 공통 아이콘 보정 */
+.festival-icon {
+  text-align: center;
+  line-height: 1;
+  transform: translateY(var(--emoji-y));
+}
+
+/* 🌐만 미세하게 더 아래 */
+.festival-icon--globe {
+  transform: translateY(var(--emoji-globe-y));
+}
+
+/* 일반 텍스트 */
+.festival-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 주최 전용 */
+.festival-organizer {
+  font-weight: 600;
+}
+
+/* URL / 전화 */
+.festival-link,
+.festival-tel {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2563eb;
+  text-decoration: none;
+}
+.festival-link:hover,
+.festival-tel:hover {
+  text-decoration: underline;
+}
+
+/* 구분선 */
+.festival-sep {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 0 10px;
+}
+
+/* 설명 문단 */
+.festival-desc {
+  white-space: pre-wrap;     /* 줄바꿈 유지 */
+  word-break: keep-all;      /* 한국어 단어 단위 줄바꿈 */
+  line-height: 1.8;
+  color: #0f172a;
+  font-size: 14px;
+}

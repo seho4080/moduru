@@ -1,0 +1,179 @@
+/* src/features/search/ui/searchBox.css */
+
+/* NOTE: 컨테이너 */
+.sbx-root {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  font-family: Pretendard, "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  color: #2b3340;
+}
+
+/* NOTE: 입력 박스 */
+.sbx-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 22px 0 22px;
+  flex: 0 0 auto;            /* ← 높이 고정 영역 */
+}
+
+.sbx-input {
+  flex: 1;
+  border: 1.5px solid #e3e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  background: #f7f9fc;
+  transition: border 0.15s;
+}
+.sbx-input:focus {
+  border-color: #4169e1;
+  outline: none;
+  background: #eaf0ff;
+}
+
+.sbx-icon-btn {
+  background: #4169e1;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0 16px;
+  height: 36px;
+  transition: background 0.15s;
+}
+.sbx-icon-btn:hover { background: #274bb6; }
+
+/* NOTE: 전체 모달(세로 꽉 차고, 내용 넘치면 내부 스크롤) */
+.sbx-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(65,105,225,0.13);
+  z-index: 1000;
+}
+
+.sbx-modal-card {
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 420px;
+  min-width: 320px;
+  max-width: 98vw;
+  height: min(68vh, 540px); /* 기존 84vh, 720px → 68vh, 540px로 줄임 */
+  max-height: 80vh;         /* 기존 90vh → 80vh로 줄임 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  z-index: 1001;
+  border-radius: 18px;
+  box-shadow: 0 16px 48px rgba(65,105,225,0.18);
+  font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', Arial, sans-serif;
+  color: #2b3340;
+  transition: box-shadow 0.18s;
+}
+
+.sbx-modal-card.dragging {
+  box-shadow: 0 16px 48px rgba(65,105,225,0.18);
+}
+
+.sbx-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px 14px 22px; /* 위 18px, 아래 14px로 줄임 */
+  border-bottom: 1px solid #e3e8f0;
+  cursor: grab;
+  user-select: none;
+  background: linear-gradient(90deg, #eaf0ff 0%, #f7f9fc 100%);
+  border-radius: 18px 18px 0 0;
+  flex: 0 0 auto;          /* ← 높이 고정 영역 */
+}
+
+.sbx-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #4169e1;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.sbx-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #f7f9fc;
+  border: none;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  color: #4169e1;
+  font-size: 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(65,105,225,0.08);
+  transition: background 0.15s, color 0.15s;
+}
+.sbx-close:hover { background: #eaf0ff; color: #274bb6; }
+
+/* NOTE: 결과 패널 — 남은 공간 전부 차지 + 넘칠 때만 스크롤 */
+.sbx-results {
+  padding: 10px 22px 0 22px;
+  flex: 1 1 auto;          /* ← 남는 공간 모두 차지 */
+  min-height: 0;           /* ← 플렉스 스크롤 핵심 */
+  overflow-y: auto;        /* 내용 넘칠 때만 표시 */
+  scrollbar-gutter: stable both-edges; /* 지원 브라우저에서 레이아웃 안정 */
+}
+
+/* 리스트 및 아이템 */
+.sbx-list { list-style: none; margin: 0; padding: 0; }
+
+.sbx-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #e3e8f0;
+  cursor: pointer;
+  transition: background 0.13s;
+  border-radius: 8px;
+}
+.sbx-item:last-child { border-bottom: none; }
+.sbx-item:hover { background: #eaf0ff; }
+
+.sbx-item .sbx-title {
+  color: #222;
+  font-weight: 500;
+  font-size: 0.99rem; 
+}
+
+.sbx-sub { font-size: 0.92rem; color: #6b7280; }
+.sbx-hint { color: #b0b8c1; font-size: 0.98rem; text-align: center; margin-top: 18px; }
+
+/* NOTE: 결과 없음 모달 */
+.sbx-nores-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.18);
+  z-index: 2001;
+}
+.sbx-nores {
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(65,105,225,0.13);
+  padding: 28px 24px 18px 24px;
+  min-width: 220px;
+  z-index: 2002;
+  text-align: center;
+}
+.sbx-nores-title { font-size: 1.08rem; font-weight: 700; color: #4169e1; margin-bottom: 6px; }
+.sbx-nores-desc  { font-size: 0.97rem; color: #334155; margin-bottom: 12px; }
+.sbx-nores-btn {
+  background: #4169e1; color: #fff; border: none; border-radius: 8px;
+  padding: 8px 18px; font-size: 1rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s;
+}
+.sbx-nores-btn:hover { background: #274bb6; }
