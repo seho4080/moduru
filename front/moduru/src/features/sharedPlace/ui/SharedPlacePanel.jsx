@@ -28,7 +28,11 @@ import { publishMessage } from "../../webSocket/coreSocket";
 
 // 일정창 열기/닫기 액션
 import { openItineraryPanel, closeItineraryPanel } from "../../../redux/slices/uiSlice";
-import DateSelectionModal from "../../tripPlan/ui/DateSelectionModal";
+import { setTripRoom } from "../../../redux/slices/tripRoomSlice";
+
+// 기존 달력 컴포넌트와 API 재사용
+import TripDatePicker from "../../tripCreate/ui/TripDatePicker";
+import { updateTripRoomRegion } from "../../tripCreate/lib/tripRoomApi";
 
 /** 날짜 키 포맷 변환 */
 function toDateKey(d) {
@@ -56,8 +60,10 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
   // 화면 모드
   const [viewMode, setViewMode] = useState("shared"); // "shared" | "result" | "newSelection"
 
-  // 날짜 선택 모달 상태
+  // 기간 설정 모달 상태
   const [showDateModal, setShowDateModal] = useState(false);
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [isSavingDates, setIsSavingDates] = useState(false);
 
   // 여행일수
   const travelDays = useMemo(() => {
@@ -262,6 +268,58 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
   const hasTravelDates = useMemo(() => {
     return !!(trip?.startDate && trip?.endDate);
   }, [trip?.startDate, trip?.endDate]);
+
+  // 기간 설정 모달 핸들러들
+  const handleDateChange = (dates) => {
+    setDateRange(dates);
+  };
+
+  const handleSaveDates = async () => {
+    if (!roomId || !dateRange[0] || !dateRange[1]) return;
+
+    setIsSavingDates(true);
+    try {
+      const startDate = dateRange[0].toISOString().split('T')[0];
+      const endDate = dateRange[1].toISOString().split('T')[0];
+      
+      // 현재 방 정보와 함께 전송 (제목, 지역, 기간)
+      await updateTripRoomRegion(roomId, {
+        title: trip?.title, // 방 제목이 없으면 기본값
+        region: trip?.region, // 지역이 없으면 기본값 (서울)
+        startDate,
+        endDate,
+      });
+
+      // Redux 상태 업데이트
+      dispatch(setTripRoom({
+        roomId,
+        title: trip?.title,
+        region: trip?.region,
+        startDate,
+        endDate,
+      }));
+
+      // 성공 시 모달 닫고 일정창 열기
+      setShowDateModal(false);
+      dispatch(openItineraryPanel());
+      
+      if (window?.toast?.success) {
+        window.toast.success('여행 기간이 설정되었습니다.');
+      }
+    } catch (error) {
+      console.error('기간 설정 실패:', error);
+      if (window?.toast?.error) {
+        window.toast.error('기간 설정에 실패했습니다.');
+      }
+    } finally {
+      setIsSavingDates(false);
+    }
+  };
+
+  const handleCancelDates = () => {
+    setShowDateModal(false);
+    setDateRange([null, null]);
+  };
 
   // 일정창 열기/닫기 핸들러
   const handleToggleItinerary = () => {
@@ -523,12 +581,45 @@ export default function SharedPlacePanel({ roomId, onCardClick }) {
         )}
       </div>
 
-      {/* 날짜 선택 모달 */}
+      {/* 기간 설정 모달 */}
       {showDateModal && (
-        <DateSelectionModal
-          roomId={roomId}
-          onClose={() => setShowDateModal(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-[400px] max-w-[90vw]">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                여행 기간 설정
+              </h3>
+              <p className="text-sm text-gray-600">
+                일정을 열기 위해 여행 기간을 먼저 설정해주세요.
+              </p>
+            </div>
+            
+            <div className="mb-6">
+              <TripDatePicker
+                value={dateRange}
+                onChange={handleDateChange}
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={handleCancelDates}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveDates}
+                disabled={!dateRange[0] || !dateRange[1] || isSavingDates}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSavingDates ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
