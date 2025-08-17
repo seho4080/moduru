@@ -33,33 +33,28 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
       nativeQuery = true)
   List<Object[]> findPlaceNameAddrOfLatestScheduleByRoomId(@Param("roomId") Long roomId);
 
-  @Query(
-      value =
-          """
-    WITH ranked AS (
-      SELECT
-          p.id                                       AS place_id,
-          p.place_name                               AS place_name,
-          COALESCE(p.road_address_name, p.address_name) AS address,
-          se.day,
-          se.event_order,
-          se.id                                      AS event_id,
-          ROW_NUMBER() OVER (
-            PARTITION BY p.id
-            ORDER BY se.day, se.event_order, se.id
-          ) AS rn
-      FROM schedules s
-      JOIN schedule_events se ON se.schedule_id = s.id
-      JOIN want_places wp     ON wp.id = se.want_id
-      JOIN places p           ON p.id  = wp.ref_id
-      WHERE s.room_id = :roomId
-        AND wp.type = 'PLACE'
-    )
-    SELECT place_name, address
-    FROM ranked
-    WHERE rn = 1
-    ORDER BY day, event_order, event_id
-    """,
-      nativeQuery = true)
-  List<Object[]> findPlaceNameAddrByRoomId(@Param("roomId") Long roomId);
+  @Query(value = """
+WITH ranked AS (
+  SELECT
+      p.id                                         AS placeId,
+      p.category_id                                AS categoryId,
+      p.place_name                                 AS placeName,
+      COALESCE(p.road_address_name, p.address_name) AS address,
+      se.day, se.event_order, se.id AS event_id,
+      ROW_NUMBER() OVER (PARTITION BY p.id ORDER BY se.day, se.event_order, se.id) AS rn
+  FROM schedules s
+  JOIN schedule_events se ON se.schedule_id = s.id
+  JOIN want_places wp     ON wp.id = se.want_id
+  JOIN places p           ON p.id  = wp.ref_id
+  WHERE s.room_id = :roomId
+    AND wp.type = 'PLACE'
+)
+SELECT placeId, categoryId, placeName, address
+FROM ranked
+WHERE rn = 1
+ORDER BY day, event_order, event_id
+""", nativeQuery = true)
+  List<SchedulePlaceRow> findPlaceNameAddrByRoomId(@Param("roomId") Long roomId);
+
+
 }
