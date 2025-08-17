@@ -41,14 +41,6 @@ function stripTitleToYmd(s) {
 /** 안전한 Date 파서 */
 function parseYmd(s) {
   if (!s) return null;
-  // YYYY-MM-DD 형식의 문자열을 시간대 무시하고 파싱
-  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (match) {
-    const [, year, month, day] = match;
-    // UTC 기준으로 날짜 생성 (시간대 영향 없음)
-    return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
-  }
-  // 기존 방식으로 fallback
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? null : d;
 }
