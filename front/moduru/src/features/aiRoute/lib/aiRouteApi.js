@@ -56,6 +56,7 @@ export async function getAiRouteSnapshot(roomId) {
  * @returns {Promise<{ok: true, data?: any, resumed?: true, snapshot?: any}>}
  */
 export async function requestAiRoute(roomId, placeList, day, opts = {}) {
+  console.log('requestAiRoute called:', { roomId, placeList, day, opts });
   // 파라미터 검증
   if (!roomId) throw new Error("roomId is required");
   if (!Array.isArray(placeList)) throw new Error("placeList must be an array");
@@ -69,6 +70,7 @@ export async function requestAiRoute(roomId, placeList, day, opts = {}) {
     day: Number(day),
     ...opts,
   };
+  console.log('AI Route API request:', { url, payload });
 
   try {
     const res = await api.post(url, payload);

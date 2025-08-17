@@ -1,3 +1,4 @@
+// src/redux/slices/itinerarySlice.js
 import { createSlice, nanoid } from "@reduxjs/toolkit";
 
 const initialState = {
@@ -24,13 +25,32 @@ const itinerarySlice = createSlice({
   name: "itinerary",
   initialState,
   reducers: {
-    // ✅ days 맵을 통째로 교체
-    //    - 각 날짜 배열은 복사 후 eventOrder 0-based로 재부여
-    setDays(state, { payload }) {
-      const src = payload && typeof payload === "object" ? payload : {};
+    /** days 맵 전체 교체: { 'YYYY-MM-DD': Event[] } */
+    setDays(state, action) {
+      const incoming = action.payload;
+      if (
+        !incoming ||
+        typeof incoming !== "object" ||
+        Array.isArray(incoming)
+      ) {
+        state.days = {};
+        return;
+      }
       const next = {};
-      for (const [dateKey, arr] of Object.entries(src)) {
-        next[dateKey] = renumberDay(Array.isArray(arr) ? arr.slice() : []);
+      for (const [dateKey, events] of Object.entries(incoming)) {
+        const arr = Array.isArray(events)
+          ? events.map((ev, idx) => {
+              const wantIdNum = toNum(ev?.wantId ?? ev?.id ?? ev?.placeId);
+              return {
+                ...ev,
+                entryId:
+                  ev?.entryId ?? `${wantIdNum ?? "ev"}:${idx}:${nanoid()}`,
+                wantId: wantIdNum,
+                eventOrder: toNum(ev?.eventOrder) ?? idx, // 0-based 보정
+              };
+            })
+          : [];
+        next[dateKey] = renumberDay(arr);
       }
       state.days = next;
     },
@@ -81,11 +101,13 @@ const itinerarySlice = createSlice({
       if (fromIdx === toIdx) return;
       if (fromIdx < 0 || fromIdx >= arr.length) return;
 
+      // 목표 인덱스 경계 보정 (배열 길이까지 허용 → 맨끝 삽입)
       let target = typeof toIdx === "number" ? toIdx : arr.length - 1;
       if (target < 0) target = 0;
       if (target > arr.length) target = arr.length;
 
       const [moved] = arr.splice(fromIdx, 1);
+      // from < target 였다면, 제거로 인해 실제 삽입 위치 한 칸 앞으로 당겨짐
       if (fromIdx < target) target -= 1;
       if (target < 0) target = 0;
       if (target > arr.length) target = arr.length;
@@ -197,7 +219,7 @@ const itinerarySlice = createSlice({
 });
 
 export const {
-  setDays,                // ✅ 추가 export
+  setDays,
   addPlaceToDay,
   moveItemWithin,
   moveItemAcross,

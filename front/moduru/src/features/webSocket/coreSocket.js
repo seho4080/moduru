@@ -116,7 +116,15 @@ function ensureClient() {
   });
 
   stompClient.activate();
-  if (typeof window !== "undefined") window.stompClient = stompClient;
+  if (typeof window !== "undefined") {
+    window.stompClient = stompClient;
+    window.wsStatus = {
+      connected: () => stompClient?.connected,
+      subs: () => Array.from(subs.keys()),
+      handlers: () => Array.from(handlers.keys()),
+      currentRoomId: () => currentRoomId
+    };
+  }
   return stompClient;
 }
 

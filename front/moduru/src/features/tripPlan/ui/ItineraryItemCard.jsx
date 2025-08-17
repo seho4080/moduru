@@ -4,7 +4,7 @@ import SharedPlaceCard from "../../sharedPlace/ui/SharedPlaceCard";
 import { useDispatch } from "react-redux";
 import { removeItem, updateMemo, updateTime } from "../../../redux/slices/itinerarySlice";
 
-export default function ItineraryItemCard({ item, day, index }) {
+export default function ItineraryItemCard({ item, day, index, onCardClick }) {
   const dispatch = useDispatch();
   const [memo, setMemo] = useState(item.memo || "");
 
@@ -46,6 +46,7 @@ export default function ItineraryItemCard({ item, day, index }) {
         endTime={item.endTime || ""}
         onStartTimeChange={handleStartTimeChange}
         onEndTimeChange={handleEndTimeChange}
+        onCardClick={onCardClick}
         showVote={false} // 투표 버튼 숨김
         showAddress={false} // 주소 숨김
         showTimeInputs={true} // 시간 입력 활성화
