@@ -1,5 +1,5 @@
 // src/features/myTravelSpace/ui/TravelRoomsTable.jsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { openReviewWrite, setReviewWriteTarget } from "../../../redux/slices/uiSlice";
 import durumiImg from "../../../assets/durumi.png";
@@ -56,12 +56,13 @@ export default function TravelRoomsTable({
 
   const hasData = localRooms && localRooms.length > 0;
   const [openMenuKey, setOpenMenuKey] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
 
   // 바깥 클릭/ESC → 메뉴 닫기
   useEffect(() => {
     const onDocPointer = (e) => {
       const t = e.target;
-      if (t.closest?.(".more-wrap") || t.closest?.(".more-menu")) return;
+      if (t.closest?.(".more-wrap") || t.closest?.(".more-menu-portal")) return;
       setOpenMenuKey(null);
     };
     const onKey = (e) => e.key === "Escape" && setOpenMenuKey(null);
@@ -144,124 +145,196 @@ export default function TravelRoomsTable({
   const toggleMenu = (e, rowKey) => {
     e.preventDefault();
     e.stopPropagation();
-    setOpenMenuKey((k) => (k === rowKey ? null : rowKey));
+    
+    if (openMenuKey === rowKey) {
+      setOpenMenuKey(null);
+      return;
+    }
+
+    // 더보기 버튼의 위치 계산
+    const buttonRect = e.currentTarget.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // 화면 하단에 가까우면 위쪽에 표시
+    const showAbove = buttonRect.bottom > viewportHeight - 150;
+    
+    setMenuPosition({
+      top: showAbove ? buttonRect.top - 80 : buttonRect.bottom + 4,
+      right: window.innerWidth - buttonRect.right,
+    });
+    
+    setOpenMenuKey(rowKey);
   };
 
   const canView = Boolean(onViewSchedule);
 
   return (
-    <div className="travel-table">
-      <div className="travel-table-head head-shift">
-        <div>제목</div>
-        <div>지역</div>
-        <div>기간</div>
-        <div>멤버</div>
-        <div className="head-actions" aria-hidden />
-      </div>
-      <div className="travel-divider" />
+    <>
+      <div className="room-item travel-table">
+        <div className="travel-table-head head-shift">
+          <div>제목</div>
+          <div>지역</div>
+          <div>기간</div>
+          <div>멤버</div>
+          <div className="head-actions" aria-hidden />
+        </div>
 
-      <ul className="travel-table-body">
-        {hasData ? (
-          rows.map((row) => {
-            const ended = isEnded(row.raw?.endDate);
-            return (
-              <li className="travel-row" key={row.key}>
-                <div className="col col-title">{row.title}</div>
-                <div className="col col-region">{row.region}</div>
-                <div className="col col-period">{row.period}</div>
-                <div className="col col-status">{row.memberCount}</div>
+        <ul className="travel-table-body">
+          {hasData ? (
+            rows.map((row) => {
+              const ended = isEnded(row.raw?.endDate);
+              return (
+                <li className="travel-row" key={row.key}>
+                  <div className="col col-title">{row.title}</div>
+                  <div className="col col-region">{row.region}</div>
+                  <div className="col col-period">{row.period}</div>
+                  <div className="col col-status">{row.memberCount}</div>
 
-                <div className="col col-actions" onClick={(e) => e.stopPropagation()}>
-                  <div className="action-group">
-                    {ended ? (
-                      <button
-                        type="button"
-                        className="row-btn btn-enter"
-                        onClick={() => handleReview(row.raw)}
-                        title="리뷰쓰기"
-                      >
-                        리뷰쓰기
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="row-btn btn-enter"
-                        onClick={() => handleEnter(row.raw)}
-                        title="입장하기"
-                      >
-                        입장하기
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      className="row-btn btn-schedule"
-                      onClick={canView ? () => handleView(row.raw) : undefined}
-                      disabled={!canView}
-                      aria-disabled={!canView}
-                      title={canView ? "일정 조회" : "일정 조회 기능이 제공되지 않습니다"}
-                    >
-                      일정 조회
-                    </button>
-                  </div>
-
-                  <div className="more-wrap">
-                    <button
-                      type="button"
-                      className="row-more"
-                      aria-haspopup="menu"
-                      aria-expanded={openMenuKey === row.key}
-                      onClick={(e) => toggleMenu(e, row.key)}
-                      title="더보기"
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle cx="5" cy="12" r="2" />
-                        <circle cx="12" cy="12" r="2" />
-                        <circle cx="19" cy="12" r="2" />
-                      </svg>
-                    </button>
-
-                    {openMenuKey === row.key && (
-                      <div role="menu" className="more-menu more-menu--dark">
+                  <div className="col col-actions" onClick={(e) => e.stopPropagation()}>
+                    <div className="action-group">
+                      {ended ? (
                         <button
-                          role="menuitem"
                           type="button"
-                          className="more-item more-item--leave"
-                          onClick={() => handleLeave(row.raw)}
+                          className="row-btn btn-enter"
+                          onClick={() => handleReview(row.raw)}
+                          title="리뷰쓰기"
                         >
-                          나가기
+                          리뷰쓰기
                         </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="row-btn btn-enter"
+                          onClick={() => handleEnter(row.raw)}
+                          title="입장하기"
+                        >
+                          입장하기
+                        </button>
+                      )}
 
-                        {onRemove && (
-                          <button
-                            role="menuitem"
-                            type="button"
-                            className="more-item more-item--delete"
-                            onClick={() => handleRemove(row.raw)}
-                          >
-                            삭제하기
-                          </button>
-                        )}
-                      </div>
-                    )}
+                      <button
+                        type="button"
+                        className="row-btn btn-schedule"
+                        onClick={canView ? () => handleView(row.raw) : undefined}
+                        disabled={!canView}
+                        aria-disabled={!canView}
+                        title={canView ? "일정 조회" : "일정 조회 기능이 제공되지 않습니다"}
+                      >
+                        일정 조회
+                      </button>
+                    </div>
+
+                    <div className="more-wrap">
+                      <button
+                        type="button"
+                        className="row-more"
+                        aria-haspopup="menu"
+                        aria-expanded={openMenuKey === row.key}
+                        onClick={(e) => toggleMenu(e, row.key)}
+                        title="더보기"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="5" r="2" />
+                          <circle cx="12" cy="12" r="2" />
+                          <circle cx="12" cy="19" r="2" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </li>
-            );
-          })
-        ) : (
-          <li className="travel-empty">
-            <img
-              className="empty-illust"
-              src={durumiImg}
-              alt="두루미 일러스트"
-              loading="lazy"
-              draggable="false"
-            />
-            <p className="empty-text">여행을 시작해보세요.</p>
-          </li>
-        )}
-      </ul>
-    </div>
+                </li>
+              );
+            })
+          ) : (
+            <li className="travel-empty">
+              <img
+                className="empty-illust"
+                src={durumiImg}
+                alt="두루미 일러스트"
+                loading="lazy"
+                draggable="false"
+              />
+              <p className="empty-text">여행을 시작해보세요.</p>
+            </li>
+          )}
+        </ul>
+      </div>
+
+      {/* 🎯 포털 메뉴 - 최상위에 표시! */}
+      {openMenuKey && (
+        <div 
+          role="menu" 
+          className="more-menu-portal"
+          style={{
+            position: 'fixed',
+            top: `${menuPosition.top}px`,
+            right: `${menuPosition.right}px`,
+            zIndex: 9999999,
+            background: '#ffffff',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            padding: '6px',
+            minWidth: '120px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+            fontFamily: 'Ownglyph_meetme-Rg, Noto Sans KR, Arial, sans-serif',
+          }}
+        >
+          <button
+            role="menuitem"
+            type="button"
+            onClick={() => {
+              const room = rows.find(r => r.key === openMenuKey)?.raw;
+              if (room) handleLeave(room);
+            }}
+            style={{
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              color: '#ff0000 ',
+              padding: '8px 12px',
+              textAlign: 'left',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'block',
+              fontWeight: '400',
+              transition: 'background-color 0.2s ease',
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#fee2e2'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+          >
+            나가기
+          </button>
+
+          {onRemove && (
+            <button
+              role="menuitem"
+              type="button"
+              onClick={() => {
+                const room = rows.find(r => r.key === openMenuKey)?.raw;
+                if (room) handleRemove(room);
+              }}
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                color: '#ff0000 ',
+                padding: '8px 12px',
+                textAlign: 'left',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'block',
+                fontWeight: '400',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#fee2e2'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            >
+              삭제하기
+            </button>
+          )}
+        </div>
+      )}
+    </>
   );
 }

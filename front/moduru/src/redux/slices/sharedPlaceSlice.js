@@ -112,10 +112,14 @@ const sharedPlaceSlice = createSlice({
      */
     setSharedPlaces(state, action) {
       const arr = Array.isArray(action.payload) ? action.payload : [];
+      console.log("[sharedPlaceSlice] setSharedPlaces 호출:", arr);
+      
       // 정규화(+ wantId/placeId 없는 것 필터)
       const normalized = arr
         .map(normalize)
         .filter((p) => p.wantId != null || p.placeId != null);
+
+      console.log("[sharedPlaceSlice] 정규화 후:", normalized);
 
       if (normalized.length === 0) {
         state.sharedPlaces = [];
@@ -129,6 +133,8 @@ const sharedPlaceSlice = createSlice({
         const old = prev[i];
         return { ...old, ...p, imgUrl: p.imgUrl ?? old.imgUrl };
       });
+      
+      console.log("[sharedPlaceSlice] 최종 저장:", merged);
       state.sharedPlaces = merged;
     },
 
@@ -184,6 +190,26 @@ const sharedPlaceSlice = createSlice({
     resetSharedPlaces(state) {
       state.sharedPlaces = [];
     },
+
+    /**
+     * 투표 상태 업데이트 (API 응답 또는 WebSocket)
+     */
+    updateVoteState(state, action) {
+      const { wantId, isVoted, voteCnt } = action.payload || {};
+      if (!wantId) return;
+
+      const idx = state.sharedPlaces.findIndex(
+        (p) => Number(p.wantId) === Number(wantId)
+      );
+      if (idx !== -1) {
+        const place = state.sharedPlaces[idx];
+        state.sharedPlaces[idx] = {
+          ...place,
+          isVoted: typeof isVoted === "boolean" ? isVoted : place.isVoted,
+          voteCnt: Number.isFinite(voteCnt) ? voteCnt : place.voteCnt,
+        };
+      }
+    },
   },
 });
 
@@ -192,6 +218,7 @@ export const {
   addSharedPlace,
   removeSharedPlace,
   resetSharedPlaces,
+  updateVoteState,
 } = sharedPlaceSlice.actions;
 
 /** 기본 셀렉터들 */

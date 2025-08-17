@@ -1,3 +1,4 @@
+// src/redux/slices/itinerarySlice.js
 import { createSlice, nanoid } from "@reduxjs/toolkit";
 
 const initialState = {
@@ -24,6 +25,36 @@ const itinerarySlice = createSlice({
   name: "itinerary",
   initialState,
   reducers: {
+    /** days 맵 전체 교체: { 'YYYY-MM-DD': Event[] } */
+    setDays(state, action) {
+      const incoming = action.payload;
+      if (
+        !incoming ||
+        typeof incoming !== "object" ||
+        Array.isArray(incoming)
+      ) {
+        state.days = {};
+        return;
+      }
+      const next = {};
+      for (const [dateKey, events] of Object.entries(incoming)) {
+        const arr = Array.isArray(events)
+          ? events.map((ev, idx) => {
+              const wantIdNum = toNum(ev?.wantId ?? ev?.id ?? ev?.placeId);
+              return {
+                ...ev,
+                entryId:
+                  ev?.entryId ?? `${wantIdNum ?? "ev"}:${idx}:${nanoid()}`,
+                wantId: wantIdNum,
+                eventOrder: toNum(ev?.eventOrder) ?? idx, // 0-based 보정
+              };
+            })
+          : [];
+        next[dateKey] = renumberDay(arr);
+      }
+      state.days = next;
+    },
+
     // 장소 추가: index가 있으면 그 위치에 삽입, 없으면 끝에 추가
     addPlaceToDay: {
       reducer(state, action) {
@@ -188,6 +219,7 @@ const itinerarySlice = createSlice({
 });
 
 export const {
+  setDays,
   addPlaceToDay,
   moveItemWithin,
   moveItemAcross,

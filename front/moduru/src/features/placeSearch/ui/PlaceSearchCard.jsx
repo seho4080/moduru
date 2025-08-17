@@ -1,6 +1,6 @@
 // src/features/placeSearch/ui/PlaceSearchCard.jsx
 import "./placeSearchCard.css";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setSelectedPlace, setPinCoords } from "../../../redux/slices/mapSlice";
 import LikedPlaceButton from "../../likedPlace/ui/LikedPlaceButton";
 import SharedToggleButton from "../../sharedPlace/ui/SharedToggleButton";
@@ -8,8 +8,22 @@ import { useMemo, useState } from "react";
 
 export default function PlaceSearchCard({ place, roomId }) {
   const dispatch = useDispatch();
+  
+  // place 객체 안전성 체크
+  if (!place) {
+    return <div className="place-card">장소 정보가 없습니다.</div>;
+  }
+  
   const { placeImg, placeName, category, latitude, longitude } = place;
   const [imgError, setImgError] = useState(false);
+
+  // 공유된 장소인지 확인
+  const sharedPlaces = useSelector((s) => s.sharedPlace?.sharedPlaces || []);
+  const isShared = useMemo(() => {
+    if (!place?.placeId) return false;
+    const placeId = typeof place.placeId === "object" ? place.placeId.placeId : place.placeId;
+    return sharedPlaces.some((p) => Number(p.placeId) === Number(placeId));
+  }, [sharedPlaces, place?.placeId]);
 
   const imgUrl = useMemo(() => {
     const cand =
@@ -22,13 +36,16 @@ export default function PlaceSearchCard({ place, roomId }) {
   }, [placeImg, place.placeImg, place.placeImages]);
 
   const handleClick = () => {
+    if (!place) return;
     dispatch(setSelectedPlace(place));
-    dispatch(setPinCoords({ lat: latitude, lng: longitude }));
+    if (latitude && longitude) {
+      dispatch(setPinCoords({ lat: latitude, lng: longitude }));
+    }
   };
 
   return (
     <div
-      className="place-card relative" // relative 추가
+      className={`place-card relative ${isShared ? 'shared-place' : ''}`}
       onClick={handleClick}
     >
       <div className="place-card-img-wrapper relative">
@@ -43,9 +60,16 @@ export default function PlaceSearchCard({ place, roomId }) {
           />
         )}
 
+        {/* 공유된 장소 표시 배지 */}
+        {isShared && (
+          <div className="absolute top-2 left-2 bg-emerald-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg z-10">
+            공유됨
+          </div>
+        )}
+
         {/* 공유 + 별 버튼 묶어서 항상 오른쪽 상단 */}
         <div
-          className="absolute top-2 right-2 flex items-center gap-2"
+          className="absolute top-2 right-2 flex items-center gap-2 z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 공유 토글 버튼 */}

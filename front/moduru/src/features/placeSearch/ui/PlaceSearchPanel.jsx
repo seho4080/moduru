@@ -1,3 +1,4 @@
+// src/features/placeSearch/ui/PlaceSearchPanel.jsx
 import React, { useState, useMemo, useRef } from "react";
 import { FiSearch } from "react-icons/fi";
 import { FaRobot } from "react-icons/fa";
@@ -7,7 +8,7 @@ import useLocalPaging from "../model/useLocalPaging";
 import PlaceSearchList from "./PlaceSearchList";
 import "./placeSearchPanel.css";
 
-// NOTE: 추가
+// NOTE: 키워드 검색 훅
 import { useKeywordSearch } from "../../keyWordSearch/model/useKeywordSearch";
 
 const PAGE_SIZE = 20;
@@ -31,7 +32,10 @@ const PlaceSearchPanel = ({ roomId }) => {
   };
 
   // 카테고리 데이터
-  const { places = [], loading: categoryLoading } = usePlaceSearch(roomId, selectedCategory);
+  const { places = [], loading: categoryLoading } = usePlaceSearch(
+    roomId,
+    selectedCategory
+  );
 
   // 키워드 검색 훅
   const {
@@ -41,7 +45,8 @@ const PlaceSearchPanel = ({ roomId }) => {
     results: keywordResults,
     error: keywordError,
     onChange,
-    onSubmit,
+    onSubmit,     // 🔍 일반 검색
+    onAiSubmit,   // 🤖 AI 검색
     clear,
   } = useKeywordSearch(roomId);
 
@@ -54,7 +59,10 @@ const PlaceSearchPanel = ({ roomId }) => {
     () =>
       rawList.map((p, idx) => ({
         ...p,
-        placeId: typeof p.placeId === "object" ? p.placeId?.placeId : p.placeId ?? p.id ?? idx,
+        placeId:
+          typeof p.placeId === "object"
+            ? p.placeId?.placeId
+            : p.placeId ?? p.id ?? idx,
       })),
     [rawList]
   );
@@ -72,9 +80,12 @@ const PlaceSearchPanel = ({ roomId }) => {
     scrollToTop();
   };
 
-  // 엔터 제출
+  // 엔터 제출: Enter → 일반, Ctrl/Cmd+Enter → AI
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      onAiSubmit();
+      scrollToTop();
+    } else if (e.key === "Enter") {
       onSubmit();
       scrollToTop();
     }
@@ -83,6 +94,12 @@ const PlaceSearchPanel = ({ roomId }) => {
   // 돋보기 클릭
   const handleSearchClick = () => {
     onSubmit();
+    scrollToTop();
+  };
+
+  // 🤖 로봇 클릭
+  const handleAiClick = () => {
+    onAiSubmit();
     scrollToTop();
   };
 
@@ -104,7 +121,7 @@ const PlaceSearchPanel = ({ roomId }) => {
             onChange={onChange}
             onKeyDown={handleKeyDown}
           />
-          {/* NOTE: X(지우기) 버튼을 왼쪽에 배치 */}
+          {/* X(지우기) 버튼 */}
           {keyword && (
             <button
               className="clear-icon-inside"
@@ -115,17 +132,26 @@ const PlaceSearchPanel = ({ roomId }) => {
               ×
             </button>
           )}
-          {/* NOTE: 🔍 검색 버튼을 맨 오른쪽에 배치 */}
+          {/* 🔍 검색 버튼 */}
           <button
             className="search-icon-inside"
             onClick={handleSearchClick}
             type="button"
             aria-label="검색"
+            disabled={!keyword.trim() || keywordLoading}
           >
             <FiSearch />
           </button>
         </div>
-        <button className="ai-robot-btn" title="AI 추천" type="button">
+        {/* 🤖 AI 버튼 */}
+        <button
+          className="ai-robot-btn"
+          title="AI 추천"
+          type="button"
+          onClick={handleAiClick}
+          disabled={!keyword.trim() || keywordLoading}
+          aria-label="AI 추천"
+        >
           <FaRobot />
         </button>
       </div>
@@ -137,7 +163,9 @@ const PlaceSearchPanel = ({ roomId }) => {
             {CATEGORY_OPTIONS.map((label) => (
               <button
                 key={label}
-                className={`category-tab ${selectedCategory === label ? "active" : ""}`}
+                className={`category-tab ${
+                  selectedCategory === label ? "active" : ""
+                }`}
                 onClick={() => handleCategoryClick(label)}
                 type="button"
               >
@@ -154,7 +182,11 @@ const PlaceSearchPanel = ({ roomId }) => {
         {loading ? (
           <p>장소 목록 불러오는 중...</p>
         ) : normalized.length === 0 ? (
-          <p>{isKeywordMode ? "검색 결과가 없습니다." : "해당 카테고리에 등록된 장소가 없어요."}</p>
+          <p>
+            {isKeywordMode
+              ? "검색 결과가 없습니다."
+              : "해당 카테고리에 등록된 장소가 없어요."}
+          </p>
         ) : (
           <>
             <PlaceSearchList places={slice} roomId={roomId} />
@@ -171,7 +203,9 @@ const PlaceSearchPanel = ({ roomId }) => {
             </div>
           </>
         )}
-        {isKeywordMode && keywordError && <p className="error-text">{keywordError}</p>}
+        {isKeywordMode && keywordError && (
+          <p className="error-text">{keywordError}</p>
+        )}
       </div>
     </div>
   );

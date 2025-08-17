@@ -78,7 +78,7 @@ export default function MainPage() {
     try {
       const travelRoomId = await createTripRoom();
       const travelRoomInfo = await getTripRoomInfo(travelRoomId);
-      navigate(`/trip-room/${travelRoomId}`, { state: travelRoomInfo, replace: true });
+      navigate(`/trip-room/${travelRoomId}`, { state: travelRoomInfo });
     } catch (err) {
       const status = err?.response?.status ?? err?.status;
       if (status === 401 || status === 403) {

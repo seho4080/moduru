@@ -9,14 +9,17 @@ import {
   closeReviewWrite,
 } from "../../redux/slices/uiSlice";
 import api from "../../lib/axios";
+import { getRoomSchedulePlaces } from "./lib/reviewApi";
 
-// 날짜 유틸
+// YYYY-MM-DD → 로컬 00:00 Date
 const toLocalDate = (s) => {
   if (!s) return null;
   const [y, m, d] = String(s).split("-").map(Number);
   if (!y || !m || !d) return null;
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 };
+
+// 종료일 < 오늘(00:00) → 종료 판단
 const isDone = (room) => {
   const today = new Date();
   const today00 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -50,16 +53,10 @@ export default function ReviewWriteHost() {
     }
   };
 
-  // 여행별 방문 장소
+  // 여행별 방문 장소 (백엔드가 placeId/카테고리 제공)
   const fetchPlacesByTrip = async (tripId) => {
     try {
-      const res = await api.get(`/travel-rooms/${tripId}/places`, { withCredentials: true });
-      const arr = Array.isArray(res.data) ? res.data : [];
-      return arr.map((p) => ({
-        id: p.id,
-        name: p.name ?? p.title ?? "(장소)",
-        address: p.address ?? p.roadAddress ?? "",
-      }));
+      return await getRoomSchedulePlaces(tripId);
     } catch (e) {
       console.error("[ReviewWriteHost] fetchPlacesByTrip error:", e?.response?.data || e);
       return [];
