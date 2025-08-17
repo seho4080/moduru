@@ -1,6 +1,5 @@
 // src/features/itinerary/ui/useCalcStatusByDate.js
 import { useEffect, useRef, useState } from "react";
-import { subscribeTravelStatus } from "../../webSocket/travelStatusSocket";
 
 /**
  * 날짜 배열 단위로 계산 상태/에러/타임아웃을 관리
@@ -70,11 +69,10 @@ export default function useCalcStatusByDate(roomId, dates, { notify } = {}) {
     clearTimeoutFor(dk);
   };
 
-  // 단일 토픽 구독
+  // 이동 시간 계산 상태/결과 이벤트 리스너
   useEffect(() => {
-    if (!roomId) return;
-
-    const off = subscribeTravelStatus(roomId, ({ status, body }) => {
+    const handleTravelStatusUpdate = ({ detail }) => {
+      const { status, body } = detail;
       const dayNum = Number(body?.day);
       const dk =
         Number.isFinite(dayNum) && dayNum > 0 ? dates[dayNum - 1] : null;
@@ -112,15 +110,24 @@ export default function useCalcStatusByDate(roomId, dates, { notify } = {}) {
         default:
           break;
       }
-    });
+    };
+
+    const handleTravelResultUpdate = ({ detail }) => {
+      // result만 도착(DONE 누락)하는 서버 대응
+      markResolvedFromResult(detail);
+    };
+
+    window.addEventListener('travel-status-update', handleTravelStatusUpdate);
+    window.addEventListener('travel-result-update', handleTravelResultUpdate);
 
     return () => {
-      off?.();
+      window.removeEventListener('travel-status-update', handleTravelStatusUpdate);
+      window.removeEventListener('travel-result-update', handleTravelResultUpdate);
       // 안전하게 모든 타이머 제거
       Object.values(timersRef.current).forEach((t) => clearTimeout(t));
       timersRef.current = {};
     };
-  }, [roomId, dates, notify]);
+  }, [dates, notify]);
 
   return {
     loadingByDate,
