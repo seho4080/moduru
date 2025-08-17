@@ -126,10 +126,9 @@ public class RoomServiceImpl implements RoomService {
   @Transactional
   public Long createCustomPlace(CustomPlaceCreateRequestDto dto) {
     TravelRoom room =
-        travelRoomRepository
-            .findById(dto.getRoomId())
-            .orElseThrow(() -> new IllegalArgumentException("해당 room이 존재하지 않습니다."));
-
+            travelRoomRepository
+                    .findById(dto.getRoomId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
     // 카카오 API로 주소 받아오기
     String address = kakaomapService.getAddressFromCoords(dto.getLat(), dto.getLng()).getAddress();
 
@@ -233,5 +232,20 @@ public class RoomServiceImpl implements RoomService {
             ? regionRepository.findAllByParentIsNullOrderByName()
             : regionRepository.findAllByParentIdOrderByName(parentId);
     return regions.stream().map(RegionResponseDto::from).toList();
+  }
+
+  @Override
+  public TravelRoomResponseDto getRoomInfo(Long roomId) {
+    TravelRoom room = travelRoomRepository
+            .findById(roomId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ROOM_NOT_FOUND));
+
+    return TravelRoomResponseDto.builder()
+            .travelRoomId(room.getId())
+            .title(room.getTitle())
+            .region(room.getRegion().getName())
+            .startDate(room.getStartDate())
+            .endDate(room.getEndDate())
+            .build();
   }
 }
