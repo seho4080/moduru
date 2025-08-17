@@ -5,7 +5,7 @@ import StepTitle from "./ui/StepTitle";
 import SelectBox from "./ui/SelectBox";
 import DropdownPanel from "./ui/DropdownPanel";
 import ReviewTags from "./ui/ReviewTags";
-import { createReview } from "./lib/reviewApi";
+import { createReview, getReviewTagsByCategory } from "./lib/reviewApi";
 
 export default function ReviewWrite({
   open,
@@ -52,6 +52,60 @@ export default function ReviewWrite({
 
   const onOverlayClick = (e) => { if (e.target === overlayRef.current) onClose?.(); };
 
+  // ----- 유틸: 태그 id/텍스트 추출 -----
+  const toId = (x) => {
+    if (x == null) return null;
+    if (typeof x === "object") {
+      const v = x.id ?? x.tagId ?? x.value;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+    const n = Number(x);
+    return Number.isFinite(n) ? n : null;
+  };
+  const toText = (x) => {
+    if (x == null) return "";
+    if (typeof x === "object") {
+      return String(x.content ?? x.label ?? x.name ?? "").trim().toLowerCase();
+    }
+    return String(x).trim().toLowerCase();
+  };
+
+  // tagIds 1차 해석 (숫자/객체에서 바로 뽑기)
+  const getTagIdsQuick = (arr) =>
+    [...new Set(arr.map(toId).filter((v) => Number.isFinite(v)))];
+
+  // 2차 보정: content/label 텍스트로 카테고리 태그 목록과 매칭
+  const resolveTagIds = async () => {
+    // 1) 빠른 해석
+    const quick = getTagIdsQuick(selectedKeywords);
+    if (quick.length > 0) return quick;
+
+    // 2) 카테고리 매칭
+    const catId = selectedPlace?.categoryId;
+    if (!catId) return [];
+
+    try {
+      const catalog = await getReviewTagsByCategory(catId); // [{id, content, ...}]
+      const map = new Map(
+        catalog
+          .filter((t) => t?.id && t?.content)
+          .map((t) => [String(t.content).trim().toLowerCase(), Number(t.id)])
+      );
+
+      const ids = [...new Set(
+        selectedKeywords
+          .map(toText)
+          .map((txt) => map.get(txt))
+          .filter((n) => Number.isFinite(n))
+      )];
+
+      return ids;
+    } catch {
+      return [];
+    }
+  };
+
   // step 토글 시 데이터 로딩
   const toggleOpen = async (step) => {
     if (step === 1 && isTripLocked) return;
@@ -79,33 +133,35 @@ export default function ReviewWrite({
     }
   };
 
-  // 작성 버튼 활성화: 여행 + 장소 + 키워드 ≥ 1
-  const canSubmit = !!selectedTrip && !!selectedPlace && selectedKeywords.length > 0 && !submitting;
-
-  // 태그 id 추출
-  const toId = (x) => {
-    if (x == null) return null;
-    if (typeof x === "object") return x.id ?? x.tagId ?? null;
-    const n = Number(x);
-    return Number.isFinite(n) ? n : null;
-  };
+  // ✅ 버튼 활성화 조건: 예전처럼 '선택 개수' 기준 유지
+  const canSubmit =
+    !!selectedTrip &&
+    !!selectedPlace &&
+    selectedKeywords.length > 0 &&
+    !submitting;
 
   // 제출
   const submit = async () => {
     if (!canSubmit) return;
 
-    const tagIds = [...new Set(selectedKeywords.map(toId).filter(Boolean))];
+    // tagIds를 안전하게 해석/보정
+    const tagIds = await resolveTagIds();
+    if (tagIds.length === 0) {
+      alert("선택한 키워드에서 태그 번호를 찾지 못했어요. 다른 키워드를 선택해보세요.");
+      return;
+    }
+
     const payload = {
-      tripId: selectedTrip.id,     // 백엔드에서 사용하지 않으면 무시됨
-      placeId: selectedPlace.id,   // reviewApi.createReview에서 검증
-      ...(tagIds.length > 0 ? { tagIds } : { tags: selectedKeywords }),
+      tripId: selectedTrip.id,   // 백엔드에서 사용하지 않으면 무시됨
+      placeId: selectedPlace.id,
+      tagIds,                    // 항상 숫자 id 배열
     };
 
     try {
       setSubmitting(true);
       const res = await createReview(payload);
       console.log("[리뷰 작성 성공]", res);
-      onStart?.({ trip: selectedTrip, place: selectedPlace, tagIds, tags: selectedKeywords });
+      onStart?.({ trip: selectedTrip, place: selectedPlace, tagIds });
       onClose?.();
     } catch (e) {
       console.error("[리뷰 작성 실패]", e?.response?.data || e);
@@ -243,13 +299,18 @@ export default function ReviewWrite({
           <section className="mb-6">
             <StepTitle title="step3. 키워드 선택" />
             <ReviewTags
+              key={`rt-${selectedPlace?.categoryId ?? 'none'}`}  // ← 카테고리 바뀌면 강제 리마운트
               enabled={!!selectedTrip && !!selectedPlace}
               selected={selectedKeywords}
               onChange={setSelectedKeywords}
-              // ✅ 선택된 장소의 카테고리를 전달해 자동 로딩
-              categoryId={selectedPlace?.categoryId ?? undefined}
+              categoryId={
+                selectedPlace?.categoryId != null
+                  ? Number(selectedPlace.categoryId)   // ← 숫자로 강제
+                  : undefined
+              }
             />
           </section>
+
         </div>
 
         {/* 푸터 */}

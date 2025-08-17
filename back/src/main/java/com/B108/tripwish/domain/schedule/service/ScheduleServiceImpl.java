@@ -257,16 +257,17 @@ public class ScheduleServiceImpl implements ScheduleService {
         .build();
   }
 
-    @Override
-    public List<SchedulePlaceResponseDto> getPlaceListBySchedule(Long roomId) {
-        return scheduleRepository.findPlaceNameAddrByRoomId(roomId).stream()
-                .map(r -> SchedulePlaceResponseDto.builder()
-                        .placeId(r.getPlaceId())
-                        .categoryId(r.getCategoryId())
-                        .placeName(r.getPlaceName())
-                        .address(r.getAddress())
-                        .build())
-                .toList();
-    }
-
+  @Override
+  public List<SchedulePlaceResponseDto> getPlaceListBySchedule(Long roomId) {
+    return scheduleRepository.findPlaceNameAddrByRoomId(roomId).stream()
+        .map(
+            r ->
+                SchedulePlaceResponseDto.builder()
+                    .placeId(r.getPlaceId())
+                    .categoryId(r.getCategoryId())
+                    .placeName(r.getPlaceName())
+                    .address(r.getAddress())
+                    .build())
+        .toList();
+  }
 }

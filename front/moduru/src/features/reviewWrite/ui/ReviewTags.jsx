@@ -1,60 +1,65 @@
-// src/features/reviewWrite/ui/ThemeTags.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { getReviewTagsByCategory } from "../lib/reviewApi";
 import "../../reviewWrite/reviewWrite.css"; // 칩 스타일 재사용
 
-export default function ReviewTags({
+export default function ThemeTags({
   enabled,            // step1, step2 완료 여부
-  selected = [],      // 선택된 content 배열
-  onChange,           // (nextSelected) => void
-  categoryId = 1,     // API 카테고리(고정 1)
+  selected = [],      // 선택된 content 문자열 배열
+  onChange,           // (nextSelected: string[]) => void
+  categoryId          // 선택된 장소의 카테고리 id
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
-  const [tags, setTags]       = useState([]); // 원본
+  const [tags, setTags]       = useState([]); // [{id, content, categoryId, categoryName}]
 
   useEffect(() => {
+    // 비활성 또는 카테고리 미지정 시 목록 비움
     if (!enabled || categoryId == null) {
-      setTags([]);            // 비활성/미지정 시 정리 (원하면 유지해도 됨)
+      setTags([]);
+      setError("");
       return;
     }
 
-    const ac = new AbortController();
     let alive = true;
-
     setLoading(true);
     setError("");
 
-    getReviewTagsByCategory(categoryId, { signal: ac.signal })
-      .then((data) => {
+    // reviewApi가 signal 옵션을 받지 않아도 무시되므로 안전
+    (async () => {
+      try {
+        const data = await getReviewTagsByCategory(Number(categoryId));
         if (!alive) return;
         setTags(Array.isArray(data) ? data : []);
-      })
-      .catch((e) => {
+      } catch (e) {
         if (!alive) return;
-        // axios v1: abort 시 CanceledError / DOMException("AbortError")
-        if (e.name === "CanceledError" || e.name === "AbortError") return;
         setError("태그를 불러오지 못했습니다.");
-      })
-      .finally(() => {
+        setTags([]);
+      } finally {
         if (alive) setLoading(false);
-      });
+      }
+    })();
 
-    return () => {
-      alive = false;
-      ac.abort(); // 🔴 이전 요청 취소
-    };
+    return () => { alive = false; };
   }, [enabled, categoryId]);
 
+  // ✅ 공통/테마 분리 로직: 공통(categoryId===4) + 현재 카테고리(categoryId===props.categoryId)
   const { commonTags, themedTags } = useMemo(() => {
-    const common = tags.filter(t => t.categoryId === 4);
-    const themed = tags.filter(t => t.categoryId === 1);
-    return { commonTags: common, themedTags: themed };
-  }, [tags]);
+    const catNum = Number(categoryId);
+    const isCommon = (t) =>
+      Number(t?.categoryId) === 4 ||
+      String(t?.categoryName ?? "").toLowerCase().includes("공통");
+
+    const isThemed = (t) => Number(t?.categoryId) === catNum;
+
+    return {
+      commonTags: tags.filter(isCommon),
+      themedTags: tags.filter(isThemed),
+    };
+  }, [tags, categoryId]);
 
   const toggle = (content) => {
     const has = selected.includes(content);
-    const next = has ? selected.filter(x => x !== content) : [...selected, content];
+    const next = has ? selected.filter((x) => x !== content) : [...selected, content];
     onChange?.(next);
   };
 
@@ -68,7 +73,7 @@ export default function ReviewTags({
         <TagGroup title="자주 쓰는 키워드" items={commonTags} selected={selected} onToggle={toggle} />
       )}
       {themedTags.length > 0 && (
-        <TagGroup title="테마별 테그" items={themedTags} selected={selected} onToggle={toggle} />
+        <TagGroup title="테마별 태그" items={themedTags} selected={selected} onToggle={toggle} />
       )}
       {commonTags.length === 0 && themedTags.length === 0 && (
         <div className="rw-meta text-sm text-gray-500">표시할 태그가 없습니다.</div>
@@ -82,7 +87,7 @@ function TagGroup({ title, items, selected, onToggle }) {
     <div className="rw-tag-group">
       <div className="rw-tag-title">{title}</div>
       <div className="flex flex-wrap">
-        {items.map(tag => {
+        {items.map((tag) => {
           const active = selected.includes(tag.content);
           return (
             <button

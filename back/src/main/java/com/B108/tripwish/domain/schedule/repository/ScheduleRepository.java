@@ -33,7 +33,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
       nativeQuery = true)
   List<Object[]> findPlaceNameAddrOfLatestScheduleByRoomId(@Param("roomId") Long roomId);
 
-  @Query(value = """
+  @Query(
+      value =
+          """
 WITH ranked AS (
   SELECT
       p.id                                         AS placeId,
@@ -53,8 +55,7 @@ SELECT placeId, categoryId, placeName, address
 FROM ranked
 WHERE rn = 1
 ORDER BY day, event_order, event_id
-""", nativeQuery = true)
+""",
+      nativeQuery = true)
   List<SchedulePlaceRow> findPlaceNameAddrByRoomId(@Param("roomId") Long roomId);
-
-
 }
