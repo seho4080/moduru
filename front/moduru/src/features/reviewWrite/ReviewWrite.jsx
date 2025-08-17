@@ -12,7 +12,7 @@ export default function ReviewWrite({
   onClose,
   onStart,
   fetchTrips,          // () => Promise<{id,title,period}[]>
-  fetchPlacesByTrip,   // (tripId) => Promise<{id,name,address}[]>
+  fetchPlacesByTrip,   // (tripId) => Promise<{id,name,address,categoryId?}[]>
   initialTrip,         // { id, title, period } | null
 }) {
   if (!open) return null;
@@ -20,37 +20,26 @@ export default function ReviewWrite({
   const [activeTab, setActiveTab] = useState(0); // 0=닫힘, 1=step1, 2=step2
   const [trips, setTrips] = useState([]);
   const [places, setPlaces] = useState([]);
-  const [loading, setLoading] = useState(false);     // 리스트 로딩
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const [selectedKeywords, setSelectedKeywords] = useState([]); // 문자열 or 객체 혼재 가능
+  const [selectedKeywords, setSelectedKeywords] = useState([]);
 
   const [submitting, setSubmitting] = useState(false);
 
   const overlayRef = useRef(null);
-  // 토글 막는 코드
   const isTripLocked = !!initialTrip?.id;
-  // ====== 초기 프리셀렉트 처리 ======
+
+  // 초기 프리셀렉트
   useEffect(() => {
     if (!open) return;
     if (initialTrip?.id) {
       setSelectedTrip(initialTrip);
       setSelectedPlace(null);
       setSelectedKeywords([]);
-      setActiveTab(0); // 필요시 2로 열고 자동 로드하고 싶으면 아래 주석 참고
-      // if (fetchPlacesByTrip) {
-      //   (async () => {
-      //     setLoading(true); setError("");
-      //     try {
-      //       const list = await fetchPlacesByTrip(initialTrip.id);
-      //       setPlaces(Array.isArray(list) ? list : []);
-      //       setActiveTab(2);
-      //     } catch { setError("장소 목록을 불러오지 못했습니다."); }
-      //     finally { setLoading(false); }
-      //   })();
-      // }
+      setActiveTab(0);
     }
   }, [open, initialTrip, fetchPlacesByTrip]);
 
@@ -65,7 +54,7 @@ export default function ReviewWrite({
 
   // step 토글 시 데이터 로딩
   const toggleOpen = async (step) => {
-    if (step === 1 && isTripLocked) return; // step1 잠금
+    if (step === 1 && isTripLocked) return;
     const willOpen = activeTab !== step ? step : 0;
     setActiveTab(willOpen);
 
@@ -90,10 +79,10 @@ export default function ReviewWrite({
     }
   };
 
-  // 작성 버튼 활성화 조건: 여행 + 장소 + 키워드 ≥ 1
+  // 작성 버튼 활성화: 여행 + 장소 + 키워드 ≥ 1
   const canSubmit = !!selectedTrip && !!selectedPlace && selectedKeywords.length > 0 && !submitting;
 
-  // 유틸: 태그 배열에서 id 추출(객체/숫자/문자열 혼재 대응)
+  // 태그 id 추출
   const toId = (x) => {
     if (x == null) return null;
     if (typeof x === "object") return x.id ?? x.tagId ?? null;
@@ -107,9 +96,9 @@ export default function ReviewWrite({
 
     const tagIds = [...new Set(selectedKeywords.map(toId).filter(Boolean))];
     const payload = {
-      tripId: selectedTrip.id,          // 백엔드가 필요 없다면 무시됨
-      placeId: selectedPlace.id,
-      ...(tagIds.length > 0 ? { tagIds } : { tags: selectedKeywords }), // id가 있으면 id 우선
+      tripId: selectedTrip.id,     // 백엔드에서 사용하지 않으면 무시됨
+      placeId: selectedPlace.id,   // reviewApi.createReview에서 검증
+      ...(tagIds.length > 0 ? { tagIds } : { tags: selectedKeywords }),
     };
 
     try {
@@ -151,61 +140,60 @@ export default function ReviewWrite({
         {/* 본문 */}
         <div className="max-h-[72vh] overflow-y-auto px-6 py-6">
           {/* step1 */}
-<section className="mb-8">
-  <StepTitle title="step1. 여행지" />
-  {isTripLocked ? (
-    // 🔒 잠금 모드: 정적 표시만 (클릭/토글 없음)
-    <div
-      className="rw-item flex w-full items-center justify-between rounded-lg border px-3 py-3 bg-gray-50 cursor-default select-none"
-      aria-disabled="true"
-    >
-      <div>
-        <div className="rw-item-title">
-          {selectedTrip?.title ?? initialTrip?.title ?? "여행"}
-        </div>
-        {(selectedTrip?.period ?? initialTrip?.period) && (
-          <div className="rw-meta">{selectedTrip?.period ?? initialTrip?.period}</div>
-        )}
-      </div>
-    </div>
-  ) : (
-    <>
-      <SelectBox
-        id="step1"
-        isOpen={activeTab === 1}
-        disabled={false}
-        label={selectedTrip ? selectedTrip.title : "여행을 선택하세요"}
-        description={selectedTrip?.period}
-        onClick={() => toggleOpen(1)}
-      />
-      {activeTab === 1 && (
-        <DropdownPanel loading={loading} error={error} emptyMessage="여행 기록이 없습니다.">
-          <ul className="divide-y">
-            {trips.map((t) => (
-              <li key={t.id}>
-                <button
-                  className="rw-item flex w-full items-center justify-between px-3 py-3 text-left hover:bg-gray-50"
-                  onClick={() => {
-                    setSelectedTrip(t);
-                    setSelectedPlace(null);
-                    setSelectedKeywords([]);
-                    setPlaces([]);
-                    setActiveTab(0);
-                  }}
-                >
-                  <div>
-                    <div className="rw-item-title">{t.title}</div>
-                    {t.period && <div className="rw-meta">{t.period}</div>}
+          <section className="mb-8">
+            <StepTitle title="step1. 여행지" />
+            {isTripLocked ? (
+              <div
+                className="rw-item flex w-full items-center justify-between rounded-lg border px-3 py-3 bg-gray-50 cursor-default select-none"
+                aria-disabled="true"
+              >
+                <div>
+                  <div className="rw-item-title">
+                    {selectedTrip?.title ?? initialTrip?.title ?? "여행"}
                   </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </DropdownPanel>
-      )}
-    </>
-  )}
-</section>
+                  {(selectedTrip?.period ?? initialTrip?.period) && (
+                    <div className="rw-meta">{selectedTrip?.period ?? initialTrip?.period}</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                <SelectBox
+                  id="step1"
+                  isOpen={activeTab === 1}
+                  disabled={false}
+                  label={selectedTrip ? selectedTrip.title : "여행을 선택하세요"}
+                  description={selectedTrip?.period}
+                  onClick={() => toggleOpen(1)}
+                />
+                {activeTab === 1 && (
+                  <DropdownPanel loading={loading} error={error} emptyMessage="여행 기록이 없습니다.">
+                    <ul className="divide-y">
+                      {trips.map((t) => (
+                        <li key={t.id}>
+                          <button
+                            className="rw-item flex w-full items-center justify-between px-3 py-3 text-left hover:bg-gray-50"
+                            onClick={() => {
+                              setSelectedTrip(t);
+                              setSelectedPlace(null);
+                              setSelectedKeywords([]);
+                              setPlaces([]);
+                              setActiveTab(0);
+                            }}
+                          >
+                            <div>
+                              <div className="rw-item-title">{t.title}</div>
+                              {t.period && <div className="rw-meta">{t.period}</div>}
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </DropdownPanel>
+                )}
+              </>
+            )}
+          </section>
 
           {/* step2 */}
           <section className="mb-8">
@@ -230,7 +218,7 @@ export default function ReviewWrite({
               >
                 <ul className="divide-y">
                   {places.map((p) => (
-                    <li key={p.id}>
+                    <li key={p.id ?? `${p.name}-${p.address}`}>
                       <button
                         className="rw-item flex w-full items-center justify-between px-3 py-3 text-left hover:bg-gray-50"
                         onClick={() => {
@@ -258,7 +246,8 @@ export default function ReviewWrite({
               enabled={!!selectedTrip && !!selectedPlace}
               selected={selectedKeywords}
               onChange={setSelectedKeywords}
-              categoryId={1} // 현재 요청: 1 고정
+              // ✅ 선택된 장소의 카테고리를 전달해 자동 로딩
+              categoryId={selectedPlace?.categoryId ?? undefined}
             />
           </section>
         </div>
