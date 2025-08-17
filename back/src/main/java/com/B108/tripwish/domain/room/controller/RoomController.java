@@ -2,7 +2,6 @@ package com.B108.tripwish.domain.room.controller;
 
 import java.util.List;
 
-import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +18,7 @@ import com.B108.tripwish.global.common.dto.RegionResponseDto;
 import com.B108.tripwish.global.exception.ErrorResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -272,24 +272,28 @@ public class RoomController {
   }
 
   @Operation(
-          summary = "여행방 정보 조회",
-          description = """
+      summary = "여행방 정보 조회",
+      description =
+          """
     여행방 ID를 기반으로 해당 여행방의 기본 정보를 조회합니다.
     조회 가능한 정보는 방 제목, 지역, 여행 시작일과 종료일입니다.
     """,
-          parameters = {
-                  @Parameter(name = "roomId", description = "여행 방 ID", required = true, example = "1")
-          },
-          responses = {
-                  @ApiResponse(responseCode = "200", description = "조회 성공",
-                          content = @Content(schema = @Schema(implementation = TravelRoomResponseDto.class))),
-                  @ApiResponse(responseCode = "404", description = "여행 방을 찾을 수 없음",
-                          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-          }
-  )
+      parameters = {
+        @Parameter(name = "roomId", description = "여행 방 ID", required = true, example = "1")
+      },
+      responses = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = TravelRoomResponseDto.class))),
+        @ApiResponse(
+            responseCode = "404",
+            description = "여행 방을 찾을 수 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      })
   @GetMapping("/{roomId}/info")
-  public ResponseEntity<TravelRoomResponseDto> getTravelRoomInfo(@AuthenticationPrincipal CustomUserDetails user,
-                                                                 @PathVariable Long roomId){
+  public ResponseEntity<TravelRoomResponseDto> getTravelRoomInfo(
+      @AuthenticationPrincipal CustomUserDetails user, @PathVariable Long roomId) {
     TravelRoomResponseDto response = roomService.getRoomInfo(roomId);
     return ResponseEntity.ok(response);
   }

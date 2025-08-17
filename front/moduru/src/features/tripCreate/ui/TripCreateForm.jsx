@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import TripNameInput from './TripNameInput';
 import RegionDropdown from './RegionDropdown';
 import TripDatePicker from './TripDatePicker';
@@ -27,7 +27,7 @@ function stripTitleToYmd(s) {
 
 export default function TripCreateForm({
   roomId,               // 업데이트 대상 방 id (필수)
-  fallbackTitle,        // 기존 방 제목. 입력이 비었을 때 대체 사용
+  fallbackTitle,        // 기존 방 제목 (표시용 대체)
   tripName, setTripName,
   region, setRegion,
   dates, setDates,      // [startDate: Date|null, endDate: Date|null]
@@ -46,17 +46,17 @@ export default function TripCreateForm({
       setIsLoadingData(true);
       try {
         const roomInfo = await getTripRoomInfoForModal(roomId);
-        
+
         // 제목 업데이트
         if (roomInfo.title) {
           setTripName(roomInfo.title);
         }
-        
+
         // 지역 업데이트
         if (roomInfo.region) {
           setRegion(roomInfo.region);
         }
-        
+
         // 날짜 업데이트
         if (roomInfo.startDate && roomInfo.endDate) {
           const startDate = new Date(roomInfo.startDate);
@@ -106,6 +106,14 @@ export default function TripCreateForm({
   );
 
   const handleSave = async () => {
+    // 제목 검증: 공백/빈값 금지
+    const rawTitle = (displayTitle ?? '').trim();
+    if (!rawTitle) {
+      setErrorText('방 이름은 1자 이상 입력해주세요.');
+      return;
+    }
+
+    // 지역 검증
     if (!region || !region.trim()) {
       setErrorText('지역을 선택하세요.');
       return;
@@ -122,11 +130,7 @@ export default function TripCreateForm({
     setLoading(true);
     setErrorText('');
 
-    const rawTitle = (displayTitle && displayTitle.trim().length > 0)
-      ? displayTitle.trim()
-      : (fallbackTitle || '');
     const titleToSend = stripTitleToYmd(rawTitle); // 안전빵
-
     const start = hasStart ? toYmd(dates[0]) : todayYmd();
     const end   = hasEnd   ? toYmd(dates[1]) : todayYmd();
 
@@ -145,8 +149,7 @@ export default function TripCreateForm({
       window.dispatchEvent(new CustomEvent('schedule:state', { detail: { roomId, state: 'idle' } }));
 
       onSuccess?.(normalized);
-      // 여기서는 닫지 않음 (Host가 onSuccess에서 닫음)
-      // onClose?.();
+      // 닫기는 Host가 onSuccess에서 처리
     } catch (e) {
       setErrorText(e?.message ?? '업데이트 중 오류가 발생했습니다.');
     } finally {
@@ -169,14 +172,14 @@ export default function TripCreateForm({
           </div>
         ) : (
           <>
-            {/* 여행방 이름 */}
-            <TripNameInput value={tripName ?? ''} onChange={setTripName} />
+            {/* 여행방 이름 (YYYY-MM-DD까지만 표시/유지) */}
+            <TripNameInput value={displayTitle} onChange={handleTitleChange} />
 
             {/* 지역(필수) */}
-            <RegionDropdown value={region} onChange={setRegion} />
+            <RegionDropdown value={region ?? ''} onChange={handleRegionChange} />
 
             {/* 날짜: 미선택 시 오늘로 자동 대체 */}
-            <TripDatePicker value={dates} onChange={setDates} />
+            <TripDatePicker value={dates} onChange={handleDatesChange} />
 
             {errorText && (
               <div style={{ color: '#d32f2f', marginTop: 8, fontSize: 13 }}>
