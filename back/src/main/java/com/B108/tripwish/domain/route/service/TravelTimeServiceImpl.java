@@ -4,6 +4,7 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.room.entity.WantPlace;
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TravelTimeServiceImpl implements TravelTimeService {
@@ -85,7 +87,8 @@ public class TravelTimeServiceImpl implements TravelTimeService {
     List<Node> nodes = resolveNodes(ordered);
     double meters =
         haversineMeters(nodes.get(0).lat, nodes.get(0).lng, nodes.get(1).lat, nodes.get(1).lng);
-    boolean near = meters <= 1500.0;
+    // 근거리 기준을 늘려서 도보 계산도 함께 수행 (1000m 이하)
+    boolean near = meters <= 1000.0;
 
     if (near) {
       Mono<RouteResultResponseDto> walk =
@@ -113,21 +116,37 @@ public class TravelTimeServiceImpl implements TravelTimeService {
 
     double meters =
         haversineMeters(nodes.get(0).lat, nodes.get(0).lng, nodes.get(1).lat, nodes.get(1).lng);
-    boolean near = meters <= 1500.0;
+    // 근거리 기준을 늘려서 도보 계산도 함께 수행 (1000m 이하)
+    boolean near = meters <= 1000.0;
+
+    log.info("🚶‍♂️ [transit-smart] 거리: {}m, 근거리여부: {}", meters, near);
 
     if (near) {
+      log.info("🚶‍♂️ [transit-smart] 근거리 감지 - 도보와 대중교통 비교 시작");
       Mono<RouteResultResponseDto> walk =
           Mono.fromSupplier(() -> estimateWalking(roomId, day, nodes));
       Mono<RouteResultResponseDto> tran =
           Mono.fromSupplier(() -> estimateTransitPerLeg(roomId, day, date, nodes));
       return Mono.zip(walk, tran)
           .map(
-              t ->
-                  t.getT1().getTotalDurationSec() <= t.getT2().getTotalDurationSec()
-                      ? t.getT1()
-                      : t.getT2())
+              t -> {
+                long walkSec = t.getT1().getTotalDurationSec();
+                long tranSec = t.getT2().getTotalDurationSec();
+                
+                // 도보 계산이 실패했거나 0초인 경우 대중교통 선택
+                if (walkSec <= 0) {
+                  log.info("🚶‍♂️ [transit-smart] 도보 계산 실패 또는 0초 - 대중교통 선택");
+                  return t.getT2();
+                }
+                
+                RouteResultResponseDto result = walkSec <= tranSec ? t.getT1() : t.getT2();
+                log.info("🚶‍♂️ [transit-smart] 비교 결과 - 도보: {}초, 대중교통: {}초, 선택: {}", 
+                    walkSec, tranSec, walkSec <= tranSec ? "도보" : "대중교통");
+                return result;
+              })
           .block();
     } else {
+      log.info("🚶‍♂️ [transit-smart] 원거리 - 대중교통만 계산");
       return estimateTransitPerLeg(roomId, day, date, nodes);
     }
   }
@@ -237,21 +256,50 @@ public class TravelTimeServiceImpl implements TravelTimeService {
   }
 
   /* =========================================================
-   * WALKING (Google, 전체 한 번 호출)
+   * WALKING (Google, leg별 호출) - waypoints 문제 해결
    * ========================================================= */
   private RouteResultResponseDto estimateWalking(Long roomId, int day, List<Node> nodes) {
     if (nodes.size() < 2) return RouteResultResponseDto.empty();
 
-    String origin = ll(nodes.get(0));
-    String dest = ll(nodes.get(nodes.size() - 1));
-    String wps =
-        google.joinWaypointsFromPoints(
-            nodes.stream().map(n -> new GoogleDirectionsClient.LatLng(n.lat, n.lng)).toList(),
-            false // 정차 지점으로 넣어서 legs 생성
-            );
+    log.info("🚶‍♂️ [walking] 도보 계산 시작 - 노드 수: {}", nodes.size());
 
-    String json = google.walking(origin, dest, wps).block();
-    return parseWholeRoute(roomId, day, json, nodes, TransportType.walking);
+    long totalDist = 0, totalSec = 0;
+    List<LegResponseDto> legs = new ArrayList<>();
+
+    for (int i = 0; i < nodes.size() - 1; i++) {
+      Node from = nodes.get(i);
+      Node to = nodes.get(i + 1);
+
+      log.info("🚶‍♂️ [walking] leg {}: {} -> {} ({} -> {})", 
+          i + 1, from.wantId, to.wantId, ll(from), ll(to));
+
+      String json = google.walking(ll(from), ll(to), null).block();
+      log.info("🚶‍♂️ [walking] Google API 응답 길이: {}", json != null ? json.length() : 0);
+      
+      LegResponseDto leg = parseSingleLeg(json, from.wantId, to.wantId(), TransportType.walking);
+      legs.add(leg);
+
+      log.info("🚶‍♂️ [walking] leg {} 결과: {}m, {}초", 
+          i + 1, leg.getDistanceMeters(), leg.getDurationSec());
+
+      totalDist += leg.getDistanceMeters();
+      totalSec += leg.getDurationSec();
+    }
+
+    RouteResultResponseDto result = RouteResultResponseDto.builder()
+        .roomId(roomId)
+        .day(day)
+        .transport(TransportType.walking)
+        .totalDistanceMeters(totalDist)
+        .totalDurationSec(totalSec)
+        .legs(legs)
+        .polyline(null)
+        .build();
+
+    log.info("🚶‍♂️ [walking] 도보 계산 결과: {}m, {}초", 
+        result.getTotalDistanceMeters(), result.getTotalDurationSec());
+
+    return result;
   }
 
   /* =========================================================
@@ -260,6 +308,8 @@ public class TravelTimeServiceImpl implements TravelTimeService {
   private RouteResultResponseDto estimateTransitPerLeg(
       Long roomId, int day, LocalDate date, List<Node> nodes) {
     if (nodes.size() < 2) return RouteResultResponseDto.empty();
+
+    log.info("🚌 [transit-per-leg] 대중교통 계산 시작 - 노드 수: {}", nodes.size());
 
     long totalDist = 0, totalSec = 0;
     List<LegResponseDto> legs = new ArrayList<>();
@@ -270,13 +320,23 @@ public class TravelTimeServiceImpl implements TravelTimeService {
             ? ZonedDateTime.of(date, nodes.get(0).endTime, ZONE).toInstant()
             : Instant.now();
 
+    log.info("🚌 [transit-per-leg] 출발시간: {}", currentDeparture);
+
     for (int i = 0; i < nodes.size() - 1; i++) {
       Node from = nodes.get(i);
       Node to = nodes.get(i + 1);
 
+      log.info("🚌 [transit-per-leg] leg {}: {} -> {} ({} -> {})", 
+          i + 1, from.wantId, to.wantId, ll(from), ll(to));
+
       String json = google.transit(ll(from), ll(to), null, currentDeparture).block();
-      LegResponseDto leg = parseSingleLeg(json, from.wantId, to.wantId());
+      log.info("🚌 [transit-per-leg] Google API 응답 길이: {}", json != null ? json.length() : 0);
+      
+      LegResponseDto leg = parseSingleLeg(json, from.wantId, to.wantId(), TransportType.transit);
       legs.add(leg);
+
+      log.info("🚌 [transit-per-leg] leg {} 결과: {}m, {}초", 
+          i + 1, leg.getDistanceMeters(), leg.getDurationSec());
 
       totalDist += leg.getDistanceMeters();
       totalSec += leg.getDurationSec();
@@ -326,11 +386,25 @@ public class TravelTimeServiceImpl implements TravelTimeService {
       Long roomId, int day, String json, List<Node> nodes, TransportType transport) {
     try {
       JsonNode root = om.readTree(json);
-      if (!"OK".equals(root.path("status").asText())) {
+      String status = root.path("status").asText();
+      
+      log.info("🚶‍♂️ [parse-whole-route] Google API 상태: {}", status);
+      
+      if (!"OK".equals(status)) {
+        log.warn("🚶‍♂️ [parse-whole-route] Google API 오류: {}", status);
         return RouteResultResponseDto.empty();
       }
-      JsonNode route0 = root.path("routes").get(0);
+      
+      JsonNode routes = root.path("routes");
+      if (!routes.isArray() || routes.size() == 0) {
+        log.warn("🚶‍♂️ [parse-whole-route] 경로 없음");
+        return RouteResultResponseDto.empty();
+      }
+      
+      JsonNode route0 = routes.get(0);
       JsonNode legsNode = route0.path("legs");
+
+      log.info("🚶‍♂️ [parse-whole-route] legs 수: {}", legsNode.size());
 
       long totalDist = 0, totalSec = 0;
       List<LegResponseDto> legs = new ArrayList<>();
@@ -341,6 +415,8 @@ public class TravelTimeServiceImpl implements TravelTimeService {
         long dur = leg.path("duration").path("value").asLong(0);
         totalDist += dist;
         totalSec += dur;
+
+        log.info("🚶‍♂️ [parse-whole-route] leg {}: {}m, {}초", i + 1, dist, dur);
 
         long fromId = nodes.get(i).wantId;
         long toId = nodes.get(i + 1).wantId;
@@ -355,6 +431,8 @@ public class TravelTimeServiceImpl implements TravelTimeService {
       }
       String polyline = route0.path("overview_polyline").path("points").asText(null);
 
+      log.info("🚶‍♂️ [parse-whole-route] 최종 결과: {}m, {}초", totalDist, totalSec);
+
       return RouteResultResponseDto.builder()
           .roomId(roomId)
           .day(day)
@@ -365,34 +443,57 @@ public class TravelTimeServiceImpl implements TravelTimeService {
           .build();
 
     } catch (Exception e) {
+      log.error("🚶‍♂️ [parse-whole-route] 파싱 실패", e);
       throw new RuntimeException("Directions parse failed", e);
     }
   }
 
-  private LegResponseDto parseSingleLeg(String json, long fromId, long toId) {
+  private LegResponseDto parseSingleLeg(String json, long fromId, long toId, TransportType transport) {
     try {
       JsonNode root = om.readTree(json);
-      if (!"OK".equals(root.path("status").asText())) {
+      String status = root.path("status").asText();
+      
+      String logPrefix = transport == TransportType.walking ? "🚶‍♂️" : "🚌";
+      log.info("{} [parse-single-leg] Google API 상태: {}", logPrefix, status);
+      
+      if (!"OK".equals(status)) {
+        log.warn("{} [parse-single-leg] Google API 오류: {}", logPrefix, status);
         return LegResponseDto.builder()
             .fromWantId(fromId)
             .toWantId(toId)
             .distanceMeters(0)
             .durationSec(0)
-            .transport(TransportType.transit)
+            .transport(transport)
             .build();
       }
-      JsonNode leg = root.path("routes").get(0).path("legs").get(0);
+      
+      JsonNode routes = root.path("routes");
+      if (!routes.isArray() || routes.size() == 0) {
+        log.warn("{} [parse-single-leg] 경로 없음", logPrefix);
+        return LegResponseDto.builder()
+            .fromWantId(fromId)
+            .toWantId(toId)
+            .distanceMeters(0)
+            .durationSec(0)
+            .transport(transport)
+            .build();
+      }
+      
+      JsonNode leg = routes.get(0).path("legs").get(0);
       long dist = leg.path("distance").path("value").asLong(0);
       long dur = leg.path("duration").path("value").asLong(0);
+
+      log.info("{} [parse-single-leg] 파싱 결과: {}m, {}초", logPrefix, dist, dur);
 
       return LegResponseDto.builder()
           .fromWantId(fromId)
           .toWantId(toId)
           .distanceMeters(dist)
           .durationSec(dur)
-          .transport(TransportType.transit)
+          .transport(transport)
           .build();
     } catch (Exception e) {
+      log.error("🚌 [parse-single-leg] 파싱 실패", e);
       throw new RuntimeException("Directions parse failed", e);
     }
   }

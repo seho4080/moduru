@@ -317,8 +317,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
 
   // 일자별 교통수단
   const [transportByDate, setTransportByDate] = useState({});
-  // 일자별 마지막 계산된 교통수단 (중복 계산 방지용)
-  const [lastCalculatedTransport, setLastCalculatedTransport] = useState({});
   useEffect(() => {
     setTransportByDate((prev) => {
       const next = { ...prev };
@@ -367,13 +365,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
       return;
     }
     const t = transportByDate[dateKey] || "driving";
-    const lastCalculated = lastCalculatedTransport[dateKey];
-
-    // 이미 같은 교통수단으로 계산된 경우 중복 계산 방지
-    if (lastCalculated === t) {
-      console.log(`Already calculated for ${t} on ${dateKey}, skipping...`);
-      return;
-    }
 
     const day = dates.indexOf(dateKey) + 1;
 
@@ -385,12 +376,6 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
     }));
 
     markOwnRequestAndStart(dateKey);
-
-    // 계산 요청 전에 마지막 계산된 교통수단 업데이트 (중복 방지)
-    setLastCalculatedTransport(prev => ({
-      ...prev,
-      [dateKey]: t
-    }));
 
     publishTravel({
       roomId,
@@ -554,13 +539,8 @@ const ItineraryBoard = forwardRef(function ItineraryBoard(
                             }))
                           }
                           onTransportChange={(val) => {
-                            // 교통수단 변경 시 마지막 계산된 교통수단 리셋
+                            // 교통수단 변경 시 로그 출력
                             console.log(`Transport changed to ${val} for ${dateKey}`);
-                            setLastCalculatedTransport(prev => {
-                              const newState = { ...prev };
-                              delete newState[dateKey]; // 해당 날짜의 계산 기록 삭제
-                              return newState;
-                            });
                           }}
                         />
                         <button
