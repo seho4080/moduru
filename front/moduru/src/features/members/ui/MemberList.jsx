@@ -18,7 +18,7 @@ import { kickMember as kickMemberApi } from '../../invite/lib/inviteApi';
 import { useAuth } from '../../../shared/model/useAuth';
 import './memberList.css';
 
-export default function MemberList({ roomId, onAdd }) {
+export default function MemberList({ roomId, onAdd, loading = false }) {
   const dispatch = useDispatch();
 
   // ✅ 로그인 사용자 id(문자/숫자 혼용 대비)
@@ -179,9 +179,23 @@ export default function MemberList({ roomId, onAdd }) {
     setKickBusyId(null);
   }, [canKick, roomId, dispatch]);
 
+  // 로딩 중일 때
+  if (loading) {
+    return (
+      <div className="member-compact-loading">
+        <p>멤버 목록을 불러오는 중...</p>
+      </div>
+    );
+  }
+
+  // 아이템이 없을 때도 기본 구조는 렌더링
   if (!hasItems) {
     console.log('[MemberList] no items for roomId =', roomId);
-    return null;
+    return (
+      <div className="member-compact-empty">
+        <p>멤버가 없습니다.</p>
+      </div>
+    );
   }
 
   return (
@@ -210,7 +224,7 @@ export default function MemberList({ roomId, onAdd }) {
               aria-label="더보기"
               type="button"
             >
-              …
+              ⋯
             </button>
 
             {menuOpenIdx === idx && (
