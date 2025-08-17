@@ -214,12 +214,14 @@ export default function TravelRoomsTable({
                       onClick={(e) => toggleMenu(e, row.key)}
                       title="더보기"
                     >
+                      {/* 기존 동그라미 세 개 대신 ↓ */}
                       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle cx="5" cy="12" r="2" />
+                        <circle cx="12" cy="5" r="2" />
                         <circle cx="12" cy="12" r="2" />
-                        <circle cx="19" cy="12" r="2" />
+                        <circle cx="12" cy="19" r="2" />
                       </svg>
                     </button>
+
 
                     {openMenuKey === row.key && (
                       <div role="menu" className="more-menu more-menu--dark">

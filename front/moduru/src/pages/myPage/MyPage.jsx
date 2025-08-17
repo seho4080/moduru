@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import MyProfile from "../../features/profile/ui/MyProfile";
-import MyLikeSpace from "./ui/MyLikePlaceContent";  
+import MyLikeSpace from "./ui/MyLikePlaceContent";
 import MyReviewsList from "../../features/myReview/ui/MyReviewsList";
-import "./css/MyPage.css"; 
+import MyTravelSpacePage from "../myTravelSpacePage/MyTravelSpacePage"; // 추가
+import "./css/MyPage.css";
 
 export default function MyPage() {
-  const [activeTab, setActiveTab] = useState("profile"); // profile, liked, reviews
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile"); // travel, profile, liked, reviews
 
   const renderContent = () => {
     switch (activeTab) {
+      case "travel":
+        return <MyTravelSpacePage />;
       case "profile":
         return <MyProfile />;
       case "liked":
@@ -22,19 +24,19 @@ export default function MyPage() {
   };
 
   return (
-    <div className={`mypage-container ${isExpanded ? 'expanded' : ''}`}>
+    <div className="mypage-container">
       <div className="mypage-content">
         {/* 사이드 탭 메뉴 */}
-        <aside className={`mypage-sidebar ${isExpanded ? 'hidden' : ''}`}>
+        <aside className="mypage-sidebar">
           <div className="sidebar-header">
             <h2>마이페이지</h2>
           </div>
           <nav className="sidebar-nav">
             <button
-              className={`nav-item ${activeTab === "profile" ? "active" : ""}`}
-              onClick={() => setActiveTab("profile")}
+              className={`nav-item ${activeTab === "travel" ? "active" : ""}`}
+              onClick={() => setActiveTab("travel")}
             >
-              내 정보
+              내 여행 방
             </button>
             <button
               className={`nav-item ${activeTab === "liked" ? "active" : ""}`}
@@ -48,24 +50,19 @@ export default function MyPage() {
             >
               작성한 리뷰
             </button>
+            <button
+              className={`nav-item ${activeTab === "profile" ? "active" : ""}`}
+              onClick={() => setActiveTab("profile")}
+            >
+              내 정보
+            </button>
           </nav>
         </aside>
 
+          {/* {renderContent()} */}
+
         {/* 메인 콘텐츠 영역 */}
-        <main className={`mypage-main ${isExpanded ? 'full-width' : ''}`}>
-          {/* 사이드바 토글 버튼 */}
-          <div className="sidebar-toggle">
-            <button 
-              className="toggle-btn"
-              onClick={() => setIsExpanded(!isExpanded)}
-              title={isExpanded ? "사이드바 열기" : "사이드바 닫기"}
-            >
-              <span className={`arrow ${isExpanded ? 'right' : 'left'}`}>
-                {isExpanded ? '▶' : '◀'}
-              </span>
-            </button>
-          </div>
-          
+        <main className={`mypage-main ${activeTab === "liked" ? "is-liked" : ""}`}>
           {renderContent()}
         </main>
       </div>

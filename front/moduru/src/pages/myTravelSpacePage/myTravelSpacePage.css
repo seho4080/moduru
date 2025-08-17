@@ -83,3 +83,7 @@
   }
   .row-btn{ height: 28px; line-height: 28px; font-size: 12px; }
 }
+
+/* 제목 헤더와 본문 첫 컬럼을 살짝 오른쪽으로(정렬 유지) */
+.travel-table-head > div:first-child { padding-left: 14px; }  /* 헤더 '제목' */
+.travel-row > .col.col-title       { padding-left: 14px; }     /* 본문 제목 셀 */
