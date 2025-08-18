@@ -1,0 +1,204 @@
+/* 중앙 안내문 / 빈 상태 */
+.empty-state{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#94a3b8;
+  font-size:14px;
+  text-align:center;
+}
+.invite-body--center{
+  display:grid;
+  place-items:center;
+}
+
+/* 팝오버 컨테이너 (상단 여백 압축 반영) */
+.invite-popover {
+  position: relative; /* 닫기 버튼 위치 기준 */
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.10);
+  padding: 16px 24px 20px;
+  min-width: 380px;
+  max-width: 440px;
+  min-height: 420px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Pretendard','Noto Sans KR',Arial,sans-serif;
+}
+
+/* ───────────── 탭(공유/게시) ───────────── */
+.invite-tabs{
+  display:flex;
+  gap:8px;
+  margin:-2px 0 8px;
+  /* ↓ 선 추가 + 간격 보정 */
+  border-bottom:1.5px solid #e5e7eb;
+  padding-bottom:8px;   /* 선과 인풋 사이 여백 */
+  margin-bottom:10px;   /* 탭과 인풋 사이 전체 간격 */
+}
+.invite-tab{
+  border:1.5px solid #e5e7eb;
+  background:#f3f4f6;
+  color:#6b7280;
+  border-radius:8px;
+  padding:6px 10px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .18s, color .18s, border-color .18s, box-shadow .18s;
+}
+.invite-tab.is-active{
+  background:#fff;
+  color:#111827;
+  border-color:#d1d5db;
+  box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+.invite-tab:focus{
+  outline:none;
+  box-shadow:0 0 0 3px rgba(51,153,204,.25);
+}
+
+/* 헤더: 검색 + 초대 버튼 */
+.invite-header{ padding-bottom:6px; }    /* ⬅ 간격 축소 */
+
+.invite-input-row{
+  display:flex;
+  gap:10px;
+  margin-bottom:6px;                     /* ⬅ 간격 축소 */
+}
+
+.dropdown-input-wrapper{
+  position:relative;
+  flex:1;
+}
+
+.dropdown-input-wrapper input{
+  width:100%;
+  padding:8px 12px;                      /* ⬅ 높이 살짝 낮춤 */
+  border:1.5px solid #e5e7eb;
+  border-radius:8px;
+  font-size:15px;
+  background:#f8fafc;
+  color:#222;
+  outline:none;
+  transition:border .18s;
+}
+.dropdown-input-wrapper input:focus{ border-color:#3399cc; }
+
+.dropdown-list{
+  position:absolute;
+  top:110%;
+  left:0;
+  width:100%;
+  background:#fff;
+  border:1.5px solid #e5e7eb;
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+  z-index:10;
+  max-height:180px;
+  overflow-y:auto;
+  margin-top:4px;
+}
+
+.dropdown-item{
+  padding:10px 12px;
+  font-size:15px;
+  color:#222;
+  cursor:pointer;
+  transition:background .15s, color .15s;
+}
+.dropdown-item:hover{ background:#eaf4ff; color:#3399cc; }
+.dropdown-item.empty{ color:#94a3b8; text-align:center; background:#f8fafc; }
+
+.invite-button{
+  background:#3399cc;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  font-size:15px;
+  font-weight:600;
+  padding:10px 18px;
+  cursor:pointer;
+  transition:background .18s;
+}
+.invite-button:hover{ background:#2176c7; }
+
+/* 바디: 선택 리스트가 스크롤되는 영역 */
+.invite-body{
+  flex:1 1 auto;      /* 남은 공간 채우기 */
+  overflow:auto;      /* 여기만 스크롤 */
+  padding:8px 0;
+}
+
+/* 푸터: 하단 고정 */
+.invite-footer{
+  margin-top:auto;    /* 바닥으로 밀착 */
+  background:#fff;
+  padding-top:8px;
+}
+
+.divider{
+  border:none;
+  border-top:1.5px solid #e5e7eb;
+  margin:8px 0 12px;
+}
+
+/* 링크 복사 버튼 */
+.link-row{ display:flex; justify-content:flex-end; }
+
+.copy-link-button{
+  background:#fff;
+  color:#3399cc;
+  border:1.5px solid #3399cc;
+  border-radius:8px;
+  font-size:15px;
+  font-weight:600;
+  padding:8px 16px;
+  cursor:pointer;
+  transition:background .18s, color .18s, border-color .18s;
+}
+.copy-link-button:hover{
+  background:#eaf4ff;
+  color:#2176c7;
+  border-color:#2176c7;
+}
+
+
+/* 드롭다운 한 줄 스타일 */
+.dropdown-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.dropdown-nick{
+  font-weight:600;
+  color:#111827;
+  font-size:14px;
+}
+.dropdown-email{
+  color:#6b7280;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.invite-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #b0b8c1;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.18s;
+}
+.invite-close:hover {
+  color: #3399cc;
+}

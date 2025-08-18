@@ -1,0 +1,33 @@
+.edit-location-btn {
+  background-color: #fff;
+  color: #222;
+  padding: 5px 12px;    
+  font-size: 15px;
+  font-weight: 400; 
+  font-family: 'Pretendard', 'Noto Sans KR', Arial, sans-serif;
+  border: none;        
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.18s, color 0.18s;
+  box-shadow: 0 2px 8px rgba(109,135,219,0.08); 
+}
+
+.edit-location-btn:hover {
+  background-color: #6d87db;
+  color: #fff;
+}
+
+
+@media (max-width: 768px) {
+  .edit-location-btn {
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+}
+
+.edit-location-btn.safe-area {
+  margin-top: env(safe-area-inset-top);
+  margin-right: env(safe-area-inset-right);
+}
+
+

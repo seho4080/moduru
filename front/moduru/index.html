@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>React Kakao Map - 통합 기능</title>
+
+    <!-- YOUR_APP_KEY 를 발급받은 키로 교체 -->
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=a0260ae00da2be3e964123c620d9f4ae&libraries=services,clusterer"></script>
+
+
+    <style>
+      body, html { margin:0; padding:0; }
+      #map { width:100%; height:100vh; }
+      .dot { display:block; width:6px; height:6px; background:red; border-radius:50%; }
+      .dotOverlay { position:absolute; white-space:nowrap; }
+      .distanceInfo { background:#fff; border:1px solid #ddd; padding:4px; font-size:12px; }
+      .distanceInfo .number { font-weight:bold; }
+      .distanceInfo .label { color:#555; margin-right:4px; }
+      .controls {
+        position:absolute; top:10px; left:10px;
+        background:rgba(255,255,255,0.9); padding:8px;
+        border-radius:4px; z-index:10;
+        display:flex; flex-wrap:wrap; gap:4px;
+      }
+      .controls button { padding:4px 8px; }
+      .selected_btn { background:#007aff; color:#fff; }
+      .btn { background:#eee; color:#333; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+/* =========================
+   File: src/pages/myTravelSpacePage/myTravelSpacePage.css
+   ========================= */
+
+/* ===== 페이지 컨테이너 ===== */
+.travel-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+/* ===== 흰 카드 컨테이너 ===== */
+.travel-card {
+  height: 100%;
+  min-height: 600px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;         /* 내부 스크롤 제거 */
+  margin-top: 0 !important;
+}
+
+/* ===== 본문 영역 ===== */
+.travel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: visible;         /* 스크롤 제거 */
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+/* ===== 페이지네이션: 부모 하단 가운데 ===== */
+.travel-pagination {
+  position: static !important;  /* sticky 해제 */
+  margin-top: auto;             /* 하단으로 밀착 */
+  align-self: center;           /* 가로 중앙 정렬 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0 16px;
+}
+
+.travel-pagination.is-hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ===== 테이블: 헤더/행 공통 ===== */
+.travel-table {
+  display: grid;
+  gap: 12px;
+}
+
+/* 헤더 */
+.travel-table-head {
+  display: grid;
+  align-items: center;
+  padding: 10px 8px;
+  border-bottom: 1px solid #eef1f5;
+  color: #6b7280;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.travel-table-head.head-shift {
+  padding-left: 0 !important;
+  margin-left: -6px;
+}
+
+/* 행(= 항목 루트) */
+.travel-row,
+.room-item {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 12px;
+  border: 1px solid #eef1f5;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+
+.travel-row {
+  padding: 14px 8px 14px 2px !important;
+}
+
+/* 컬럼 폭 */
+.travel-table-head,
+.travel-row {
+  grid-template-columns: 2fr 1.2fr 1.6fr 0.8fr 1.6fr !important;
+}
+
+/* 공통 컬럼 */
+.col { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.col-title { font-weight: 700; color: #1f2937; }
+.col-region, .col-dates, .col-status { color: #6b7280; font-size: 13px; }
+
+/* 제목 헤더/본문 첫 컬럼 오른쪽 패딩 */
+.travel-table-head > div:first-child { padding-left: 14px; }
+.travel-row > .col.col-title       { padding-left: 14px; }
+
+/* 액션 컬럼 */
+.head-actions { text-align: right; padding-right: 6px; }
+.col-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 행 내부 버튼 */
+.row-btn {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 30px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+  white-space: nowrap;
+}
+.row-btn:hover { background: #f9fafb; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+
+.btn-enter { border-color: #10b981; color: #0f766e; background: #ecfdf5; }
+.btn-enter:hover { background: #d1fae5; }
+.btn-schedule { border-color: #d1d5db; color: #374151; background: #ffffff; }
+.btn-schedule:hover { background: #f3f4f6; }
+
+/* 팝오버 (선택) */
+.row-right { display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+.row-menu { position: relative; }
+.row-btn.more { width: 30px; padding: 0; font-size: 20px; line-height: 1; }
+.row-popover {
+  position: absolute;
+  right: 0; top: 36px;
+  background: #111827; color: #fff;
+  border-radius: 10px; padding: 8px; display: none; min-width: 120px; z-index: 2;
+}
+.row-menu:hover .row-popover { display: block; }
+.row-pop-item {
+  display: block; width: 100%; text-align: left; background: transparent; border: none;
+  color: #fff; padding: 8px 10px; border-radius: 8px; cursor: pointer;
+}
+.row-pop-item:hover { background: rgba(255,255,255,0.08); }
+.row-pop-item.danger { color: #fecaca; }
+
+/* 빈 상태 */
+.travel-empty { padding: 48px 24px; text-align: center; color: #6b7280; }
+.empty-text { margin: 8px 0 0; }
+
+/* 테이블 본문 여백 수정 */
+.travel-table-body { margin: 0 !important; padding: 0 !important; }
+.room-item, .travel-table { margin: 0 !important; padding: 0 !important; }
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .travel-table-head,
+  .travel-row {
+    grid-template-columns: 1.8fr 1fr 1.2fr 0.7fr 1.6fr !important;
+  }
+}
+@media (max-width: 768px) {
+  .travel-table-head,
+  .travel-row {
+    grid-template-columns: 1.6fr 0.9fr 1.1fr 0.7fr 1.8fr !important;
+  }
+  .row-btn { height: 28px; line-height: 28px; font-size: 12px; }
+}
+

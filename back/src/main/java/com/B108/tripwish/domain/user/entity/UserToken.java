@@ -24,22 +24,20 @@ import lombok.Setter;
 @Builder
 public class UserToken {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Column(nullable = false, unique = true, length = 512)
-    private String refreshToken;
+  @Column(nullable = false, unique = true, length = 512)
+  private String refreshToken;
 
-    @Column(nullable = false)
-    private LocalDateTime issuedAt;
+  @Column(nullable = false)
+  private LocalDateTime issuedAt;
 
-    @Column(nullable = false)
-    private LocalDateTime expiresAt;
-
+  @Column(nullable = false)
+  private LocalDateTime expiresAt;
 }
-

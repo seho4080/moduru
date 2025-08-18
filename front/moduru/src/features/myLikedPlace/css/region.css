@@ -1,0 +1,145 @@
+/* === Region Select (이미지 #2, #3 동작) === */
+
+/* 래퍼: 셀렉트와 패널의 기준 */
+.region-select-wrap {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  font-family: 'Pretendard','Noto Sans KR',Arial,sans-serif;
+}
+
+/* 셀렉트 컨트롤 */
+.region-select-control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #d1d5db;   /* gray-300 */
+  background: #f8fbff;
+  color: #111827;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) inset;
+  transition: border .18s, background .18s, box-shadow .18s;
+}
+.region-select-control:hover {
+  border-color: #9ca3af;          /* gray-400 */
+  background: #f3f6fc;
+}
+.region-select-control.open {
+  border-color: #3b82f6;          /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+.region-select-label {
+  font-size: 14px;
+  color: #6b7280;                  /* slate-500 */
+}
+.region-select-label.has-value { color: #111827; }
+
+/* SVG 캐럿(얇은 V) */
+.region-caret-svg {
+  width: 16px;
+  height: 16px;
+  color: #111827;                  /* 검정 */
+  flex-shrink: 0;
+  transition: transform .18s ease;
+  transform-origin: 50% 45%;
+}
+.region-select-control.open .region-caret-svg {
+  transform: rotate(180deg);
+}
+
+/* 드롭다운 패널 (컨트롤 바로 아래) */
+.region-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 좌/우 동일 폭 */
+  gap: 0;
+  z-index: 50;
+  max-height: 340px;
+  overflow: hidden; /* 내부 컬럼 스크롤로 */
+}
+
+/* 좌우 컬럼 공통 */
+.region-col {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+/* 좌측 컬럼 */
+.region-col.left {
+  background: #f8fafc;            /* slate-50 */
+  border-right: 1px solid #e5e7eb;
+}
+
+/* 우측 컬럼 */
+.region-col.right {
+  background: #ffffff;
+}
+
+/* 스크롤바 */
+.region-col::-webkit-scrollbar { height: 10px; width: 10px; }
+.region-col::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.25);
+  border-radius: 6px;
+}
+.region-col::-webkit-scrollbar-track { background: transparent; }
+
+/* 항목 */
+.region-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.region-item .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.region-item .chevron { opacity: .55; font-size: 12px; }
+
+.region-item:hover { background: #e8f0ff; color: #1d4ed8; }  /* indigo tint */
+.region-item.active { background: #dbeafe; color: #1e3a8a; } /* indigo-100/900 */
+
+.region-item.disabled {
+  background: #eef2ff;
+  color: #64748b;                  /* slate-500 */
+  cursor: default;
+}
+.region-item.hint {
+  color: #9aa0a6;
+  cursor: default;
+}
+
+/* 좌측 패널(광역) ▶ 화살표 제거 */
+.region-col.left .region-item .chevron {
+  display: none !important;
+}
+
+/* 모바일: 한 컬럼씩 쌓기 */
+@media (max-width: 520px) {
+  .region-dropdown {
+    grid-template-columns: 1fr;
+  }
+}
