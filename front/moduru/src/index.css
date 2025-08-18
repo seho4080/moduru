@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+@font-face {
+  font-family: "HakgyoansimAllimjangTTF-R";
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/2408-5@1.0/HakgyoansimAllimjangTTF-R.woff2")
+    format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+body {
+  font-family: "HakgyoansimAllimjangTTF-R", sans-serif;
+  font-weight: 400;
+}
