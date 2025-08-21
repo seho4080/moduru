@@ -4,7 +4,6 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.B108.tripwish.domain.room.entity.WantPlace;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -132,16 +132,19 @@ public class TravelTimeServiceImpl implements TravelTimeService {
               t -> {
                 long walkSec = t.getT1().getTotalDurationSec();
                 long tranSec = t.getT2().getTotalDurationSec();
-                
+
                 // 도보 계산이 실패했거나 0초인 경우 대중교통 선택
                 if (walkSec <= 0) {
                   log.info("🚶‍♂️ [transit-smart] 도보 계산 실패 또는 0초 - 대중교통 선택");
                   return t.getT2();
                 }
-                
+
                 RouteResultResponseDto result = walkSec <= tranSec ? t.getT1() : t.getT2();
-                log.info("🚶‍♂️ [transit-smart] 비교 결과 - 도보: {}초, 대중교통: {}초, 선택: {}", 
-                    walkSec, tranSec, walkSec <= tranSec ? "도보" : "대중교통");
+                log.info(
+                    "🚶‍♂️ [transit-smart] 비교 결과 - 도보: {}초, 대중교통: {}초, 선택: {}",
+                    walkSec,
+                    tranSec,
+                    walkSec <= tranSec ? "도보" : "대중교통");
                 return result;
               })
           .block();
@@ -270,34 +273,45 @@ public class TravelTimeServiceImpl implements TravelTimeService {
       Node from = nodes.get(i);
       Node to = nodes.get(i + 1);
 
-      log.info("🚶‍♂️ [walking] leg {}: {} -> {} ({} -> {})", 
-          i + 1, from.wantId, to.wantId, ll(from), ll(to));
+      log.info(
+          "🚶‍♂️ [walking] leg {}: {} -> {} ({} -> {})",
+          i + 1,
+          from.wantId,
+          to.wantId,
+          ll(from),
+          ll(to));
 
       String json = google.walking(ll(from), ll(to), null).block();
       log.info("🚶‍♂️ [walking] Google API 응답 길이: {}", json != null ? json.length() : 0);
-      
+
       LegResponseDto leg = parseSingleLeg(json, from.wantId, to.wantId(), TransportType.walking);
       legs.add(leg);
 
-      log.info("🚶‍♂️ [walking] leg {} 결과: {}m, {}초", 
-          i + 1, leg.getDistanceMeters(), leg.getDurationSec());
+      log.info(
+          "🚶‍♂️ [walking] leg {} 결과: {}m, {}초",
+          i + 1,
+          leg.getDistanceMeters(),
+          leg.getDurationSec());
 
       totalDist += leg.getDistanceMeters();
       totalSec += leg.getDurationSec();
     }
 
-    RouteResultResponseDto result = RouteResultResponseDto.builder()
-        .roomId(roomId)
-        .day(day)
-        .transport(TransportType.walking)
-        .totalDistanceMeters(totalDist)
-        .totalDurationSec(totalSec)
-        .legs(legs)
-        .polyline(null)
-        .build();
+    RouteResultResponseDto result =
+        RouteResultResponseDto.builder()
+            .roomId(roomId)
+            .day(day)
+            .transport(TransportType.walking)
+            .totalDistanceMeters(totalDist)
+            .totalDurationSec(totalSec)
+            .legs(legs)
+            .polyline(null)
+            .build();
 
-    log.info("🚶‍♂️ [walking] 도보 계산 결과: {}m, {}초", 
-        result.getTotalDistanceMeters(), result.getTotalDurationSec());
+    log.info(
+        "🚶‍♂️ [walking] 도보 계산 결과: {}m, {}초",
+        result.getTotalDistanceMeters(),
+        result.getTotalDurationSec());
 
     return result;
   }
@@ -326,17 +340,25 @@ public class TravelTimeServiceImpl implements TravelTimeService {
       Node from = nodes.get(i);
       Node to = nodes.get(i + 1);
 
-      log.info("🚌 [transit-per-leg] leg {}: {} -> {} ({} -> {})", 
-          i + 1, from.wantId, to.wantId, ll(from), ll(to));
+      log.info(
+          "🚌 [transit-per-leg] leg {}: {} -> {} ({} -> {})",
+          i + 1,
+          from.wantId,
+          to.wantId,
+          ll(from),
+          ll(to));
 
       String json = google.transit(ll(from), ll(to), null, currentDeparture).block();
       log.info("🚌 [transit-per-leg] Google API 응답 길이: {}", json != null ? json.length() : 0);
-      
+
       LegResponseDto leg = parseSingleLeg(json, from.wantId, to.wantId(), TransportType.transit);
       legs.add(leg);
 
-      log.info("🚌 [transit-per-leg] leg {} 결과: {}m, {}초", 
-          i + 1, leg.getDistanceMeters(), leg.getDurationSec());
+      log.info(
+          "🚌 [transit-per-leg] leg {} 결과: {}m, {}초",
+          i + 1,
+          leg.getDistanceMeters(),
+          leg.getDurationSec());
 
       totalDist += leg.getDistanceMeters();
       totalSec += leg.getDurationSec();
@@ -387,20 +409,20 @@ public class TravelTimeServiceImpl implements TravelTimeService {
     try {
       JsonNode root = om.readTree(json);
       String status = root.path("status").asText();
-      
+
       log.info("🚶‍♂️ [parse-whole-route] Google API 상태: {}", status);
-      
+
       if (!"OK".equals(status)) {
         log.warn("🚶‍♂️ [parse-whole-route] Google API 오류: {}", status);
         return RouteResultResponseDto.empty();
       }
-      
+
       JsonNode routes = root.path("routes");
       if (!routes.isArray() || routes.size() == 0) {
         log.warn("🚶‍♂️ [parse-whole-route] 경로 없음");
         return RouteResultResponseDto.empty();
       }
-      
+
       JsonNode route0 = routes.get(0);
       JsonNode legsNode = route0.path("legs");
 
@@ -448,14 +470,15 @@ public class TravelTimeServiceImpl implements TravelTimeService {
     }
   }
 
-  private LegResponseDto parseSingleLeg(String json, long fromId, long toId, TransportType transport) {
+  private LegResponseDto parseSingleLeg(
+      String json, long fromId, long toId, TransportType transport) {
     try {
       JsonNode root = om.readTree(json);
       String status = root.path("status").asText();
-      
+
       String logPrefix = transport == TransportType.walking ? "🚶‍♂️" : "🚌";
       log.info("{} [parse-single-leg] Google API 상태: {}", logPrefix, status);
-      
+
       if (!"OK".equals(status)) {
         log.warn("{} [parse-single-leg] Google API 오류: {}", logPrefix, status);
         return LegResponseDto.builder()
@@ -466,7 +489,7 @@ public class TravelTimeServiceImpl implements TravelTimeService {
             .transport(transport)
             .build();
       }
-      
+
       JsonNode routes = root.path("routes");
       if (!routes.isArray() || routes.size() == 0) {
         log.warn("{} [parse-single-leg] 경로 없음", logPrefix);
@@ -478,7 +501,7 @@ public class TravelTimeServiceImpl implements TravelTimeService {
             .transport(transport)
             .build();
       }
-      
+
       JsonNode leg = routes.get(0).path("legs").get(0);
       long dist = leg.path("distance").path("value").asLong(0);
       long dur = leg.path("duration").path("value").asLong(0);

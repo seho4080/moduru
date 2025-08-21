@@ -18,13 +18,15 @@ import reactor.netty.http.client.HttpClient;
 public class WebClientConfig {
   @Bean
   public WebClient webClient(@Value("${google.base-url}") String baseUrl) {
-    HttpClient httpClient = HttpClient.create()
-        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // 10초 연결 타임아웃
-        .responseTimeout(Duration.ofSeconds(30)) // 30초 응답 타임아웃
-        .doOnConnected(conn -> {
-          conn.addHandlerLast(new ReadTimeoutHandler(30)); // 30초 읽기 타임아웃
-          conn.addHandlerLast(new WriteTimeoutHandler(10)); // 10초 쓰기 타임아웃
-        });
+    HttpClient httpClient =
+        HttpClient.create()
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000) // 10초 연결 타임아웃
+            .responseTimeout(Duration.ofSeconds(30)) // 30초 응답 타임아웃
+            .doOnConnected(
+                conn -> {
+                  conn.addHandlerLast(new ReadTimeoutHandler(30)); // 30초 읽기 타임아웃
+                  conn.addHandlerLast(new WriteTimeoutHandler(10)); // 10초 쓰기 타임아웃
+                });
 
     return WebClient.builder()
         .baseUrl(baseUrl)

@@ -22,7 +22,7 @@ public class Place {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne
+  @ManyToOne(fetch = LAZY) // 기본 EAGER → LAZY 권장
   @JoinColumn(name = "category_id")
   private Category categoryId;
 
@@ -51,9 +51,11 @@ public class Place {
   @Column(nullable = false)
   private Double lat; // 위도
 
+  @Builder.Default
   @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PlaceMetadataTag> metadataTags = new ArrayList<>();
 
+  @Builder.Default
   @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<PlaceImage> images = new ArrayList<>();
 }
