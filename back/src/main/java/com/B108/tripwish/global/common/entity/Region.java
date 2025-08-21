@@ -23,7 +23,7 @@ public class Region {
   @Column(name = "name", nullable = false)
   private String name;
 
-  // NOTE: parent_id 컬럼 - 최상위(도 단위)는 null
+  // 최상위(도 단위)는 null
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "parent_id")
   private Region parent;
@@ -34,6 +34,7 @@ public class Region {
   @Column(name = "lng", nullable = false)
   private Double lng;
 
-  @OneToMany(mappedBy = "regionId", orphanRemoval = false) // 역방향(선택)
+  @OneToMany(mappedBy = "regionId", orphanRemoval = false) // Place의 필드명(regionId)과 일치해야 함
+  @Builder.Default
   private List<Place> places = new ArrayList<>();
 }

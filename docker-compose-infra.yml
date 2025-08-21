@@ -1,0 +1,83 @@
+services:
+  ##########################################
+  # 1. LiveKit 서버
+  ##########################################
+  livekit:
+    image: livekit/livekit-server
+    expose:
+      - "7880"
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+      - "30000-30010:30000-30010/udp"
+    environment:
+      LIVEKIT_KEYS: "APIExfXARpQDyLR: aiMU5fnfvAXXRATTtf8i3lLSghwiqPNA7RznUlKIqmtA"
+      LIVEKIT_UDP_PORT: "7882"
+      LIVEKIT_UDP_PORT_RANGE: "30000-30010"
+      LIVEKIT_PUBLIC_IP: "3.34.53.245"               # 로컬 테스트면 LAN IP로 바꿔도 됨
+      LIVEKIT_STUN_URIS: "stun:stun.l.google.com:19302"
+      LIVEKIT_WEBHOOK_URLS: "http://node-backend:4000/livekit/webhook"
+    command: ["--bind", "0.0.0.0"]
+    networks: [app-network]
+
+  ##########################################
+  # 2. DB (postgresql)
+  ##########################################
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ssafy
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    networks: [app-network]
+
+  ##########################################
+  # 3. redis
+  ##########################################
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks: [app-network]
+
+  ##########################################
+  # 4. elasticsearch
+  ##########################################
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.7.1
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
+    networks: [app-network]
+
+networks:
+  app-network:
+    external: true
+    name: moduru_net
+
+volumes:
+  pgdata:
