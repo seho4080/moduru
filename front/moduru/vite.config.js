@@ -39,7 +39,15 @@ export default defineConfig({
         secure: false,
         // /api 접두어를 유지하려면 rewrite 제거
         // 백엔드가 /api를 기대하지 않으면 아래 주석 해제하고 조정
-        // rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // 소켓 연결하는 요청
+      '/api/ws-stomp': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+      secure: false,
+      ws: true,
+      rewrite: (p) => p.replace(/^\/api/, ''),
       },
     },
   },

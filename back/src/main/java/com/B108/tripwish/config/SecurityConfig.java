@@ -11,6 +11,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -33,8 +34,6 @@ public class SecurityConfig {
     http.csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .headers(headers -> headers.frameOptions(frame -> frame.disable()))
-
-        // ⬇️ 비인증(401) / 권한없음(403) 명확화
         .exceptionHandling(
             ex ->
                 ex.authenticationEntryPoint(
@@ -54,24 +53,21 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
-                        "/v3/api-docs/**",
-                        "/swagger-resources/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/webjars/**",
-                        "/auth/login",
-                        "/auth/reissue",
-                        "/auth/email/verify",
-                        "/auth/email/send",
-                        "/users/signup")
+                        new AntPathRequestMatcher("/v3/api-docs/**"),
+                        new AntPathRequestMatcher("/swagger-resources/**"),
+                        new AntPathRequestMatcher("/swagger-ui/**"),
+                        new AntPathRequestMatcher("/swagger-ui.html"),
+                        new AntPathRequestMatcher("/webjars/**"),
+                        new AntPathRequestMatcher("/auth/login"),
+                        new AntPathRequestMatcher("/auth/reissue"),
+                        new AntPathRequestMatcher("/auth/email/verify"),
+                        new AntPathRequestMatcher("/auth/email/send"),
+                        new AntPathRequestMatcher("/users/signup"))
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-
-        // ⬇️ REST API 일반 설정
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-    // ⬇️ JWT 필터 (예외 경로 스킵은 필터 내부에서 처리)
     http.addFilterBefore(
         new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
@@ -86,7 +82,6 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
-    // 권장: 정확한 오리진 지정
     config.setAllowedOrigins(
         List.of(
             "https://moduru.co.kr",
