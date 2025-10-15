@@ -59,6 +59,11 @@ pids
 *.pid
 *.seed
 *.pid.lock
+<<<<<<< HEAD
+pg-data/
+init.sql
+*:Zone.Identifier
+=======
 
 # 가상환경 
 venv
@@ -69,3 +74,4 @@ pgdata
 festival_data_embedding.json
 restaurant_data_embedding.json
 spot_data_embedding.json
+>>>>>>> 144a37f23cced432b7f4a227b109789872c96723
